@@ -45,6 +45,26 @@ const orderSlice = createSlice({
     setError: (state, action) => {
       state.error = action.payload;
     },
+    cancelOrder: (state, action) => {
+      const { orderId, reason } = action.payload;
+      const order = state.orders.find(order => order.id === orderId);
+      if (order) {
+        order.status = 'Cancelled';
+        order.cancellationReason = reason;
+        order.cancelledAt = new Date().toISOString();
+        order.lastUpdated = new Date().toISOString();
+      }
+    },
+    returnOrder: (state, action) => {
+      const { orderId, reason } = action.payload;
+      const order = state.orders.find(order => order.id === orderId);
+      if (order) {
+        order.status = 'Returned';
+        order.returnReason = reason;
+        order.returnedAt = new Date().toISOString();
+        order.lastUpdated = new Date().toISOString();
+      }
+    },
     clearError: (state) => {
       state.error = null;
     },
@@ -56,6 +76,8 @@ export const {
   updateOrderStatus,
   setCurrentOrder,
   reorder,
+  cancelOrder,
+  returnOrder,
   setLoading,
   setError,
   clearError,

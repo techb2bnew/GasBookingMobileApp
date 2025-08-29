@@ -7,7 +7,10 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Modal,
+  Platform,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { COLORS, STRINGS } from '../constants';
 import {
@@ -16,11 +19,13 @@ import {
   deleteAddress,
   setDefaultAddress,
 } from '../redux/slices/profileSlice';
+import MapPicker from '../components/MapPicker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const AddAddressScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { addresses, defaultAddressId } = useSelector(state => state.profile);
+  const insets = useSafeAreaInsets();
   const [errors, setErrors] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -32,6 +37,8 @@ const AddAddressScreen = ({ navigation }) => {
     pincode: '',
     landmark: '',
   });
+  const [isMapModalVisible, setIsMapModalVisible] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
 
   useEffect(() => {
     if (addresses.length === 1 && !defaultAddressId) {
@@ -126,10 +133,30 @@ const AddAddressScreen = ({ navigation }) => {
     setShowForm(false);
   };
 
+  const handleLocationSelect = (location) => {
+    setSelectedLocation(location);
+    setAddressForm({
+      ...addressForm,
+      title: location.title || 'Home',
+      address: location.address,
+      city: location.city || '',
+      pincode: location.pincode || '',
+      landmark: location.landmark || '',
+    });
+    setIsMapModalVisible(false);
+  };
+
+  const openMapPicker = () => {
+    setIsMapModalVisible(true);
+  };
+
   const renderAddressItem = (address) => (
     <View key={address.id} style={styles.addressItem}>
       <View style={styles.addressHeader}>
-        <Text style={styles.addressTitle}>{address.title}</Text>
+        <Text style={styles.addressTitle}>
+          {address.title.split(' ').slice(0, 3).join(' ')}
+          {address.title.split(' ').length > 3 ? '...' : ''}
+        </Text>
         {defaultAddressId === address.id && (
           <Text style={styles.defaultBadge}>Default</Text>
         )}
@@ -192,14 +219,21 @@ const AddAddressScreen = ({ navigation }) => {
 
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Address *</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={addressForm.address}
-          onChangeText={(text) => setAddressForm({ ...addressForm, address: text })}
-          placeholder="Enter full address"
-          multiline
-          numberOfLines={3}
-        />
+        <View style={styles.addressInputContainer}>
+          <TextInput
+            style={[styles.input, styles.textArea, styles.addressInput]}
+            value={addressForm.address}
+            onChangeText={(text) => setAddressForm({ ...addressForm, address: text })}
+            placeholder="Enter full address"
+            multiline
+            numberOfLines={3}
+          />
+          <TouchableOpacity
+            style={styles.mapButton}
+            onPress={openMapPicker}>
+            <Ionicons name="map" size={20} color={COLORS.primary} />
+          </TouchableOpacity>
+        </View>
         {errors.address && <Text style={styles.errorText}>{errors.address}</Text>}
       </View>
 
@@ -250,7 +284,7 @@ const AddAddressScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}>
@@ -285,18 +319,37 @@ const AddAddressScreen = ({ navigation }) => {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      {/* Map Picker Modal */}
+      <Modal
+        visible={isMapModalVisible}
+        animationType="slide"
+        presentationStyle="fullScreen">
+        <SafeAreaView style={styles.mapModalContainer}>
+          <MapPicker
+            onLocationSelect={handleLocationSelect}
+            initialLocation={selectedLocation}
+          />
+          <TouchableOpacity
+            style={styles.closeMapButton}
+            onPress={() => setIsMapModalVisible(false)}>
+            <Ionicons name="close" size={24} color={COLORS.white} />
+          </TouchableOpacity>
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
+  mapModalContainer: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 15,
     backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
@@ -365,10 +418,41 @@ const styles = StyleSheet.create({
   },
   addButtonText: { color: COLORS.white, fontSize: 16, fontWeight: '600' },
   errorText: {
-  color: COLORS.error,
-  fontSize: 12,
-  marginTop: 4,
-},
+    color: COLORS.error,
+    fontSize: 12,
+    marginTop: 4,
+  },
+  addressInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  addressInput: {
+    flex: 1,
+    marginRight: 8,
+  },
+  mapButton: {
+    padding: 12,
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeMapButton: {
+    position: 'absolute',
+    top: Platform.OS === "ios" ? 50 : 10,
+    right: 20,
+    backgroundColor: COLORS.primary,
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
 });
 
 export default AddAddressScreen;

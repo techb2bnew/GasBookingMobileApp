@@ -111,7 +111,10 @@ const ProfileScreen = ({ navigation }) => {
   const renderAddressItem = (address) => (
     <View key={address.id} style={styles.addressItem}>
       <View style={styles.addressHeader}>
-        <Text style={styles.addressTitle}>{address.title}</Text>
+        <Text style={styles.addressTitle}>
+          {address.title.split(' ').slice(0, 3).join(' ')}
+          {address.title.split(' ').length > 3 ? '...' : ''}
+        </Text>
         {defaultAddressId === address.id && (
           <Text style={styles.defaultBadge}>Default</Text>
         )}

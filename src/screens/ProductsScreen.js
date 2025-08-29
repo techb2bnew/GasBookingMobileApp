@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,18 +7,49 @@ import {
   StyleSheet,
   Image,
   Alert,
+  Dimensions,
+  ScrollView,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { COLORS, STRINGS } from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { addToCart } from '../redux/slices/cartSlice';
+import MenuDrawer from '../components/MenuDrawer';
+import Geocoder from 'react-native-geocoding';
+
+const { width: screenWidth } = Dimensions.get('window');
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const ProductsScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { products, categories } = useSelector(state => state.products);
-  const { totalItems } = useSelector(state => state.cart);
+  const { totalItems, totalAmount } = useSelector(state => state.cart);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const carouselRef = useRef(null);
+
+  // Carousel banner data
+  const carouselData = [
+    {
+      id: '1',
+      image: 'https://media.istockphoto.com/id/2065176225/photo/a-truck-equipped-with-a-unit-for-transporting-liquefied-household-gas-for-delivery-to-the.jpg?s=2048x2048&w=is&k=20&c=pzxFHnc77bQJDd85rqlsvj2_8uCCKWehlpQtSvtiI84=',
+      title: 'Special Offer',
+      subtitle: 'Get 10% off on first order'
+    },
+    {
+      id: '2', 
+      image: 'https://media.istockphoto.com/id/1207561811/photo/colleagues-loading-gas-cylinder-on-to-tanker-truck.jpg?s=1024x1024&w=is&k=20&c=By3SZrAZMRCRhosNypjce8FyS-cjHSWyr_3M1y3Ryt8=',
+      title: 'Fast Delivery',
+      subtitle: 'Same day delivery available'
+    },
+    {
+      id: '3',
+      image: 'https://media.istockphoto.com/id/1082712970/photo/filling-the-domestic-gas-tank-with-lpg.jpg?s=1024x1024&w=is&k=20&c=XRHt393LbnMkbFKCwp8nGIb7qzzEUAaXG4-hv18J5qc=',
+      title: '24x7 Support',
+      subtitle: 'We are here to help you'
+    }
+  ];
   const filteredProducts =
     selectedCategory === 'All'
       ? products
@@ -42,6 +73,30 @@ const ProductsScreen = ({ navigation }) => {
     dispatch(addToCart({ product, quantity: 1, type: 'spare' }));
     // Alert.alert('Success', `${product.name} spare cylinder request added to cart`);
   };
+
+  const renderCarouselItem = ({ item, index }) => (
+    <View style={styles.carouselItem}>
+      <Image source={{ uri: item.image }} style={styles.carouselImage} />
+      <View style={styles.carouselOverlay}>
+        <Text style={styles.carouselTitle}>{item.title}</Text>
+        <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>
+      </View>
+    </View>
+  );
+
+  const renderCarouselDots = () => (
+    <View style={styles.carouselDots}>
+      {carouselData.map((_, index) => (
+        <View
+          key={index}
+          style={[
+            styles.dot,
+            index === currentCarouselIndex && styles.activeDot,
+          ]}
+        />
+      ))}
+    </View>
+  );
 
   const renderCategoryTabs = () => (
     <View style={styles.categoryTabs}>
@@ -68,90 +123,68 @@ const ProductsScreen = ({ navigation }) => {
   const renderProductItem = ({ item }) => (
     <View style={styles.productCard}>
       <Image source={{ uri: item.image }} style={styles.productImage} />
+      
       <View style={styles.productInfo}>
-        <Text style={styles.productName}>{item.name}</Text>
-        <Text style={styles.productDescription}>{item.description}</Text>
-
+        <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+        <Text style={styles.productPrice}>₹{item.price}</Text>
+        
         {item.weight && (
-          <Text style={styles.productDetail}>Weight: {item.weight}</Text>
-        )}
-
-        {item.length && (
-          <Text style={styles.productDetail}>Length: {item.length}</Text>
-        )}
-
-        {item.features && (
-          <View style={styles.featuresContainer}>
-            {item.features.map((feature, index) => (
-              <Text key={index} style={styles.featureText}>• {feature}</Text>
-            ))}
+          <View style={styles.weightInfo}>
+            <Icon name="scale" size={14} color={COLORS.primary} />
+            <Text style={styles.weightText}>{item.weight}</Text>
           </View>
         )}
 
-        <View style={[styles.productFooter,
-        {
-          flexDirection: item.category === 'Accessories' ? "row" : "column",
-          justifyContent: item.category !== 'Accessories' ? "center" : "space-between"
-        }]}>
-          <Text style={styles.productPrice}>₹{item.price}</Text>
-          <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={styles.addToCartButton}
+          onPress={() => handleAddToCart(item)}
+          disabled={!item.inStock}>
+          <View style={styles.buttonContent}>
+            <Icon name="add-shopping-cart" size={14} color={COLORS.white} />
+            <Text style={styles.addToCartText}>
+              {item.inStock ? 'Add to Cart' : 'Out of Stock'}
+            </Text>
+          </View>
+        </TouchableOpacity>
+        
+        {item.category !== 'Accessories' && (
+          <View style={styles.quickOptions}>
             <TouchableOpacity
-              style={[
-                styles.actionButton,
-                !item.inStock && styles.actionButtonDisabled,
-              ]}
-              onPress={() => handleAddToCart(item)}
-              disabled={!item.inStock}>
-              <Text style={styles.actionButtonText}>
-                {item.inStock ? 'Add to Cart' : 'Out of Stock'}
-              </Text>
-            </TouchableOpacity>
-            {item.category !== 'Accessories' && (<TouchableOpacity
-              style={[
-                styles.actionButton,
-                !item.inStock && styles.actionButtonDisabled,
-              ]}
+              style={styles.quickOption}
               onPress={() => handleRefillCylinder(item)}
               disabled={!item.inStock}>
-              <Text style={styles.actionButtonText}>
-                {item.inStock ? 'Refill' : 'Out of Stock'}
-              </Text>
+              <Text style={styles.quickOptionText}>Refill</Text>
             </TouchableOpacity>
-            )}
-
-            {item.category !== 'Accessories' && (<TouchableOpacity
-              style={[
-                styles.actionButton,
-                !item.inStock && styles.actionButtonDisabled,
-              ]}
+            
+            <TouchableOpacity
+              style={styles.quickOption}
               onPress={() => handleNewConnection(item)}
               disabled={!item.inStock}>
-              <Text style={styles.actionButtonText}>
-                {item.inStock ? 'New Connection' : 'Out of Stock'}
-              </Text>
-            </TouchableOpacity>)}
-            {item.category !== 'Accessories' && (<TouchableOpacity
-              style={[
-                styles.actionButton,
-                !item.inStock && styles.actionButtonDisabled,
-              ]}
+              <Text style={styles.quickOptionText}>New</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.quickOption}
               onPress={() => handleSpareCylinder(item)}
               disabled={!item.inStock}>
-              <Text style={styles.actionButtonText}>
-                {item.inStock ? 'Spare Cylinder' : 'Out of Stock'}
-              </Text>
-            </TouchableOpacity>)}
+              <Text style={styles.quickOptionText}>Spare</Text>
+            </TouchableOpacity>
           </View>
-        </View>
+        )}
       </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {/* <MaterialCommunityIcons name="gas-cylinder" size={28} color={"red"} style={{ marginRight: 8 }} /> */}
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => setMenuVisible(true)}>
+            <Icon name="menu" size={24} color={COLORS.gradientStart} />
+          </TouchableOpacity>
           <Text style={styles.title}>{STRINGS.gasBooking}</Text>
         </View>
 
@@ -159,16 +192,12 @@ const ProductsScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.addressButton}
             onPress={() => navigation.navigate('AddAddress')}>
-            {/* <Text style={styles.addressButtonText}>Add Address</Text> */}
             <Icon name="location-on" size={24} color="#fff" />
-
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.cartButton}
             onPress={() => navigation.navigate('Cart')}>
-            {/* <Text style={styles.cartButtonText}>{STRINGS.cart}</Text> */}
             <Icon name="shopping-cart" size={24} color="#fff" />
-
             {totalItems > 0 && (
               <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>{totalItems}</Text>
@@ -178,15 +207,63 @@ const ProductsScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* {renderCategoryTabs()} */}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Carousel Banner */}
+        <View style={styles.carouselContainer}>
+          <FlatList
+            ref={carouselRef}
+            data={carouselData}
+            renderItem={renderCarouselItem}
+            keyExtractor={(item) => item.id}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(event) => {
+              const index = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
+              setCurrentCarouselIndex(index);
+            }}
+            style={styles.carousel}
+          />
+          {renderCarouselDots()}
+        </View>
 
-      {/* Products */}
-      <FlatList
-        data={filteredProducts}
-        renderItem={renderProductItem}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.productsContent}
+        {/* Products Grid */}
+        <View style={styles.productsSection}>
+          <Text style={styles.sectionTitle}>Available Products</Text>
+          <FlatList
+            data={filteredProducts}
+            renderItem={renderProductItem}
+            keyExtractor={(item) => item.id}
+            numColumns={2}
+            columnWrapperStyle={styles.productRow}
+            scrollEnabled={false}
+            contentContainerStyle={styles.productsContent}
+          />
+        </View>
+      </ScrollView>
+
+      {/* Floating Cart Summary */}
+      {totalItems > 0 && (
+        <View style={styles.floatingCart}>
+          <View style={styles.cartSummary}>
+            <View style={styles.cartInfo}>
+              <Text style={styles.cartItemsText}>{totalItems} items</Text>
+              <Text style={styles.cartTotalText}>₹{totalAmount}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.checkoutButton}
+              onPress={() => navigation.navigate('Checkout')}>
+              <Text style={styles.checkoutButtonText}>Checkout</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Menu Drawer */}
+      <MenuDrawer
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        navigation={navigation}
       />
     </View>
   );
@@ -211,6 +288,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+  },
+  menuButton: {
+    // padding: 8,
+    marginRight: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   headerButtons: {
     flexDirection: 'row',
@@ -275,45 +358,207 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  productsContent: {
+  content: {
+    flex: 1,
+  },
+  carouselContainer: {
+    height: 200,
+    marginBottom: 20,
+  },
+  carousel: {
+    flex: 1,
+  },
+  carouselItem: {
+    width: screenWidth,
+    height: 200,
+    position: 'relative',
+  },
+  carouselImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  carouselOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     padding: 20,
   },
-  productCard: {
-    backgroundColor: COLORS.cardBackground,
-    borderRadius: 16,
-    marginBottom: 20,
+  carouselTitle: {
+    color: COLORS.white,
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 5,
+  },
+  carouselSubtitle: {
+    color: COLORS.white,
+    fontSize: 14,
+    opacity: 0.9,
+  },
+  carouselDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 10,
+    left: 0,
+    right: 0,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.white,
+    opacity: 0.5,
+    marginHorizontal: 4,
+  },
+  activeDot: {
+    opacity: 1,
+    backgroundColor: COLORS.primary,
+  },
+  productsSection: {
+    paddingHorizontal: 15,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 15,
+  },
+  productsContent: {
+    paddingBottom: 100, 
+  },
+  floatingCart: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.surface,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  cartSummary: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  cartInfo: {
+    flex: 1,
+  },
+  cartItemsText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginBottom: 2,
+  },
+  cartTotalText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  checkoutButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 25,
+    paddingVertical: 12,
+    borderRadius: 10,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  checkoutButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  productRow: {
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  productCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 12,
+    width: (screenWidth - 45) / 2,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   productImage: {
     width: '100%',
-    height: 220,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    backgroundColor: COLORS.lightGray,
+    height: 120,
+    borderRadius: 8,
+    marginBottom: 10,
   },
   productInfo: {
-    padding: 20,
+    flex: 1,
   },
   productName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: 8,
-    letterSpacing: -0.3,
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: COLORS.textPrimary,
+    marginBottom: 5,
+    lineHeight: 18,
+  },
+  productPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 5,
   },
   productDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.textSecondary,
     marginBottom: 8,
+    lineHeight: 18,
+  },
+  weightInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  weightText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginLeft: 4,
+  },
+  productMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaText: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  categoryTag: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  categoryTagText: {
+    fontSize: 11,
+    color: COLORS.white,
+    fontWeight: 'bold',
   },
   productDetail: {
     fontSize: 14,
@@ -322,50 +567,77 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   featuresContainer: {
-    marginVertical: 8,
+    marginBottom: 16,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    gap: 6,
   },
   featureText: {
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textSecondary,
-    marginBottom: 2,
+    fontWeight: '500',
   },
   productFooter: {
     flexDirection: 'column',
     marginTop: 10,
   },
-  actionButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 10,
-  },
-  actionButton: {
+  addToCartButton: {
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 8,
-    minWidth: 90,
+    marginVertical: 8,
     alignItems: 'center',
-    shadowColor: COLORS.shadow,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: COLORS.white,
   },
-  actionButtonDisabled: {
-    backgroundColor: COLORS.gray,
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  actionButtonText: {
+  addToCartText: {
     color: COLORS.white,
-    fontWeight: '600',
-    fontSize: 13,
-    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginLeft: 6,
+  },
+  quickOptions: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  quickOption: {
+    backgroundColor: COLORS.secondary,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    flex: 1,
+    alignItems: 'center',
+  },
+  quickOptionText: {
+    color: COLORS.white,
+    fontWeight: 'bold',
+    fontSize: 10,
+  },
+  buttonDisabled: {
+    backgroundColor: COLORS.gray,
+    opacity: 0.6,
   },
   productPrice: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '700',
     color: COLORS.primary,
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
   },
   addButton: {
     backgroundColor: COLORS.primary,

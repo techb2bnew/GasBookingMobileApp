@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { Text, View, StyleSheet, SafeAreaView } from 'react-native';
 import { store, persistor } from './src/redux/store';
 import { AppNavigator } from './src/navigation';
 import { COLORS } from './src/constants';
+import { requestLocationPermission } from './src/utils/locationPermissions';
 
 const LoadingScreen = () => (
   <View style={styles.loadingContainer}>
@@ -15,6 +16,11 @@ const LoadingScreen = () => (
 );
 
 const App = () => {
+  useEffect(() => {
+    // Request location permission when app starts
+    requestLocationPermission();
+  }, []);
+
   return (
     <Provider store={store}>
       <PersistGate loading={<LoadingScreen />} persistor={persistor}>

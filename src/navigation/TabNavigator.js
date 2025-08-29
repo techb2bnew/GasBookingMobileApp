@@ -6,8 +6,9 @@ import { COLORS } from '../constants';
 // Screens
 import ProductsScreen from '../screens/ProductsScreen';
 import OrdersScreen from '../screens/OrdersScreen';
-import ProfileScreen from '../screens/ProfileScreen';
 import SupportScreen from '../screens/SupportScreen';
+import TrackingScreen from '../screens/TrackingScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -47,6 +48,16 @@ const TabNavigator = () => {
           tabBarLabel: 'Orders',
           tabBarIcon: ({ color, size }) => (
             <Icon name="list-alt" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Tracking"
+        component={TrackingScreen}
+        options={{
+          tabBarLabel: 'Tracking',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="local-shipping" color={color} size={size} />
           ),
         }}
       />

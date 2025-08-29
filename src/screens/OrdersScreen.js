@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { COLORS, STRINGS } from '../constants';
-import { reorder, setCurrentOrder } from '../redux/slices/orderSlice';
+import { reorder, setCurrentOrder, cancelOrder, returnOrder } from '../redux/slices/orderSlice';
 import ReasonModal from '../components/ReasonModal';
 
 const OrdersScreen = ({ navigation }) => {
@@ -45,10 +45,10 @@ const OrdersScreen = ({ navigation }) => {
     if (!currentAction) return;
 
     if (currentAction.type === 'return') {
-      // Call return API or dispatch action
+      dispatch(returnOrder({ orderId: currentAction.orderId, reason }));
       Alert.alert('Order Returned', `Order ${currentAction.orderId} returned for reason: ${reason}`);
     } else if (currentAction.type === 'cancel') {
-      // Call cancel API or dispatch action
+      dispatch(cancelOrder({ orderId: currentAction.orderId, reason }));
       Alert.alert('Order Cancelled', `Order ${currentAction.orderId} cancelled for reason: ${reason}`);
     }
 
@@ -74,6 +74,10 @@ const OrdersScreen = ({ navigation }) => {
         return styles.statusOutForDelivery;
       case 'Delivered':
         return styles.statusDelivered;
+      case 'Cancelled':
+        return styles.statusCancelled;
+      case 'Returned':
+        return styles.statusReturned;
       default:
         return {};
     }
@@ -121,29 +125,33 @@ const OrdersScreen = ({ navigation }) => {
       <Text style={styles.orderItemsCount}>Items: {item.items.length}</Text>
 
       <View style={styles.orderActions}>
-        <TouchableOpacity
-          style={styles.trackButton}
-          onPress={() => handleTrackOrder(item)}>
-          <Text style={styles.trackButtonText}>{STRINGS.trackOrder}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.reorderButton}
-          onPress={() => handleReorder(item.id)}>
-          <Text style={styles.reorderButtonText}>{STRINGS.reorder}</Text>
-        </TouchableOpacity>
-        {item.status === 'Delivered' ? (
+        <View style={styles.buttonRow}>
+          {item.status !== 'Cancelled' && item.status !== 'Returned' && (
+            <TouchableOpacity
+              style={styles.trackButton}
+              onPress={() => handleTrackOrder(item)}>
+              <Text style={styles.trackButtonText}>{STRINGS.trackOrder}</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
-            style={styles.returnButton}
-            onPress={() => handleAction('return', item.id)}>
-            <Text style={styles.returnButtonText}>Return Order</Text>
+            style={styles.reorderButton}
+            onPress={() => handleReorder(item.id)}>
+            <Text style={styles.reorderButtonText}>{STRINGS.reorder}</Text>
           </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={[styles.cancelButton, { marginLeft: 10 }]}
-            onPress={() => handleAction('cancel', item.id)}>
-            <Text style={styles.cancelButtonText}>Cancel Order</Text>
-          </TouchableOpacity>
-        )}
+          {item.status === 'Delivered' ? (
+            <TouchableOpacity
+              style={styles.returnButton}
+              onPress={() => handleAction('return', item.id)}>
+              <Text style={styles.returnButtonText}>Return</Text>
+            </TouchableOpacity>
+          ) : item.status === 'Pending' || item.status === 'Accepted' ? (
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => handleAction('cancel', item.id)}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
 
     </View>
@@ -155,7 +163,7 @@ const OrdersScreen = ({ navigation }) => {
       <Text style={styles.emptySubtitle}>Place your first order to see it here.</Text>
       <TouchableOpacity
         style={styles.shopButton}
-        onPress={() => navigation.navigate('Main')}>
+        onPress={() => navigation.navigate('Main',{screen:"Products"})}>
         <Text style={styles.shopButtonText}>Start Shopping</Text>
       </TouchableOpacity>
     </View>
@@ -269,6 +277,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.success,
     color: COLORS.white,
   },
+  statusCancelled: {
+    backgroundColor: COLORS.error,
+    color: COLORS.white,
+  },
+  statusReturned: {
+    backgroundColor: COLORS.warning,
+    color: COLORS.white,
+  },
   orderDate: {
     fontSize: 14,
     color: COLORS.textSecondary,
@@ -286,31 +302,39 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   orderActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
     marginTop: 10,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    gap: 8,
   },
   trackButton: {
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 15,
+    paddingHorizontal: 8,
     paddingVertical: 8,
     borderRadius: 8,
-    marginLeft: 10,
+    flex: 1,
+    alignItems: 'center',
   },
   trackButtonText: {
     color: COLORS.white,
     fontWeight: '600',
+    fontSize: 12,
   },
   reorderButton: {
     backgroundColor: COLORS.secondary,
-    paddingHorizontal: 15,
+    paddingHorizontal: 8,
     paddingVertical: 8,
     borderRadius: 8,
-    marginLeft: 10,
+    flex: 1,
+    alignItems: 'center',
   },
   reorderButtonText: {
     color: COLORS.white,
     fontWeight: '600',
+    fontSize: 12,
   },
   emptyContainer: {
     flex: 1,
@@ -343,14 +367,16 @@ const styles = StyleSheet.create({
   },
   returnButton: {
     backgroundColor: COLORS.error,
-    paddingHorizontal: 15,
+    paddingHorizontal: 8,
     paddingVertical: 8,
     borderRadius: 8,
-    marginLeft: 10,
+    flex: 1,
+    alignItems: 'center',
   },
   returnButtonText: {
     color: COLORS.white,
     fontWeight: '600',
+    fontSize: 12,
   },
   modalOverlay: {
     flex: 1,
@@ -386,14 +412,16 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     backgroundColor: COLORS.gray,
-    paddingHorizontal: 15,
+    paddingHorizontal: 8,
     paddingVertical: 8,
     borderRadius: 8,
-    marginRight: 10,
+    flex: 1,
+    alignItems: 'center',
   },
   cancelButtonText: {
     color: COLORS.white,
     fontWeight: '600',
+    fontSize: 12,
   },
   submitButton: {
     backgroundColor: COLORS.primary,

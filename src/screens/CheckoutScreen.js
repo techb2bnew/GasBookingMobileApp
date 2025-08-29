@@ -37,7 +37,6 @@ const CheckoutScreen = ({ navigation }) => {
 
   const deliveryOptions = [
     { id: 'Home Delivery', label: STRINGS.homeDelivery, price: 0 },
-    { id: 'Pickup', label: STRINGS.pickup, price: 0 },
   ];
 
   const paymentOptions = [
@@ -45,17 +44,15 @@ const CheckoutScreen = ({ navigation }) => {
   ];
 
   const handlePlaceOrder = () => {
-    if (deliveryType === 'Home Delivery' && !selectedAddress) {
+    if (!selectedAddress) {
       Alert.alert('Error', 'Please add and select a delivery address first');
       return;
     }
 
-    if (deliveryType === 'Home Delivery' && selectedAddress) {
-      // Check if address has all required fields
-      if (!selectedAddress.address || !selectedAddress.city || !selectedAddress.pincode) {
-        Alert.alert('Error', 'Please complete your address details');
-        return;
-      }
+    // Check if address has all required fields
+    if (!selectedAddress.address || !selectedAddress.city || !selectedAddress.pincode) {
+      Alert.alert('Error', 'Please complete your address details');
+      return;
     }
 
     setLoading(true);
@@ -66,9 +63,9 @@ const CheckoutScreen = ({ navigation }) => {
         id: Date.now().toString(),
         items: items,
         totalAmount: totalAmount,
-        deliveryType: deliveryType,
+        deliveryType: 'Home Delivery',
         paymentMethod: paymentMethod,
-        address: deliveryType === 'Home Delivery' ? selectedAddress : null,
+        address: selectedAddress,
         status: 'Pending',
         orderDate: new Date().toISOString(),
         estimatedDelivery: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now

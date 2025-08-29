@@ -96,10 +96,12 @@ const LoginScreen = ({ navigation }) => {
 
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+    <View style={styles.container}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
         {otpSent && (
           <TouchableOpacity
             style={styles.backButton}
@@ -182,12 +184,15 @@ const LoginScreen = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
-      {/* Contact Support Button */}
-      <TouchableOpacity
-        style={styles.contactButton}
-        onPress={() => setModalVisible(true)}>
-        <Text style={styles.contactButtonText}>Contact Support</Text>
-      </TouchableOpacity>
+      
+      {/* Contact Support Button - Fixed position behind keyboard */}
+      <View style={styles.supportButtonContainer}>
+        <TouchableOpacity
+          style={styles.contactButton}
+          onPress={() => setModalVisible(true)}>
+          <Text style={styles.contactButtonText}>Contact Support</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Modal for Support */}
       <Modal
@@ -215,7 +220,7 @@ const LoginScreen = ({ navigation }) => {
           </View>
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -224,11 +229,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  scrollView: {
+    flex: 1,
+  },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
     paddingVertical: 40,
+    paddingBottom: 120, // Extra padding for support button
   },
   content: {
     flex: 1,
@@ -334,6 +343,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: COLORS.primary,
+  },
+  supportButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.background,
+    paddingBottom: 20,
+    zIndex: 1000,
   },
   contactButton: {
     // backgroundColor: COLORS.primary,
