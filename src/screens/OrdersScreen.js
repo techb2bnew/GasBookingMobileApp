@@ -18,8 +18,10 @@ const OrdersScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { orders } = useSelector(state => state.orders);
   const [modalVisible, setModalVisible] = useState(false);
+  const [reorderModalVisible, setReorderModalVisible] = useState(false);
   const [currentAction, setCurrentAction] = useState(null);
   const [reasonsList, setReasonsList] = useState([]);
+  const [currentReorderId, setCurrentReorderId] = useState(null);
 
   const cancelReasons = [
     'Change of mind',
@@ -91,20 +93,22 @@ const OrdersScreen = ({ navigation }) => {
   };
 
   const handleReorder = (orderId) => {
-    Alert.alert(
-      'Reorder',
-      'Are you sure you want to reorder this item?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reorder',
-          onPress: () => {
-            dispatch(reorder(orderId));
-            Alert.alert('Success', 'Your past order has been re-added as a new pending order.');
-          },
-        },
-      ]
-    );
+    setCurrentReorderId(orderId);
+    setReorderModalVisible(true);
+  };
+
+  const handleReorderConfirm = () => {
+    if (currentReorderId) {
+      dispatch(reorder(currentReorderId));
+      Alert.alert('Success', 'Your past order has been re-added as a new pending order.');
+      setReorderModalVisible(false);
+      setCurrentReorderId(null);
+    }
+  };
+
+  const handleReorderCancel = () => {
+    setReorderModalVisible(false);
+    setCurrentReorderId(null);
   };
 
   const handleAction = (type, orderId) => {
@@ -196,6 +200,35 @@ const OrdersScreen = ({ navigation }) => {
         onClose={() => setModalVisible(false)}
         onSubmit={handleReasonSubmit}
       />
+
+      <Modal
+        visible={reorderModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleReorderCancel}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Confirm Reorder</Text>
+            <Text style={styles.reorderModalText}>
+              Are you sure you want to reorder the item from your past order?
+              This will add it as a new pending order.
+            </Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.submitButton, { backgroundColor: COLORS.gray, marginRight: 10 }]}
+                onPress={handleReorderCancel}>
+                <Text style={styles.submitButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={handleReorderConfirm}>
+                <Text style={styles.submitButtonText}>Reorder</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -211,7 +244,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 20,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.primary,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
@@ -223,7 +256,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 23,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.white,
     letterSpacing: -0.5,
   },
   ordersList: {
@@ -402,6 +435,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: COLORS.text,
   },
+  reorderModalText: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 20,
+  },
   reasonInput: {
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -413,7 +453,8 @@ const styles = StyleSheet.create({
   },
   modalActions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cancelButton: {
     backgroundColor: COLORS.gray,

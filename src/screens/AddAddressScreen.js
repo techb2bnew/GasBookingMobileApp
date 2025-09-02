@@ -288,7 +288,7 @@ const AddAddressScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={28} color={COLORS.primary} />
+          <Ionicons name="arrow-back" size={28} color={COLORS.white} />
         </TouchableOpacity>
         <Text style={styles.title}>Manage Addresses</Text>
         <View style={styles.placeholder} />
@@ -350,13 +350,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.primary,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     elevation: 5,
   },
   backButton: { paddingVertical: 5 },
-  title: { fontSize: 20, fontWeight: '600', color: COLORS.text },
+  title: { fontSize: 20, fontWeight: '600', color: COLORS.white },
   placeholder: { width: 40 },
   content: { flex: 1 },
   emptyContainer: { alignItems: 'center', paddingVertical: 40 },

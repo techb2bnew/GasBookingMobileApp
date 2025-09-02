@@ -74,7 +74,7 @@ const OrderTrackingScreen = ({ route, navigation }) => {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={28} color={COLORS.primary} />
+          <Ionicons name="arrow-back" size={28} color={COLORS.white} />
           </TouchableOpacity>
         <Text style={styles.title}>{STRINGS.trackOrder}</Text>
         <View style={styles.placeholder} />
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.primary,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
@@ -186,14 +186,14 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   backButtonText: {
-    color: COLORS.primary,
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: '500',
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: COLORS.text,
+    color: COLORS.white,
   },
   placeholder: {
     width: 60,

@@ -154,7 +154,7 @@ const CheckoutScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={28} color={COLORS.primary} />
+          <Ionicons name="arrow-back" size={28} color={COLORS.white} />
         </TouchableOpacity>
         <Text style={styles.title}>{STRINGS.checkout}</Text>
         <View style={styles.placeholder} />
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.primary,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
@@ -261,14 +261,14 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   backButtonText: {
-    color: COLORS.primary,
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: '500',
   },
   title: {
     fontSize: 24,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.white,
     letterSpacing: -0.5,
   },
   placeholder: {

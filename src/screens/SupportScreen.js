@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 20,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.primary,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 23,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.white,
     letterSpacing: -0.5,
   },
   section: {

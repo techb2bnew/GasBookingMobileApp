@@ -19,15 +19,21 @@ const CartScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { items, totalAmount, totalItems } = useSelector(state => state.cart);
 
-  const handleUpdateQuantity = (productId, newQuantity) => {
+  const handleUpdateQuantity = (item, newQuantity) => {
     if (newQuantity <= 0) {
-      handleRemoveItem(productId);
+      handleRemoveItem(item);
     } else {
-      dispatch(updateQuantity({ productId, quantity: newQuantity }));
+      dispatch(updateQuantity({
+        productId: item.id,
+        quantity: newQuantity,
+        weight: item.weight,
+        category: item.category,
+        type: item.type
+      }));
     }
   };
 
-  const handleRemoveItem = (productId) => {
+  const handleRemoveItem = (item) => {
     Alert.alert(
       'Remove Item',
       'Are you sure you want to remove this item from cart?',
@@ -36,7 +42,12 @@ const CartScreen = ({ navigation }) => {
         {
           text: 'Remove',
           style: 'destructive',
-          onPress: () => dispatch(removeFromCart(productId)),
+          onPress: () => dispatch(removeFromCart({
+            productId: item.id,
+            weight: item.weight,
+            category: item.category,
+            type: item.type
+          })),
         },
       ]
     );
@@ -55,12 +66,24 @@ const CartScreen = ({ navigation }) => {
       <Image source={{ uri: item.image }} style={styles.itemImage} />
       <View style={styles.itemInfo}>
         <Text style={styles.itemName}>{item.name}</Text>
+        
+        {/* Display weight and category if available */}
+        {item.weight && (
+          <Text style={styles.itemDetails}>Weight: {item.weight}</Text>
+        )}
+        {item.category && (
+          <Text style={styles.itemDetails}>Category: {item.category}</Text>
+        )}
+        {item.type && (
+          <Text style={styles.itemDetails}>Type: {item.type.replace('_', ' ')}</Text>
+        )}
+        
         <Text style={styles.itemPrice}>₹{item.price}</Text>
 
         <View style={styles.quantityContainer}>
           <TouchableOpacity
             style={styles.quantityButton}
-            onPress={() => handleUpdateQuantity(item.id, item.quantity - 1)}>
+            onPress={() => handleUpdateQuantity(item, item.quantity - 1)}>
             <Text style={styles.quantityButtonText}>-</Text>
           </TouchableOpacity>
 
@@ -68,7 +91,7 @@ const CartScreen = ({ navigation }) => {
 
           <TouchableOpacity
             style={styles.quantityButton}
-            onPress={() => handleUpdateQuantity(item.id, item.quantity + 1)}>
+            onPress={() => handleUpdateQuantity(item, item.quantity + 1)}>
             <Text style={styles.quantityButtonText}>+</Text>
           </TouchableOpacity>
         </View>
@@ -80,7 +103,7 @@ const CartScreen = ({ navigation }) => {
 
       <TouchableOpacity
         style={styles.removeButton}
-        onPress={() => handleRemoveItem(item.id)}>
+        onPress={() => handleRemoveItem(item)}>
         {/* <Text style={styles.removeButtonText}>✕</Text> */}
         <AntDesign name="delete" size={28} color={COLORS.error} />
       </TouchableOpacity>
@@ -107,7 +130,7 @@ const CartScreen = ({ navigation }) => {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={28} color={COLORS.primary} />
+          <Ionicons name="arrow-back" size={28} color={COLORS.white} />
         </TouchableOpacity>
         <Text style={styles.title}>{STRINGS.cart}</Text>
         <View style={styles.placeholder} />
@@ -154,7 +177,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.primary,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
@@ -169,7 +192,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.white,
     letterSpacing: -0.5,
   },
   placeholder: {
@@ -215,6 +238,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textSecondary,
     marginBottom: 10,
+  },
+  itemDetails: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginBottom: 5,
   },
   quantityContainer: {
     flexDirection: 'row',

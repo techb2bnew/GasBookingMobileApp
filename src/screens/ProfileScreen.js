@@ -28,6 +28,7 @@ const ProfileScreen = ({ navigation }) => {
   const [editingAddress, setEditingAddress] = useState(null);
   const [profileForm, setProfileForm] = useState(profile);
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+  const [isDeleteAccountModalVisible, setIsDeleteAccountModalVisible] = useState(false);
   const [addressForm, setAddressForm] = useState({
     title: '',
     address: '',
@@ -67,7 +68,7 @@ const ProfileScreen = ({ navigation }) => {
     });
     setEditingAddress(null);
     setIsAddressModalVisible(false);
-    Alert.alert('Success', editingAddress ? 'Address updated successfully' : 'Address added successfully');
+    // Alert.alert('Success', editingAddress ? 'Address updated successfully' : 'Address added successfully');
   };
 
   const handleEditAddress = (address) => {
@@ -108,6 +109,19 @@ const ProfileScreen = ({ navigation }) => {
   const handleLogout = () => {
     setIsLogoutModalVisible(true);
   };
+
+  const handleDeleteAccount = () => {
+    setIsDeleteAccountModalVisible(true);
+  };
+
+  const confirmDeleteAccount = () => {
+    // Clear all user data
+    dispatch(logout());
+    // You can add additional cleanup here like clearing addresses, orders, etc.
+    setIsDeleteAccountModalVisible(false);
+    // Alert.alert('Account Deleted', 'Your account has been successfully deleted.');
+  };
+
   const renderAddressItem = (address) => (
     <View key={address.id} style={styles.addressItem}>
       <View style={styles.addressHeader}>
@@ -212,13 +226,20 @@ const ProfileScreen = ({ navigation }) => {
           />
         </View>
 
-        {isEditingProfile && (
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => setIsEditingProfile(false)}>
-            <Text style={[styles.cancelButtonText,{color:COLORS.primary}]}>{STRINGS.cancel}</Text>
+        {/* Buttons Row */}
+        <View style={styles.buttonsRow}>
+          {isEditingProfile && (
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setIsEditingProfile(false)}>
+              <Text style={[styles.cancelButtonText, { color: COLORS.primary }]}>{STRINGS.cancel}</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity style={styles.deleteAccountButton} onPress={handleDeleteAccount}>
+            <Text style={styles.deleteAccountText}>Delete Account</Text>
           </TouchableOpacity>
-        )}
+        </View>
       </View>
 
       {/* Addresses Section */}
@@ -365,6 +386,36 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+
+      {/* Delete Account Modal */}
+      <Modal
+        visible={isDeleteAccountModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsDeleteAccountModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmModal}>
+            <Text style={styles.confirmTitle}>Delete Account</Text>
+            <Text style={styles.confirmMessage}>
+              Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.
+            </Text>
+
+            <View style={styles.confirmActions}>
+              <TouchableOpacity
+                style={[styles.confirmButton, styles.logoutcancelButton]}
+                onPress={() => setIsDeleteAccountModalVisible(false)}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.confirmButton, styles.logoutConfirmButton]}
+                onPress={confirmDeleteAccount}>
+                <Text style={styles.logoutConfirmText}>Delete Account</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -380,7 +431,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 20,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.primary,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
@@ -392,8 +443,28 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 23,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.white,
     letterSpacing: -0.5,
+  },
+  buttonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 15,
+  },
+  deleteAccountButton: {
+    backgroundColor: COLORS.error + '10',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.error + '30',
+  },
+  deleteAccountText: {
+    color: COLORS.error,
+    fontWeight: '500',
+    fontSize: 14,
   },
   logoutButton: {
     paddingHorizontal: 15,
@@ -473,8 +544,13 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   cancelButton: {
-    alignItems: 'center',
+    backgroundColor: COLORS.primary + '10',
     paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.primary + '30',
   },
   cancelButtonText: {
     color: COLORS.textSecondary,

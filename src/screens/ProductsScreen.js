@@ -20,7 +20,7 @@ const { width: screenWidth } = Dimensions.get('window');
 
 const ProductsScreen = ({ navigation }) => {
   const dispatch = useDispatch();
-  const { products, categories } = useSelector(state => state.products);
+  const { products } = useSelector(state => state.products);
   const { totalItems, totalAmount } = useSelector(state => state.cart);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
@@ -98,7 +98,7 @@ const ProductsScreen = ({ navigation }) => {
 
   const renderCategoryTabs = () => (
     <View style={styles.categoryTabs}>
-      {categories.map(cat => (
+      {['All', 'LPG', 'Accessories'].map(cat => (
         <TouchableOpacity
           key={cat}
           style={[
@@ -119,7 +119,9 @@ const ProductsScreen = ({ navigation }) => {
   );
 
   const renderProductItem = ({ item }) => (
-    <View style={styles.productCard}>
+    <TouchableOpacity
+      style={styles.productCard}
+      onPress={() => navigation.navigate('ProductDetails', { product: item })}>
       <Image source={{ uri: item.image }} style={styles.productImage} />
       
       <View style={styles.productInfo}>
@@ -170,7 +172,7 @@ const ProductsScreen = ({ navigation }) => {
           </View>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -233,9 +235,12 @@ const ProductsScreen = ({ navigation }) => {
           {renderCarouselDots()}
         </View>
 
+        {/* Category Filter Tabs */}
+          {renderCategoryTabs()}
+
+
         {/* Products Grid */}
         <View style={styles.productsSection}>
-          <Text style={styles.sectionTitle}>Available Products</Text>
           <FlatList
             data={filteredProducts}
             renderItem={renderProductItem}
@@ -394,7 +399,7 @@ const styles = StyleSheet.create({
   },
   carouselContainer: {
     height: 200,
-    marginBottom: 20,
+    marginBottom: 0,
   },
   carousel: {
     flex: 1,
@@ -451,12 +456,7 @@ const styles = StyleSheet.create({
   },
   productsSection: {
     paddingHorizontal: 15,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 15,
+    paddingTop: 10,
   },
   productsContent: {
     paddingBottom: 100, 
@@ -687,22 +687,54 @@ const styles = StyleSheet.create({
   categoryTabs: {
     flexDirection: 'row',
     paddingVertical: 10,
-    paddingHorizontal: 10,
-    backgroundColor: COLORS.primary,
-    // justifyContent: 'center',
+    backgroundColor: COLORS.white,
+    justifyContent: "space-evenly",
+    alignItems: 'center',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   categoryButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    marginHorizontal: 6,
-    borderRadius: 20,
-    backgroundColor: COLORS.cardBackground,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 25,
+    backgroundColor: COLORS.background,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+    minWidth: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 5,
   },
   categoryButtonActive: {
-    backgroundColor: COLORS.error,
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.4,
+    transform: [{ scale: 1.05 }],
   },
-  categoryText: { fontSize: 14, fontWeight: '600', color: COLORS.text },
-  categoryTextActive: { color: COLORS.white },
+  categoryText: { 
+    fontSize: 12, 
+    fontWeight: '600', 
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  categoryTextActive: { 
+    color: COLORS.white,
+    fontWeight: '700',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
 });
 
 export default ProductsScreen;

@@ -202,20 +202,27 @@ const LoginScreen = ({ navigation }) => {
         onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            {/* Close button with cross icon */}
+            <TouchableOpacity 
+              style={styles.modalCloseButton}
+              onPress={() => setModalVisible(false)}>
+              <Ionicons name="close" size={24} color={COLORS.text} />
+            </TouchableOpacity>
+
             <Text style={styles.modalTitle}>Contact Support</Text>
 
-            <TouchableOpacity onPress={() => Linking.openURL(`mailto:${STRINGS.email}?subject=Support%20Request&body=Hello%20Support%20Team,`)}>
-              <Text style={styles.contactText}>Email: {STRINGS.email}</Text>
+            <TouchableOpacity 
+              style={styles.contactItem}
+              onPress={() => Linking.openURL(`mailto:${STRINGS.email}?subject=Support%20Request&body=Hello%20Support%20Team,`)}>
+              <Ionicons name="mail-outline" size={20} color={COLORS.primary} style={styles.contactIcon} />
+              <Text style={styles.contactText}>{STRINGS.email}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => Linking.openURL(`tel:${STRINGS.phone}`)}>
-              <Text style={styles.contactText}>Phone: {STRINGS.phone}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}>
-              <Text style={styles.closeButtonText}>Close</Text>
+            <TouchableOpacity 
+              style={styles.contactItem}
+              onPress={() => Linking.openURL(`tel:${STRINGS.phone}`)}>
+              <Ionicons name="call-outline" size={20} color={COLORS.primary} style={styles.contactIcon} />
+              <Text style={styles.contactText}>{STRINGS.phone}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -373,26 +380,42 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     width: '80%',
     alignItems: 'center',
+    position: 'relative',
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 20,
     color: COLORS.primary,
+    marginTop: 10,
   },
   contactText: {
     fontSize: 16,
     color: COLORS.text,
+    flex: 1,
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    zIndex: 10,
+    padding: 8,
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 20,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 15,
-  },
-  closeButton: {
-    marginTop: 15,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: COLORS.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
     borderRadius: 12,
+    backgroundColor: COLORS.lightGray,
+    width: '100%',
   },
-  closeButtonText: { color: COLORS.white, fontSize: 16, fontWeight: '600' },
+  contactIcon: {
+    marginRight: 12,
+  },
 });
 
 export default LoginScreen;
