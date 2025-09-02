@@ -66,7 +66,7 @@ const LoginScreen = ({ navigation }) => {
       if (otpValue === '1234' || otpValue.length === 4) {
         const userData = {
           id: '1',
-          name: 'User',
+          name: `Customer_${phoneNumber.slice(-4)}`,
           phoneNumber: phoneNumber,
           email: '',
         };

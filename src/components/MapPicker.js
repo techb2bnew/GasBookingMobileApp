@@ -172,7 +172,7 @@ const MapPicker = ({ onLocationSelect, initialLocation = null }) => {
       <View style={styles.mapContainer}>
         <MapView
           ref={mapRef}
-          provider={PROVIDER_GOOGLE}
+          // provider={PROVIDER_GOOGLE}
           style={styles.map}
           initialRegion={{
             latitude: currentLocation.latitude,

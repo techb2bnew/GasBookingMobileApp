@@ -85,7 +85,9 @@ const OrdersScreen = ({ navigation }) => {
 
   const handleTrackOrder = (order) => {
     dispatch(setCurrentOrder(order));
-    navigation.navigate('OrderTracking', { orderId: order.id });
+    // navigation.navigate('OrderTracking', { orderId: order.id });
+    navigation.navigate("Main", { screen: "Tracking", orderId: order.id })
+
   };
 
   const handleReorder = (orderId) => {
@@ -163,7 +165,7 @@ const OrdersScreen = ({ navigation }) => {
       <Text style={styles.emptySubtitle}>Place your first order to see it here.</Text>
       <TouchableOpacity
         style={styles.shopButton}
-        onPress={() => navigation.navigate('Main',{screen:"Products"})}>
+        onPress={() => navigation.navigate('Main', { screen: "Products" })}>
         <Text style={styles.shopButtonText}>Start Shopping</Text>
       </TouchableOpacity>
     </View>
@@ -204,8 +206,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 20,
     backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,

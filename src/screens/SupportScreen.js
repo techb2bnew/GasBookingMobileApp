@@ -7,8 +7,10 @@ import {
   StyleSheet,
   TextInput,
   Alert,
+  Linking,
 } from 'react-native';
 import { COLORS, STRINGS } from '../constants';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const FAQ_DATA = [
   {
@@ -39,23 +41,23 @@ const FAQ_DATA = [
 
 const SupportScreen = () => {
   const [expandedFAQ, setExpandedFAQ] = useState(null);
-  const [complaintText, setComplaintText] = useState('');
   const [refundText, setRefundText] = useState('');
-  const [complaintError, setComplaintError] = useState('');
 
 
   const toggleFAQ = (index) => {
     setExpandedFAQ(expandedFAQ === index ? null : index);
   };
 
-  const handleSubmitComplaint = () => {
-    if (!complaintText.trim()) {
-      setComplaintError('Please enter your complaint details.');
-      return;
-    }
-    setComplaintError('');
-    setComplaintText('');
-    // Alert.alert('Success', 'Your complaint has been submitted. We will get back to you shortly.');
+  const handleEmailPress = () => {
+    Linking.openURL('mailto:support@gasbooking.com');
+  };
+
+  const handlePhonePress = () => {
+    Linking.openURL('tel:+919876543210');
+  };
+
+  const handleRaiseComplaint = () => {
+    Linking.openURL('mailto:support@gasbooking.com?subject=Complaint');
   };
 
   const handleSubmitRefund = () => {
@@ -73,22 +75,15 @@ const SupportScreen = () => {
         <Text style={styles.title}>{STRINGS.support}</Text>
       </View>
 
-      {/* Complaint Form */}
+      {/* Raise Complaint Button */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{STRINGS.raiseComplaint}</Text>
-        <TextInput
-          style={styles.textArea}
-          placeholder="Describe your complaint here..."
-          multiline
-          numberOfLines={4}
-          value={complaintText}
-          onChangeText={setComplaintText}
-        />
-        {complaintError ? (
-          <Text style={styles.errorText}>{complaintError}</Text>
-        ) : null}
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmitComplaint}>
-          <Text style={styles.submitButtonText}>{STRINGS.submit}</Text>
+        <Text style={styles.sectionDescription}>
+          Click below to send us an email with your complaint details.
+        </Text>
+        <TouchableOpacity style={styles.complaintButton} onPress={handleRaiseComplaint}>
+          <Icon name="email" size={20} color={COLORS.white} />
+          <Text style={styles.complaintButtonText}>Send Email Complaint</Text>
         </TouchableOpacity>
       </View>
 
@@ -134,8 +129,18 @@ const SupportScreen = () => {
         <Text style={styles.contactText}>
           For further assistance, please contact us at:
         </Text>
-        <Text style={styles.contactText}>Email: support@gasbooking.com</Text>
-        <Text style={styles.contactText}>Phone: +91 98765 43210</Text>
+        
+        <TouchableOpacity style={styles.contactItem} onPress={handleEmailPress}>
+          <Icon name="email" size={20} color={COLORS.primary} />
+          <Text style={styles.contactLink}>support@gasbooking.com</Text>
+          <Icon name="launch" size={16} color={COLORS.primary} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.contactItem} onPress={handlePhonePress}>
+          <Icon name="phone" size={20} color={COLORS.primary} />
+          <Text style={styles.contactLink}>+91 98765 43210</Text>
+          <Icon name="launch" size={16} color={COLORS.primary} />
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -147,8 +152,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 20,
     backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
@@ -185,6 +193,12 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     marginBottom: 15,
   },
+  sectionDescription: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginBottom: 20,
+    lineHeight: 20,
+  },
   textArea: {
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -211,6 +225,26 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 16,
     fontWeight: '600',
+  },
+  complaintButton: {
+    backgroundColor: COLORS.secondary,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  complaintButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 10,
   },
   faqItem: {
     marginBottom: 10,
@@ -245,7 +279,25 @@ const styles = StyleSheet.create({
   contactText: {
     fontSize: 14,
     color: COLORS.text,
-    marginBottom: 5,
+    marginBottom: 15,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  contactLink: {
+    fontSize: 16,
+    color: COLORS.primary,
+    fontWeight: '500',
+    flex: 1,
+    marginLeft: 12,
   },
   errorText: {
     color: 'red',

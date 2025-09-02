@@ -4,7 +4,7 @@ const initialState = {
   products: [
     {
       id: '1',
-      name: 'LPG Gas Cylinder - 14.2kg',
+      name: 'LPG Gas Cylinder - 14.3kg',
       category: 'LPG Cylinder',
       price: 850,
       image: 'https://images.unsplash.com/photo-1644217209694-5ca176114adb?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',

@@ -15,10 +15,8 @@ import { COLORS, STRINGS } from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { addToCart } from '../redux/slices/cartSlice';
 import MenuDrawer from '../components/MenuDrawer';
-import Geocoder from 'react-native-geocoding';
 
 const { width: screenWidth } = Dimensions.get('window');
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const ProductsScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -179,31 +177,39 @@ const ProductsScreen = ({ navigation }) => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={() => setMenuVisible(true)}>
-            <Icon name="menu" size={24} color={COLORS.gradientStart} />
-          </TouchableOpacity>
-          <Text style={styles.title}>{STRINGS.gasBooking}</Text>
-        </View>
-
-        <View style={styles.headerButtons}>
-          <TouchableOpacity
-            style={styles.addressButton}
-            onPress={() => navigation.navigate('AddAddress')}>
-            <Icon name="location-on" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.cartButton}
-            onPress={() => navigation.navigate('Cart')}>
-            <Icon name="shopping-cart" size={24} color="#fff" />
-            {totalItems > 0 && (
-              <View style={styles.cartBadge}>
-                <Text style={styles.cartBadgeText}>{totalItems}</Text>
+        <View style={styles.headerGradient}>
+          <View style={styles.headerContent}>
+            <View style={styles.headerLeft}>
+              <TouchableOpacity
+                style={styles.menuButton}
+                onPress={() => setMenuVisible(true)}>
+                <Icon name="menu" size={26} color={COLORS.white} />
+              </TouchableOpacity>
+              <View style={styles.titleContainer}>
+                <Text style={styles.title}>{STRINGS.gasBooking}</Text>
+                <Text style={styles.subtitle}>Fast & Safe Delivery</Text>
               </View>
-            )}
-          </TouchableOpacity>
+            </View>
+
+            <View style={styles.headerButtons}>
+              <TouchableOpacity
+                style={styles.addressButton}
+                onPress={() => navigation.navigate('AddAddress')}>
+                <Icon name="location-on" size={20} color={COLORS.primary} />
+                <Text style={styles.addressButtonText}>Address</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cartButton}
+                onPress={() => navigation.navigate('Cart')}>
+                <Icon name="shopping-cart" size={22} color={COLORS.white} />
+                {totalItems > 0 && (
+                  <View style={styles.cartBadge}>
+                    <Text style={styles.cartBadgeText}>{totalItems}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </View>
 
@@ -275,36 +281,69 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
+    backgroundColor: 'transparent',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  headerGradient: {
+    backgroundColor: COLORS.primary,
+    paddingTop: 10,
+    paddingBottom: 15,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: COLORS.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  menuButton: {
+    padding: 8,
+    marginRight: 15,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  menuButton: {
-    // padding: 8,
-    marginRight: 12,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  titleContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.white,
+    letterSpacing: -0.5,
+    marginBottom: 2,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
   },
   headerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
   addressButton: {
-    backgroundColor: COLORS.secondary,
-    padding: 10,
-    // paddingVertical: 10,
-    borderRadius: 25,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -312,22 +351,14 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   addressButtonText: {
-    color: COLORS.white,
+    color: COLORS.primary,
     fontWeight: '600',
-    fontSize: 13,
-  },
-  title: {
-    fontSize: 23,
-    fontWeight: '600',
-    color: COLORS.text,
-    letterSpacing: -0.5,
+    fontSize: 12,
+    marginLeft: 4,
   },
   cartButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.secondary,
     padding: 10,
-    // paddingVertical: 10,
     borderRadius: 25,
     position: 'relative',
     shadowColor: COLORS.shadow,
@@ -487,7 +518,7 @@ const styles = StyleSheet.create({
   productCard: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
-    padding: 12,
+    padding: 8,
     width: (screenWidth - 45) / 2,
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -505,7 +536,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   productName: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
     marginBottom: 5,
@@ -515,7 +546,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.primary,
-    marginBottom: 5,
+    marginBottom: 8,
   },
   productDescription: {
     fontSize: 13,
@@ -526,7 +557,7 @@ const styles = StyleSheet.create({
   weightInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   weightText: {
     fontSize: 12,
@@ -586,10 +617,10 @@ const styles = StyleSheet.create({
   },
   addToCartButton: {
     backgroundColor: COLORS.primary,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 8,
-    marginVertical: 8,
+    marginVertical: 5,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
@@ -615,10 +646,11 @@ const styles = StyleSheet.create({
   quickOptions: {
     flexDirection: 'row',
     gap: 4,
+    marginTop: 5,
   },
   quickOption: {
     backgroundColor: COLORS.secondary,
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: 8,
     borderRadius: 4,
     flex: 1,

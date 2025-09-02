@@ -128,7 +128,7 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.trackButton}
-            onPress={() => navigation.navigate('OrderTracking', { orderId: orderId })}>
+            onPress={() => navigation.navigate("Main", { screen: "Tracking", orderId: orderId })}>
             <Text style={styles.trackButtonText}>{STRINGS.trackOrder}</Text>
           </TouchableOpacity>
 

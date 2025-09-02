@@ -50,18 +50,35 @@ const MenuDrawer = ({ visible, onClose, navigation }) => {
     });
   };
 
+  const handleMenuCloseWithCallback = (callback) => {
+    Animated.timing(slideAnim, {
+      toValue: -width,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      onClose();
+      if (callback) {
+        setTimeout(callback, Platform.OS === 'ios' ? 100 : 50);
+      }
+    });
+  };
+
   const handleRateUs = () => {
     Linking.openURL('https://play.google.com/store/apps/details?id=com.gasbooking.app');
   };
 
   const handleMySafety = () => {
-    // Show safety modal
-    setSafetyModalVisible(true);
+    // Close menu first, then show safety modal
+    handleMenuCloseWithCallback(() => {
+      setSafetyModalVisible(true);
+    });
   };
 
   const handleKnowYourPrice = () => {
-    // Show price modal
-    setPriceModalVisible(true);
+    // Close menu first, then show price modal
+    handleMenuCloseWithCallback(() => {
+      setPriceModalVisible(true);
+    });
   };
 
   const handleProfileDetails = () => {
@@ -70,7 +87,10 @@ const MenuDrawer = ({ visible, onClose, navigation }) => {
   };
 
   const handleLogout = () => {
-    setLogoutModalVisible(true);
+    // Close menu first, then show logout modal
+    handleMenuCloseWithCallback(() => {
+      setLogoutModalVisible(true);
+    });
   };
 
   const confirmLogout = () => {

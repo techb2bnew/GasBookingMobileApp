@@ -42,65 +42,69 @@ const ReasonModal = ({ visible, onClose, onSubmit, title,reasonsList }) => {
         <Modal visible={visible} animationType="slide" transparent>
             <View style={styles.overlay}>
                 <View style={styles.modalBox}>
+                    <View style={styles.topBar}>
+                        <View style={styles.handle} />
+                    </View>
+                    
                     <Text style={styles.heading}>{title}</Text>
-
-
-                    <FlatList
-                        data={reasonsList}
-                        keyExtractor={(item, index) => index.toString()}
-                        renderItem={({ item }) => {
+                    
+                    <View style={styles.reasonsList}>
+                        {reasonsList.map((item, index) => {
                             const isSelected = selectedReason === item;
                             return (
                                 <TouchableOpacity
+                                    key={index}
                                     style={[
-                                        styles.reasonItem,
-                                        isSelected && { backgroundColor: COLORS.primary },
+                                        styles.reasonOption,
+                                        isSelected && styles.reasonOptionSelected,
                                     ]}
                                     onPress={() => {
                                         setSelectedReason(item);
                                         setError('');
                                     }}>
-                                    <Text
-                                        style={[
-                                            styles.reasonText,
-                                            isSelected && { color: COLORS.white, fontWeight: '600' },
-                                        ]}>
+                                    <Text style={[
+                                        styles.reasonText,
+                                        isSelected && styles.reasonTextSelected
+                                    ]}>
                                         {item}
                                     </Text>
                                     {isSelected && (
-                                        <Icon
-                                            name="check-circle"
-                                            size={20}
-                                            color={COLORS.white}
-                                            style={{ marginLeft: 8 }}
-                                        />
+                                        <Icon name="check-circle" size={20} color={COLORS.primary} />
                                     )}
                                 </TouchableOpacity>
                             );
-                        }}
-                    />
+                        })}
+                    </View>
 
                     {selectedReason === 'Other' && (
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter your reason"
-                            placeholderTextColor={COLORS.gray}
-                            value={customReason}
-                            onChangeText={text => {
-                                setCustomReason(text);
-                                setError('');
-                            }}
-                            multiline
-                        />
+                        <View style={styles.otherSection}>
+                            <Text style={styles.otherLabel}>Tell us more:</Text>
+                            <TextInput
+                                style={styles.otherInput}
+                                placeholder="Write your reason here..."
+                                placeholderTextColor={COLORS.textSecondary}
+                                value={customReason}
+                                onChangeText={text => {
+                                    setCustomReason(text);
+                                    setError('');
+                                }}
+                                multiline
+                                numberOfLines={2}
+                            />
+                        </View>
                     )}
+                    
                     {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-                    <View style={styles.footerBtns}>
-                        <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
+                    <View style={styles.buttonRow}>
+                        <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
                             <Text style={styles.cancelText}>Cancel</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
-                            <Text style={styles.submitText}>Submit</Text>
+                        <TouchableOpacity 
+                            style={[styles.confirmButton, !selectedReason && styles.confirmButtonDisabled]} 
+                            onPress={handleSubmit}
+                            disabled={!selectedReason}>
+                            <Text style={styles.confirmText}>Confirm</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -110,36 +114,127 @@ const ReasonModal = ({ visible, onClose, onSubmit, title,reasonsList }) => {
 };
 
 const styles = StyleSheet.create({
-    overlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
-    modalBox: { width: '90%', backgroundColor: COLORS.white, padding: 20, borderRadius: 10 },
-    heading: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-    errorText: { color: COLORS.error, fontSize: 14, marginBottom: 10 },
-    reasonItem: {
-        padding: 14,
-        borderWidth: 1,
-        borderColor: COLORS.gray,
-        borderRadius: 8,
-        marginVertical: 6,
+    overlay: { 
+        flex: 1, 
+        justifyContent: 'flex-end', 
+        backgroundColor: 'rgba(0,0,0,0.5)' 
+    },
+    modalBox: { 
+        backgroundColor: COLORS.white, 
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        paddingHorizontal: 20,
+        paddingTop: 10,
+        paddingBottom: 30,
+        shadowColor: COLORS.shadow,
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+        elevation: 8,
+    },
+    topBar: {
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    handle: {
+        width: 40,
+        height: 4,
+        backgroundColor: COLORS.border,
+        borderRadius: 2,
+    },
+    heading: { 
+        fontSize: 20, 
+        fontWeight: 'bold', 
+        color: COLORS.text,
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    reasonsList: {
+        marginBottom: 20,
+    },
+    reasonOption: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: COLORS.border,
     },
-    reasonText: { fontSize: 16, color: COLORS.black },
-    input: {
+    reasonOptionSelected: {
+        backgroundColor: COLORS.primary + '08',
+    },
+    reasonText: { 
+        fontSize: 16, 
+        color: COLORS.text,
+        fontWeight: '500',
+        flex: 1,
+    },
+    reasonTextSelected: {
+        color: COLORS.primary,
+        fontWeight: '600',
+    },
+    otherSection: {
+        marginTop: 10,
+        padding: 16,
+        backgroundColor: COLORS.surface,
+        borderRadius: 12,
+        marginBottom: 20,
+    },
+    otherLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: COLORS.text,
+        marginBottom: 8,
+    },
+    otherInput: {
         borderWidth: 1,
-        borderColor: COLORS.gray,
+        borderColor: COLORS.border,
         borderRadius: 8,
-        padding: 14,
-        marginTop: 12,
+        padding: 12,
         fontSize: 16,
         minHeight: 50,
         textAlignVertical: 'top',
+        backgroundColor: COLORS.white,
     },
-    footerBtns: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
-    cancelBtn: { paddingHorizontal: 20, paddingVertical: 12, backgroundColor: COLORS.error, borderRadius: 8 },
-    cancelText: { color: COLORS.white, fontSize: 16 },
-    submitBtn: { paddingHorizontal: 20, paddingVertical: 12, backgroundColor: COLORS.gradientEnd, borderRadius: 8 },
-    submitText: { color: COLORS.white, fontWeight: 'bold', fontSize: 16 },
+    errorText: { 
+        color: COLORS.error, 
+        fontSize: 14, 
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    buttonRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    cancelButton: {
+        flex: 1,
+        paddingVertical: 14,
+        backgroundColor: COLORS.gray,
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    cancelText: {
+        color: COLORS.white,
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    confirmButton: {
+        flex: 1,
+        paddingVertical: 14,
+        backgroundColor: COLORS.primary,
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    confirmButtonDisabled: {
+        backgroundColor: COLORS.gray,
+        opacity: 0.6,
+    },
+    confirmText: {
+        color: COLORS.white,
+        fontSize: 16,
+        fontWeight: '600',
+    },
 });
 
 export default ReasonModal;

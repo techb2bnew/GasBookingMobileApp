@@ -38,7 +38,7 @@ const getCoordinatesFromAddress = async (address) => {
   }
 };
 
-const TrackingScreen = ({ navigation }) => {
+const TrackingScreen = ({ navigation, route }) => {
   const dispatch = useDispatch();
   const { orders } = useSelector(state => state.orders);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -65,6 +65,19 @@ const TrackingScreen = ({ navigation }) => {
 
     fetchCurrentLocation();
   }, []);
+
+  // Handle navigation with orderId parameter - auto expand the specific order
+  useEffect(() => {
+    if (route.params?.orderId) {
+      const orderId = route.params.orderId;
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        setSelectedOrder(order);
+        // Clear the route params to prevent re-selection on re-render
+        navigation.setParams({ orderId: undefined });
+      }
+    }
+  }, [route.params?.orderId, orders, navigation]);
 
   // Load coordinates for selected order
   useEffect(() => {
@@ -395,7 +408,7 @@ const TrackingScreen = ({ navigation }) => {
             </View>
 
             <MapView
-              provider={PROVIDER_GOOGLE}
+              // provider={PROVIDER_GOOGLE}
               style={styles.map}
               initialRegion={{
                 latitude: 30.7046,
@@ -616,6 +629,12 @@ const styles = StyleSheet.create({
   selectedOrderCard: {
     borderColor: COLORS.primary,
     borderWidth: 2,
+    backgroundColor: COLORS.primary + '05',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   orderHeader: {
     flexDirection: 'row',
