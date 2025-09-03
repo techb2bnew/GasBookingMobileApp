@@ -10,7 +10,10 @@ import {
   Modal,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, STRINGS } from '../constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import {
   updateProfile,
   addAddress,
@@ -29,6 +32,8 @@ const ProfileScreen = ({ navigation }) => {
   const [profileForm, setProfileForm] = useState(profile);
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const [isDeleteAccountModalVisible, setIsDeleteAccountModalVisible] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [validationError, setValidationError] = useState('');
   const [addressForm, setAddressForm] = useState({
     title: '',
     address: '',
@@ -37,14 +42,152 @@ const ProfileScreen = ({ navigation }) => {
     landmark: '',
   });
 
-  const handleUpdateProfile = () => {
+  // Fetch user profile from API
+  const fetchUserProfile = async () => {
+    try {
+      setIsLoadingProfile(true);
+
+      // Get token from AsyncStorage
+      const token = await AsyncStorage.getItem('userToken');
+
+      if (!token) {
+        console.log('No token found, user not authenticated');
+        return;
+      }
+
+      // Make API call to get user profile
+      const response = await axios.get(
+        `${STRINGS.API_BASE_URL}/api/auth/profile`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      console.log('Profile API Response:', response.data);
+
+      if (response?.data && response?.data?.success) {
+        const userProfile = response?.data?.data?.user;
+
+        // Update Redux state with fresh profile data
+        dispatch(updateProfile({
+          id: userProfile?.id,
+          name: userProfile?.name || '',
+          email: userProfile?.email || '',
+          phone: userProfile.phone || '',
+          role: userProfile?.role || 'customer',
+          profileImage: userProfile?.profileImage || null,
+          address: userProfile?.address || null,
+          isProfileComplete: userProfile?.isProfileComplete || false,
+        }));
+
+        // Update local form state
+        setProfileForm({
+          id: userProfile.id,
+          name: userProfile.name || '',
+          email: userProfile.email || '',
+          phone: userProfile.phone || '',
+          role: userProfile.role || 'customer',
+          profileImage: userProfile.profileImage || null,
+          address: userProfile.address || null,
+          isProfileComplete: userProfile.isProfileComplete || false,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      if (error.response?.status === 401) {
+        // Token expired or invalid, logout user
+        console.error('Session Expired', 'Please login again');
+        dispatch(logout());
+        // Clear AsyncStorage
+        await AsyncStorage.removeItem('userToken');
+      } else {
+        console.error('Error', 'Failed to fetch profile. Please try again.');
+      }
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
+  // Fetch profile when component mounts
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUserProfile();
+    }, [])
+  );
+
+  // Update profileForm when profile changes
+  useFocusEffect(
+    React.useCallback(() => {
+      if (profile) {
+        setProfileForm(profile);
+      }
+    }, [profile])
+  );
+
+  const handleUpdateProfile = async () => {
     if (!profileForm.name.trim()) {
-      Alert.alert('Error', 'Name is required');
+      setValidationError('Name is required');
       return;
     }
-    dispatch(updateProfile(profileForm));
-    setIsEditingProfile(false);
-    Alert.alert('Success', 'Profile updated successfully');
+
+    setValidationError(''); // Clear any previous validation errors
+
+    try {
+      // Get token from AsyncStorage
+      const token = await AsyncStorage.getItem('userToken');
+
+      if (!token) {
+        console.log('Error', 'Authentication token not found');
+        return;
+      }
+
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('name', profileForm?.name?.trim());
+      formData.append('phone', profileForm?.phone || '');
+
+      // Make API call to update profile
+      const response = await axios.put(
+        `${STRINGS.API_BASE_URL}/api/auth/profile`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      console.log('Profile Update API Response:', response.data);
+
+      if (response.data && response.data.success) {
+        // Update local Redux state
+        dispatch(updateProfile(profileForm));
+        setIsEditingProfile(false);
+
+        // Refresh profile data from server
+        await fetchUserProfile();
+
+        console.log('Success', 'Profile updated successfully');
+
+      } else {
+        console.log('Error', response.data?.message || 'Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Profile Update Error:', error);
+
+      if (error.response?.status === 401) {
+        // Token expired or invalid, logout user
+        console.log('Session Expired', 'Please login again');
+        dispatch(logout());
+        await AsyncStorage.removeItem('userToken');
+      } else {
+        console.log('Error', error.response?.data?.message || 'Failed to update profile. Please try again.');
+      }
+    }
   };
 
   const handleAddAddress = () => {
@@ -178,53 +321,84 @@ const ProfileScreen = ({ navigation }) => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Profile Details</Text>
-          <TouchableOpacity
-            onPress={() => {
-              if (isEditingProfile) {
-                handleUpdateProfile();
-              } else {
-                setIsEditingProfile(true);
-                setProfileForm(profile);
-              }
-            }}>
-            <Text style={styles.editButton}>
-              {isEditingProfile ? STRINGS.save : STRINGS.edit}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.sectionActions}>
+            {/* <TouchableOpacity
+              style={styles.refreshButton}
+              onPress={fetchUserProfile}
+              disabled={isLoadingProfile}>
+              <Text style={[styles.refreshButtonText, isLoadingProfile && { opacity: 0.5 }]}>
+                {isLoadingProfile ? 'Refreshing...' : '🔄'}
+              </Text>
+            </TouchableOpacity> */}
+            <TouchableOpacity
+              onPress={() => {
+                if (isEditingProfile) {
+                  handleUpdateProfile();
+                } else {
+                  setIsEditingProfile(true);
+                  setProfileForm(profile);
+                }
+              }}>
+              <Text style={styles.editButton}>
+                {isEditingProfile ? STRINGS.save : STRINGS.edit}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{STRINGS.phoneNumber}</Text>
-          <TextInput
-            style={[styles.input, styles.inputDisabled]}
-            value={profile.phoneNumber}
-            editable={false}
-            placeholder="Phone number"
-          />
-        </View>
+        {isLoadingProfile ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading profile...</Text>
+          </View>
+        ) : profile ? (
+          <>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{STRINGS.phoneNumber}</Text>
+              <TextInput
+                style={[styles.input, !isEditingProfile && styles.inputDisabled]}
+                value={isEditingProfile ? profileForm.phone : (profile.phone || 'Not provided')}
+                onChangeText={(text) => setProfileForm({ ...profileForm, phone: text })}
+                editable={isEditingProfile}
+                placeholder="Enter your phone number"
+                keyboardType="phone-pad"
+              />
+            </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{STRINGS.name}</Text>
-          <TextInput
-            style={[styles.input, !isEditingProfile && styles.inputDisabled]}
-            value={isEditingProfile ? profileForm.name : profile.name}
-            onChangeText={(text) => setProfileForm({ ...profileForm, name: text })}
-            editable={isEditingProfile}
-            placeholder="Enter your name"
-          />
-        </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>{STRINGS.name}</Text>
+              <TextInput
+                style={[styles.input, !isEditingProfile && styles.inputDisabled]}
+                value={isEditingProfile ? profileForm.name : (profile.name || 'Not provided')}
+                onChangeText={(text) => setProfileForm({ ...profileForm, name: text })}
+                editable={isEditingProfile}
+                placeholder="Enter your name"
+              />
+              {validationError && isEditingProfile && (
+                <Text style={styles.validationError}>{validationError}</Text>
+              )}
+            </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{STRINGS.email}</Text>
-          <TextInput
-            style={[styles.input, !isEditingProfile && styles.inputDisabled]}
-            value={isEditingProfile ? profileForm.email : profile.email}
-            onChangeText={(text) => setProfileForm({ ...profileForm, email: text })}
-            editable={isEditingProfile}
-            placeholder="Enter your email"
-            keyboardType="email-address"
-          />
-        </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>E-mail</Text>
+              <TextInput
+                style={[styles.input, styles.inputDisabled]}
+                value={profile.email || 'Not provided'}
+                editable={false}
+                placeholder="Enter your email"
+                keyboardType="email-address"
+              />
+            </View>
+
+
+          </>
+        ) : (
+          <View style={styles.emptyProfileContainer}>
+            <Text style={styles.emptyProfileText}>No profile data available</Text>
+            <TouchableOpacity style={styles.refreshProfileButton} onPress={fetchUserProfile}>
+              <Text style={styles.refreshProfileButtonText}>Refresh Profile</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Buttons Row */}
         <View style={styles.buttonsRow}>
@@ -724,6 +898,60 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontWeight: '600',
   },
+  sectionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  refreshButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: COLORS.lightGray,
+    marginRight: 10,
+  },
+  refreshButtonText: {
+    fontSize: 18,
+    color: COLORS.primary,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+  },
+  emptyProfileContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  emptyProfileText: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  refreshProfileButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  refreshProfileButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  validationError: {
+    color: COLORS.error,
+    fontSize: 12,
+    marginTop: 5,
+  },
+
 });
 
 export default ProfileScreen;

@@ -1,7 +1,7 @@
 export const STRINGS = {
   // App
   appName: 'Gas Booking',
-  
+
   // Authentication
   login: 'Login',
   logout: 'Logout',
@@ -13,7 +13,7 @@ export const STRINGS = {
   resendOTP: 'Resend OTP',
   otpSent: 'OTP sent successfully',
   invalidOTP: 'Invalid OTP',
-  
+
   // Profile
   profile: 'Profile',
   editProfile: 'Edit Profile',
@@ -24,7 +24,7 @@ export const STRINGS = {
   editAddress: 'Edit Address',
   deleteAddress: 'Delete Address',
   setAsDefault: 'Set as Default',
-  
+
   // Products
   products: 'Products',
   gasBooking: 'Gas Booking',
@@ -36,7 +36,7 @@ export const STRINGS = {
   quantity: 'Quantity',
   price: 'Price',
   total: 'Total',
-  
+
   // Checkout
   checkout: 'Checkout',
   deliveryType: 'Delivery Type',
@@ -46,7 +46,7 @@ export const STRINGS = {
   cashOnDelivery: 'Cash on Delivery',
   placeOrder: 'Place Order',
   orderConfirmed: 'Order Confirmed',
-  
+
   // Orders
   orders: 'Orders',
   orderHistory: 'Order History',
@@ -57,14 +57,14 @@ export const STRINGS = {
   outForDelivery: 'Out for Delivery',
   delivered: 'Delivered',
   reorder: 'Reorder',
-  
+
   // Support
   support: 'Support',
   raiseComplaint: 'Raise Complaint',
   refundRequest: 'Refund Request',
   faq: 'FAQ',
   contactUs: 'Contact Us',
-  
+
   // Common
   save: 'Save',
   cancel: 'Cancel',
@@ -78,17 +78,20 @@ export const STRINGS = {
   ok: 'OK',
   yes: 'Yes',
   no: 'No',
-  loading: 'Loading...', 
+  loading: 'Loading...',
   error: 'Error',
   success: 'Success',
   warning: 'Warning',
   info: 'Info',
-  
+
   // Validation
   required: 'This field is required',
   invalidPhone: 'Invalid phone number',
   invalidEmail: 'Invalid email address',
-  email:"support@gasbooking.com",
-  phone:"+919876543210"
+  email: "support@gasbooking.com",
+  phone: "+919876543210",
+
+
+  API_BASE_URL: "https://1b74b14d0c61.ngrok-free.app"
 };
 

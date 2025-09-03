@@ -61,54 +61,60 @@ const CartScreen = ({ navigation }) => {
     navigation.navigate('Checkout');
   };
 
-  const renderCartItem = ({ item }) => (
-    <View style={styles.cartItem}>
-      <Image source={{ uri: item.image }} style={styles.itemImage} />
-      <View style={styles.itemInfo}>
-        <Text style={styles.itemName}>{item.name}</Text>
-        
-        {/* Display weight and category if available */}
-        {item.weight && (
-          <Text style={styles.itemDetails}>Weight: {item.weight}</Text>
-        )}
-        {item.category && (
-          <Text style={styles.itemDetails}>Category: {item.category}</Text>
-        )}
-        {item.type && (
-          <Text style={styles.itemDetails}>Type: {item.type.replace('_', ' ')}</Text>
-        )}
-        
-        <Text style={styles.itemPrice}>₹{item.price}</Text>
+  const renderCartItem = ({ item }) => {
+    // console.log("Cart Item:", item); // 👈 yaha sirf current item ka data aayega
 
-        <View style={styles.quantityContainer}>
-          <TouchableOpacity
-            style={styles.quantityButton}
-            onPress={() => handleUpdateQuantity(item, item.quantity - 1)}>
-            <Text style={styles.quantityButtonText}>-</Text>
-          </TouchableOpacity>
+    return (
+      <View style={styles.cartItem}>
+        <Image source={{ uri: item.images[0] }} style={styles.itemImage} />
+        <View style={styles.itemInfo}>
+          <Text style={styles.itemName}>{item.productName}</Text>
 
-          <Text style={styles.quantityText}>{item.quantity}</Text>
+          {/* Display weight and category if available */}
+          {item.weight && (
+            <Text style={styles.itemDetails}>Weight: {item.weight}</Text>
+          )}
+          {item.category && (
+            <Text style={styles.itemDetails}>Category: {item.category}</Text>
+          )}
+          {item.type && (
+            <Text style={styles.itemDetails}>
+              Type: {item.type.replace('_', ' ')}
+            </Text>
+          )}
 
-          <TouchableOpacity
-            style={styles.quantityButton}
-            onPress={() => handleUpdateQuantity(item, item.quantity + 1)}>
-            <Text style={styles.quantityButtonText}>+</Text>
-          </TouchableOpacity>
+          <Text style={styles.itemPrice}>₹{item.price}</Text>
+
+          <View style={styles.quantityContainer}>
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() => handleUpdateQuantity(item, item.quantity - 1)}>
+              <Text style={styles.quantityButtonText}>-</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.quantityText}>{item.quantity}</Text>
+
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() => handleUpdateQuantity(item, item.quantity + 1)}>
+              <Text style={styles.quantityButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.itemTotal}>
+            Total: ₹{item.price * item.quantity}
+          </Text>
         </View>
 
-        <Text style={styles.itemTotal}>
-          Total: ₹{item.price * item.quantity}
-        </Text>
+        <TouchableOpacity
+          style={styles.removeButton}
+          onPress={() => handleRemoveItem(item)}>
+          <AntDesign name="delete" size={28} color={COLORS.error} />
+        </TouchableOpacity>
       </View>
+    );
+  };
 
-      <TouchableOpacity
-        style={styles.removeButton}
-        onPress={() => handleRemoveItem(item)}>
-        {/* <Text style={styles.removeButtonText}>✕</Text> */}
-        <AntDesign name="delete" size={28} color={COLORS.error} />
-      </TouchableOpacity>
-    </View>
-  );
 
   const renderEmptyCart = () => (
     <View style={styles.emptyContainer}>

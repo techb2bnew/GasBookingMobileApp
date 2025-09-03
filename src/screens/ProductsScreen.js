@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,21 +11,79 @@ import {
   ScrollView,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, STRINGS } from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { addToCart } from '../redux/slices/cartSlice';
 import MenuDrawer from '../components/MenuDrawer';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 const ProductsScreen = ({ navigation }) => {
   const dispatch = useDispatch();
-  const { products } = useSelector(state => state.products);
   const { totalItems, totalAmount } = useSelector(state => state.cart);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [productsError, setProductsError] = useState(null);
+  const [apiProducts, setApiProducts] = useState([]);
   const carouselRef = useRef(null);
+
+  // Fetch products from API
+  const fetchProducts = async () => {
+    try {
+      setIsLoadingProducts(true);
+      setProductsError(null);
+
+      // Get token from AsyncStorage
+      const token = await AsyncStorage.getItem('userToken');
+
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await axios.get(
+        `${STRINGS.API_BASE_URL}/api/products/status/active`,
+        { headers }
+      );
+
+      console.log('Products API Response:', response.data);
+      console.log('Products Data Structure:', response.data.data);
+      console.log('Products Array:', response.data.data.products);
+      console.log('First Product Sample:', response.data.data.products?.[0]);
+      console.log('Categories Available:', [...new Set(response.data.data.products?.map(p => p.category) || [])]);
+
+      if (response.data && response.data.success) {
+        const products = response.data.data.products;
+        if (products && Array.isArray(products)) {
+          setApiProducts(products);
+        } else {
+          setProductsError('Invalid products data received');
+        }
+      } else {
+        setProductsError(response.data?.message || 'Failed to fetch products');
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setProductsError('Failed to load products. Please try again.');
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
+
+  // Fetch products when component mounts and when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchProducts();
+    }, [])
+  );
+
+  // Use only API products - no static data fallback
+  const allProducts = apiProducts;
 
   // Carousel banner data
   const carouselData = [
@@ -36,7 +94,7 @@ const ProductsScreen = ({ navigation }) => {
       subtitle: 'Get 10% off on first order'
     },
     {
-      id: '2', 
+      id: '2',
       image: 'https://media.istockphoto.com/id/1207561811/photo/colleagues-loading-gas-cylinder-on-to-tanker-truck.jpg?s=1024x1024&w=is&k=20&c=By3SZrAZMRCRhosNypjce8FyS-cjHSWyr_3M1y3Ryt8=',
       title: 'Fast Delivery',
       subtitle: 'Same day delivery available'
@@ -48,13 +106,34 @@ const ProductsScreen = ({ navigation }) => {
       subtitle: 'We are here to help you'
     }
   ];
-  const filteredProducts =
-    selectedCategory === 'All'
-      ? products
-      : products.filter(item => item.category === selectedCategory);
+  // Filter products based on selected category
+  const filteredProducts = selectedCategory === 'All'
+    ? allProducts
+    : allProducts.filter(item => {
+      console.log('Filtering item:', item.productName, 'Category:', item.category, 'Selected:', selectedCategory);
+      return item.category === selectedCategory;
+    });
+
   const handleAddToCart = (product) => {
-    dispatch(addToCart({ product, quantity: 1 }));
-    // Alert.alert('Success', `${product.name} added to cart`);
+    // Extract first variant data for cart
+    const firstVariant = product?.variants?.[0];
+    console.log('Original Product:', product);
+    console.log('First Variant:', firstVariant);
+
+    if (firstVariant) {
+      const cartProduct = {
+        ...product,
+        weight: firstVariant.label,
+        price: firstVariant.price,
+        stock: firstVariant.stock,
+        inStock: firstVariant.stock > 0
+      };
+      console.log('Cart Product:', cartProduct);
+      dispatch(addToCart({ product: cartProduct, quantity: 1 }));
+    } else {
+      console.log('No variants found for product:', product);
+    }
+    // Alert.alert('Success', `${product.productName} added to cart`);
   };
 
   const handleRefillCylinder = (product) => {
@@ -118,62 +197,79 @@ const ProductsScreen = ({ navigation }) => {
     </View>
   );
 
-  const renderProductItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.productCard}
-      onPress={() => navigation.navigate('ProductDetails', { product: item })}>
-      <Image source={{ uri: item.image }} style={styles.productImage} />
-      
-      <View style={styles.productInfo}>
-        <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-        <Text style={styles.productPrice}>₹{item.price}</Text>
-        
-        {item.weight && (
-          <View style={styles.weightInfo}>
-            <Icon name="scale" size={14} color={COLORS.primary} />
-            <Text style={styles.weightText}>{item.weight}</Text>
-          </View>
-        )}
+  const renderProductItem = ({ item }) => {
+    // console.log("Rendering Product Item:", item);
 
-        <TouchableOpacity
-          style={styles.addToCartButton}
-          onPress={() => handleAddToCart(item)}
-          disabled={!item.inStock}>
-          <View style={styles.buttonContent}>
-            <Icon name="add-shopping-cart" size={14} color={COLORS.white} />
-            <Text style={styles.addToCartText}>
-              {item.inStock ? 'Add to Cart' : 'Out of Stock'}
-            </Text>
-          </View>
-        </TouchableOpacity>
-        
-        {item.category !== 'Accessories' && (
-          <View style={styles.quickOptions}>
-            <TouchableOpacity
-              style={styles.quickOption}
-              onPress={() => handleRefillCylinder(item)}
-              disabled={!item.inStock}>
-              <Text style={styles.quickOptionText}>Refill</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.quickOption}
-              onPress={() => handleNewConnection(item)}
-              disabled={!item.inStock}>
-              <Text style={styles.quickOptionText}>New</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.quickOption}
-              onPress={() => handleSpareCylinder(item)}
-              disabled={!item.inStock}>
-              <Text style={styles.quickOptionText}>Spare</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+    return (
+      <TouchableOpacity
+        style={styles.productCard}
+        onPress={() => navigation.navigate('ProductDetails', { product: item })}>
+        <Image source={{ uri: item?.images[0] }} style={styles.productImage} />
+
+        <View style={styles.productInfo}>
+          <Text style={styles.productName} numberOfLines={2}>{item?.productName}</Text>
+          <Text style={styles.productPrice}>₹{item?.variants?.[0]?.price || 'N/A'}</Text>
+
+          {item?.variants?.[0]?.label && (
+            <View style={styles.weightInfo}>
+              <Icon name="scale" size={14} color={COLORS.primary} />
+              <Text style={styles.weightText}>{item.variants[0].label}</Text>
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={styles.addToCartButton}
+            onPress={() => {
+              // console.log("Add to Cart pressed:", item); 
+              handleAddToCart(item);
+            }}
+            disabled={!(item?.variants?.[0]?.stock > 0)}>
+            <View style={styles.buttonContent}>
+              <Icon name="add-shopping-cart" size={14} color={COLORS.white} />
+              <Text style={styles.addToCartText}>
+                {(item?.variants?.[0]?.stock > 0) ? 'Add to Cart' : 'Out of Stock'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* {item.category !== 'Accessories' && (
+            <View style={styles.quickOptions}>
+              <TouchableOpacity
+                style={styles.quickOption}
+                onPress={() => {
+                  console.log("Refill pressed:", item); // ✅ log
+                  handleRefillCylinder(item);
+                }}
+                disabled={!(item?.variants?.[0]?.stock > 0)}>
+                <Text style={styles.quickOptionText}>Refill</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.quickOption}
+                onPress={() => {
+                  console.log("New Connection pressed:", item); // ✅ log
+                  handleNewConnection(item);
+                }}
+                disabled={!(item?.variants?.[0]?.stock > 0)}>
+                <Text style={styles.quickOptionText}>New</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.quickOption}
+                onPress={() => {
+                  console.log("Spare pressed:", item); // ✅ log
+                  handleSpareCylinder(item);
+                }}
+                disabled={!(item?.variants?.[0]?.stock > 0)}>
+                <Text style={styles.quickOptionText}>Spare</Text>
+              </TouchableOpacity>
+            </View>
+          )} */}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
 
   return (
     <View style={styles.container}>
@@ -236,20 +332,50 @@ const ProductsScreen = ({ navigation }) => {
         </View>
 
         {/* Category Filter Tabs */}
-          {renderCategoryTabs()}
+        {renderCategoryTabs()}
 
-
-        {/* Products Grid */}
+        {/* Products Section with Loading and Error States */}
         <View style={styles.productsSection}>
-          <FlatList
-            data={filteredProducts}
-            renderItem={renderProductItem}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            columnWrapperStyle={styles.productRow}
-            scrollEnabled={false}
-            contentContainerStyle={styles.productsContent}
-          />
+          {isLoadingProducts ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Loading products...</Text>
+            </View>
+          ) : productsError ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{productsError}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={fetchProducts}>
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : filteredProducts.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No products found</Text>
+              <TouchableOpacity style={styles.refreshButton} onPress={fetchProducts}>
+                <Text style={styles.refreshButtonText}>Refresh</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              {/* Products Header with Refresh */}
+              <View style={styles.productsHeader}>
+                <Text style={styles.productsTitle}>Available Products</Text>
+                {/* <TouchableOpacity style={styles.refreshProductsButton} onPress={fetchProducts}>
+                  <Text style={styles.refreshProductsButtonText}>🔄</Text>
+                </TouchableOpacity> */}
+              </View>
+
+              {/* Products Grid */}
+              <FlatList
+                data={filteredProducts}
+                renderItem={renderProductItem}
+                keyExtractor={(item) => item.id}
+                numColumns={2}
+                columnWrapperStyle={styles.productRow}
+                scrollEnabled={false}
+                contentContainerStyle={styles.productsContent}
+              />
+            </>
+          )}
         </View>
       </ScrollView>
 
@@ -459,7 +585,88 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   productsContent: {
-    paddingBottom: 100, 
+    paddingBottom: 100,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  loadingText: {
+    fontSize: 18,
+    color: COLORS.textSecondary,
+    fontStyle: 'italic',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: COLORS.error,
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  retryButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  emptyText: {
+    fontSize: 18,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  refreshButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  refreshButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  productsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  productsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.textPrimary,
+  },
+  refreshProductsButton: {
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: COLORS.background,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  refreshProductsButtonText: {
+    fontSize: 20,
   },
   floatingCart: {
     position: 'absolute',
@@ -531,6 +738,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 8,
     marginBottom: 10,
+    resizeMode:"contain"
   },
   productInfo: {
     flex: 1,
@@ -722,14 +930,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     transform: [{ scale: 1.05 }],
   },
-  categoryText: { 
-    fontSize: 12, 
-    fontWeight: '600', 
+  categoryText: {
+    fontSize: 12,
+    fontWeight: '600',
     color: COLORS.textSecondary,
     textAlign: 'center',
     letterSpacing: 0.5,
   },
-  categoryTextActive: { 
+  categoryTextActive: {
     color: COLORS.white,
     fontWeight: '700',
     textAlign: 'center',

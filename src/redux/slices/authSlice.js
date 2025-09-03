@@ -3,6 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
   isAuthenticated: false,
   user: null,
+  token: null,
   phoneNumber: '',
   otp: '',
   otpSent: false,
@@ -39,7 +40,8 @@ const authSlice = createSlice({
     verifyOTPSuccess: (state, action) => {
       state.loading = false;
       state.isAuthenticated = true;
-      state.user = action.payload;
+      state.user = action.payload.user;
+      state.token = action.payload.token;
       state.otp = '';
       state.otpSent = false;
     },
@@ -54,6 +56,7 @@ const authSlice = createSlice({
       state.otp = '';
       state.otpSent = false;
       state.error = null;
+      state.token = null;
     },
     clearError: (state) => {
       state.error = null;

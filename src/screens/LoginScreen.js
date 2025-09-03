@@ -18,6 +18,7 @@ import {
   setPhoneNumber,
   sendOTPStart,
   sendOTPSuccess,
+  sendOTPFailure,
   setOTP,
   verifyOTPStart,
   verifyOTPSuccess,
@@ -26,6 +27,9 @@ import {
 } from '../redux/slices/authSlice';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
 import { updateProfile } from '../redux/slices/profileSlice';
+import axios from "axios";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { hp, wp } from '../utils/dimensions';
 
 const LoginScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -43,61 +47,188 @@ const LoginScreen = ({ navigation }) => {
     return () => clearInterval(interval);
   }, [timer]);
 
-  const handleSendOTP = () => {
-    if (!phoneNumber || phoneNumber.length < 10) {
-      setError('Please enter a valid phone number');
+  // const handleSendOTP = () => {
+  //   if (!phoneNumber || phoneNumber.length < 10) {
+  //     setError('Please enter a valid phone number');
+  //     return;
+  //   }
+  //   setError('');
+  //   dispatch(sendOTPStart());
+  //   setTimeout(() => {
+  //     dispatch(sendOTPSuccess());
+  //   }, 1000);
+  // };
+  const handleSendOTP = async () => {
+    if (!phoneNumber || !phoneNumber.includes('@')) {
+      setError('Please enter a valid email address');
       return;
     }
-    setError('');
+    setError(""); // ✅ Clear any previous errors
     dispatch(sendOTPStart());
-    setTimeout(() => {
+
+    try {
+      const response = await axios.post(
+        `${STRINGS.API_BASE_URL}/api/auth/request-otp`,
+        {
+          email: phoneNumber,
+          role: "customer",
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("OTP API Success:", response.data);
+
       dispatch(sendOTPSuccess());
-    }, 1000);
+      // setTimer(30); // ❌ Timer removed - only starts on resend click
+    } catch (error) {
+      console.error("OTP Request Error:", error);
+
+      const message =
+        error.response?.data?.message || "Something went wrong. Please try again.";
+
+      setError(message);
+      dispatch(sendOTPFailure(message)); // ✅ Reset loading state on error
+    }
   };
 
-  const handleVerifyOTP = () => {
-    if (!otpValue || otpValue.length < 4) {
+
+  // const handleVerifyOTP = () => {
+  //   if (!otpValue || otpValue.length < 6) {
+  //     setError('Please enter a valid OTP');
+  //     return;
+  //   }
+  //   setError('');
+  //   dispatch(verifyOTPStart());
+  //   setTimeout(() => {
+  //     if (otpValue === '1234' || otpValue.length === 6) {
+  //       const userData = {
+  //         id: '1',
+  //         name: `Customer_${phoneNumber.slice(-4)}`,
+  //         phoneNumber: phoneNumber,
+  //         email: '',
+  //       };
+  //       dispatch(verifyOTPSuccess(userData));
+
+  //       // ✅ Profile me bhi phone number update
+  //       dispatch(updateProfile(userData));
+
+  //     } else {
+  //       dispatch(verifyOTPFailure('Invalid OTP'));
+  //       setError('Invalid OTP');
+  //     }
+  //   }, 1000);
+  // };
+
+  const handleVerifyOTP = async () => {
+    if (!otpValue || otpValue.length < 6) {
       setError('Please enter a valid OTP');
       return;
     }
+
     setError('');
     dispatch(verifyOTPStart());
-    setTimeout(() => {
-      if (otpValue === '1234' || otpValue.length === 4) {
+
+    try {
+      const response = await axios.post(
+        `${STRINGS.API_BASE_URL}/api/auth/verify-otp`,
+        {
+          email: phoneNumber,
+          otp: otpValue,
+          role: "customer"
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Verify OTP API Response:", response.data);
+
+      if (response.data && response.data.success) {
         const userData = {
-          id: '1',
-          name: `Customer_${phoneNumber.slice(-4)}`,
-          phoneNumber: phoneNumber,
-          email: '',
+          id: response.data.data.user?.id || '1',
+          name: response.data.data.user?.name || `Customer_${phoneNumber.slice(-4)}`,
+          phoneNumber: response.data.data.user?.phone ,
+          email: response.data.data.user?.email ,
+          role: response.data.data.user?.role || 'customer',
+          profileImage: response.data.data.user?.profileImage || null,
+          address: response.data.data.user?.address || null,
+          isProfileComplete: response.data.data.user?.isProfileComplete || false,
         };
-        dispatch(verifyOTPSuccess(userData));
 
-        // ✅ Profile me bhi phone number update
+        const token = response.data.data.token;
+
+        // ✅ Save token to secure storage (you'll need to implement this)
+        await AsyncStorage.setItem('userToken', token);
+        
+        // ✅ Save user data to Redux
+        dispatch(verifyOTPSuccess({
+          user: userData,
+          token: token
+        }));
         dispatch(updateProfile(userData));
-
+        
+        console.log("Login successful! Token:", token);
+        console.log("User data saved:", userData);
       } else {
         dispatch(verifyOTPFailure('Invalid OTP'));
         setError('Invalid OTP');
       }
-    }, 1000);
-  };
-
-  const handleResendOTP = () => {
-    if (timer === 0) {
-      setOtpValue('');
-      dispatch(sendOTPStart());
-      setTimeout(() => {
-        dispatch(sendOTPSuccess());
-        setTimer(30);
-      }, 1000);
+    } catch (error) {
+      console.error("Verify OTP Error:", error);
+      dispatch(verifyOTPFailure(error.response?.data?.message || 'Something went wrong'));
+      setError(error.response?.data?.message || 'Something went wrong');
     }
   };
 
+  const handleResendOTP = async () => {
+    if (timer > 0) {
+      return; // Don't allow resend if timer is still running
+    }
 
+    setError(''); // Clear any previous errors
+    dispatch(sendOTPStart());
+
+    try {
+      const response = await axios.post(
+        `${STRINGS.API_BASE_URL}/api/auth/request-otp`,
+        {
+          email: phoneNumber,
+          role: "customer",
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Resend OTP API Success:", response.data);
+
+      if (response.data && response.data.success) {
+        dispatch(sendOTPSuccess());
+        setTimer(30); // Start resend timer
+        setOtpValue(''); // Clear previous OTP input
+      } else {
+        setError(response.data?.message || "Failed to resend OTP");
+        dispatch(sendOTPFailure(response.data?.message || "Failed to resend OTP"));
+      }
+    } catch (error) {
+      console.error("Resend OTP Error:", error);
+      const message = error.response?.data?.message || "Something went wrong. Please try again.";
+      setError(message);
+      dispatch(sendOTPFailure(message));
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
@@ -128,8 +259,8 @@ const LoginScreen = ({ navigation }) => {
                   placeholder={STRINGS.enterPhoneNumber}
                   value={phoneNumber}
                   onChangeText={text => dispatch(setPhoneNumber(text))}
-                  keyboardType="phone-pad"
-                  maxLength={10}
+                  // keyboardType="phone-pad"
+                  // maxLength={10}
                 />
                 {error ? <Text style={styles.error}>{error}</Text> : null}
                 <TouchableOpacity
@@ -144,13 +275,13 @@ const LoginScreen = ({ navigation }) => {
             ) : (
               <View style={styles.card}>
                 <Text style={styles.label}>{STRINGS.enterOTP}</Text>
-                <Text style={styles.otpInfo}>OTP sent to +91 {phoneNumber}</Text>
+                <Text style={styles.otpInfo}>OTP sent to {phoneNumber}</Text>
 
                 <OTPTextInput
                   containerStyle={styles.otpContainer}
                   textInputStyle={styles.otpInput}
                   handleTextChange={setOtpValue}
-                  inputCount={4}
+                  inputCount={6}
                   keyboardType="numeric"
                 />
 
@@ -184,7 +315,7 @@ const LoginScreen = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
-      
+
       {/* Contact Support Button - Fixed position behind keyboard */}
       <View style={styles.supportButtonContainer}>
         <TouchableOpacity
@@ -203,7 +334,7 @@ const LoginScreen = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             {/* Close button with cross icon */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setModalVisible(false)}>
               <Ionicons name="close" size={24} color={COLORS.text} />
@@ -211,14 +342,14 @@ const LoginScreen = ({ navigation }) => {
 
             <Text style={styles.modalTitle}>Contact Support</Text>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.contactItem}
               onPress={() => Linking.openURL(`mailto:${STRINGS.email}?subject=Support%20Request&body=Hello%20Support%20Team,`)}>
               <Ionicons name="mail-outline" size={20} color={COLORS.primary} style={styles.contactIcon} />
               <Text style={styles.contactText}>{STRINGS.email}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.contactItem}
               onPress={() => Linking.openURL(`tel:${STRINGS.phone}`)}>
               <Ionicons name="call-outline" size={20} color={COLORS.primary} style={styles.contactIcon} />
@@ -316,19 +447,24 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   otpContainer: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    margin: 20,
+    marginVertical: 20,
+    gap: 4,
   },
   otpInput: {
+    // flex: 1,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 10,
+    borderRadius: 8,
     backgroundColor: COLORS.white,
     color: COLORS.text,
-    fontSize: 20,
+    fontSize: 14,
     fontWeight: '700',
-    height: 55,
-    width: 55,
+    height: hp(6),
+    width: wp(10),
+    textAlign: 'center',
+    marginRight: 2,
   },
   resendButton: {
     alignItems: 'center',
