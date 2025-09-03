@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../constants';
-
+import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 
 
 const ReasonModal = ({ visible, onClose, onSubmit, title,reasonsList }) => {
@@ -121,11 +121,11 @@ const styles = StyleSheet.create({
     },
     modalBox: { 
         backgroundColor: COLORS.white, 
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        paddingHorizontal: 20,
-        paddingTop: 10,
-        paddingBottom: 30,
+        borderTopLeftRadius: wp('5%'),
+        borderTopRightRadius: wp('5%'),
+        paddingHorizontal: spacing.lg,
+        paddingTop: spacing.sm,
+        paddingBottom: spacing.xl,
         shadowColor: COLORS.shadow,
         shadowOffset: { width: 0, height: -4 },
         shadowOpacity: 0.25,
@@ -134,30 +134,30 @@ const styles = StyleSheet.create({
     },
     topBar: {
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: spacing.lg,
     },
     handle: {
-        width: 40,
-        height: 4,
+        width: wp('10%'),
+        height: wp('1%'),
         backgroundColor: COLORS.border,
-        borderRadius: 2,
+        borderRadius: wp('0.5%'),
     },
     heading: { 
-        fontSize: 20, 
+        fontSize: fontSize.xl, 
         fontWeight: 'bold', 
         color: COLORS.text,
-        marginBottom: 20,
+        marginBottom: spacing.lg,
         textAlign: 'center',
     },
     reasonsList: {
-        marginBottom: 20,
+        marginBottom: spacing.lg,
     },
     reasonOption: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 16,
-        paddingHorizontal: 20,
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.lg,
         borderBottomWidth: 1,
         borderBottomColor: COLORS.border,
     },
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary + '08',
     },
     reasonText: { 
-        fontSize: 16, 
+        fontSize: fontSize.md, 
         color: COLORS.text,
         fontWeight: '500',
         flex: 1,
@@ -175,55 +175,55 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     otherSection: {
-        marginTop: 10,
-        padding: 16,
+        marginTop: spacing.sm,
+        padding: spacing.md,
         backgroundColor: COLORS.surface,
-        borderRadius: 12,
-        marginBottom: 20,
+        borderRadius: borderRadius.md,
+        marginBottom: spacing.lg,
     },
     otherLabel: {
-        fontSize: 14,
+        fontSize: fontSize.sm,
         fontWeight: '600',
         color: COLORS.text,
-        marginBottom: 8,
+        marginBottom: wp('2%'),
     },
     otherInput: {
         borderWidth: 1,
         borderColor: COLORS.border,
-        borderRadius: 8,
-        padding: 12,
-        fontSize: 16,
-        minHeight: 50,
+        borderRadius: borderRadius.md,
+        padding: spacing.sm,
+        fontSize: fontSize.md,
+        minHeight: hp('6.25%'),
         textAlignVertical: 'top',
         backgroundColor: COLORS.white,
     },
     errorText: { 
         color: COLORS.error, 
-        fontSize: 14, 
-        marginBottom: 20,
+        fontSize: fontSize.sm, 
+        marginBottom: spacing.lg,
         textAlign: 'center',
     },
     buttonRow: {
         flexDirection: 'row',
-        gap: 12,
+        gap: wp('3%'),
     },
     cancelButton: {
         flex: 1,
-        paddingVertical: 14,
+        paddingVertical: spacing.md,
         backgroundColor: COLORS.gray,
-        borderRadius: 10,
+        borderRadius: borderRadius.md,
         alignItems: 'center',
     },
     cancelText: {
         color: COLORS.white,
-        fontSize: 16,
+        fontSize: fontSize.md,
         fontWeight: '600',
     },
     confirmButton: {
         flex: 1,
-        paddingVertical: 14,
+        paddingVertical: spacing.md,
         backgroundColor: COLORS.primary,
-        borderRadius: 10,
+        borderRadius: borderRadius.md,
         alignItems: 'center',
     },
     confirmButtonDisabled: {
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     },
     confirmText: {
         color: COLORS.white,
-        fontSize: 16,
+        fontSize: fontSize.md,
         fontWeight: '600',
     },
 });

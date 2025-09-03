@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useSelector } from 'react-redux';
 import { COLORS, STRINGS } from '../constants';
+import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 
 const OrderConfirmationScreen = ({ route, navigation }) => {
   const { orderId } = route.params;
@@ -139,9 +140,9 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.autoRedirectText}>
+        {/* <Text style={styles.autoRedirectText}>
           You will be redirected to orders in a few seconds...
-        </Text>
+        </Text> */}
       </View>
     </ScrollView>
   );
@@ -153,43 +154,43 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   content: {
-    padding: 20,
+    padding: spacing.lg,
     alignItems: 'center',
   },
   successIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: wp('20%'),
+    height: wp('20%'),
+    borderRadius: wp('10%'),
     backgroundColor: COLORS.success,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 20,
+    marginTop: wp('10%'),
+    marginBottom: spacing.lg,
   },
   successIconText: {
     color: COLORS.white,
-    fontSize: 40,
+    fontSize: fontSize.xxl,
     fontWeight: 'bold',
   },
   title: {
-    fontSize: 28,
+    fontSize: fontSize.xxl,
     fontWeight: 'bold',
     color: COLORS.text,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     color: COLORS.textSecondary,
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: spacing.xl,
   },
   orderCard: {
     backgroundColor: COLORS.cardBackground,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
     width: '100%',
-    marginBottom: 20,
+    marginBottom: spacing.lg,
     shadowColor: COLORS.shadow,
     shadowOffset: {
       width: 0,
@@ -203,18 +204,18 @@ const styles = StyleSheet.create({
   },
   orderHeader: {
     alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 15,
+    marginBottom: spacing.lg,
+    paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
   orderIdLabel: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: COLORS.textSecondary,
-    marginBottom: 5,
+    marginBottom: wp('1.25%'),
   },
   orderIdValue: {
-    fontSize: 20,
+    fontSize: fontSize.xl,
     fontWeight: 'bold',
     color: COLORS.primary,
   },
@@ -222,15 +223,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   detailLabel: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: COLORS.textSecondary,
     flex: 1,
   },
   detailValue: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: COLORS.text,
     fontWeight: '500',
     flex: 1,
@@ -238,10 +239,10 @@ const styles = StyleSheet.create({
   },
   itemsCard: {
     backgroundColor: COLORS.cardBackground,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
     width: '100%',
-    marginBottom: 20,
+    marginBottom: spacing.lg,
     shadowColor: COLORS.shadow,
     shadowOffset: {
       width: 0,
@@ -254,51 +255,51 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   itemsTitle: {
-    fontSize: 18,
+    fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.text,
-    marginBottom: 15,
+    marginBottom: spacing.md,
   },
   orderItem: {
-    paddingVertical: 8,
+    paddingVertical: wp('2%'),
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
   itemName: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     fontWeight: '500',
     color: COLORS.text,
   },
   itemDetails: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: COLORS.textSecondary,
-    marginTop: 2,
+    marginTop: wp('0.5%'),
   },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 15,
-    marginTop: 10,
+    paddingTop: spacing.md,
+    marginTop: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
   },
   totalLabel: {
-    fontSize: 18,
+    fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.text,
   },
   totalAmount: {
-    fontSize: 20,
+    fontSize: fontSize.xl,
     fontWeight: 'bold',
     color: COLORS.primary,
   },
   statusCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: borderRadius.md,
+    padding: spacing.lg,
     width: '100%',
-    marginBottom: 30,
+    marginBottom: spacing.xl,
     shadowColor: COLORS.shadow,
     shadowOffset: {
       width: 0,
@@ -309,26 +310,26 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   statusTitle: {
-    fontSize: 18,
+    fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.text,
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   statusText: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: COLORS.textSecondary,
-    lineHeight: 20,
+    lineHeight: fontSize.lg,
   },
   buttonContainer: {
     width: '100%',
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   trackButton: {
     backgroundColor: COLORS.primary,
-    paddingVertical: 15,
-    borderRadius: 12,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: spacing.sm,
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -337,15 +338,15 @@ const styles = StyleSheet.create({
   },
   trackButtonText: {
     color: COLORS.white,
-    fontSize: 16,
+    fontSize: fontSize.md,
     fontWeight: '600',
   },
   continueButton: {
     backgroundColor: COLORS.white,
     borderWidth: 1,
     borderColor: COLORS.primary,
-    paddingVertical: 15,
-    borderRadius: 12,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -355,20 +356,20 @@ const styles = StyleSheet.create({
   },
   continueButtonText: {
     color: COLORS.primary,
-    fontSize: 16,
+    fontSize: fontSize.md,
     fontWeight: '600',
   },
   autoRedirectText: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
     color: COLORS.textSecondary,
     textAlign: 'center',
     fontStyle: 'italic',
   },
   errorText: {
-    fontSize: 18,
+    fontSize: fontSize.lg,
     color: COLORS.error,
     textAlign: 'center',
-    marginTop: 50,
+    marginTop: hp('6.25%'),
   },
 });
 

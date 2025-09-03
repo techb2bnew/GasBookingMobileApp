@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { COLORS, STRINGS } from '../constants';
 import { removeFromCart, updateQuantity } from '../redux/slices/cartSlice';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 
 
 const CartScreen = ({ navigation }) => {
@@ -181,8 +182,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     backgroundColor: COLORS.primary,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
@@ -196,23 +197,23 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   title: {
-    fontSize: 24,
+    fontSize: fontSize.xl,
     fontWeight: '600',
     color: COLORS.white,
     letterSpacing: -0.5,
   },
   placeholder: {
-    width: 60,
+    width: wp('15%'),
   },
   cartContent: {
-    padding: 20,
+    padding: spacing.lg,
   },
   cartItem: {
     flexDirection: 'row',
     backgroundColor: COLORS.cardBackground,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
     shadowColor: COLORS.shadow,
     shadowOffset: {
       width: 0,
@@ -225,93 +226,93 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   itemImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
+    width: wp('20%'),
+    height: wp('20%'),
+    borderRadius: borderRadius.md,
     backgroundColor: COLORS.lightGray,
   },
   itemInfo: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: spacing.md,
   },
   itemName: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     fontWeight: '600',
     color: COLORS.text,
-    marginBottom: 5,
+    marginBottom: wp('1.25%'),
   },
   itemPrice: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: COLORS.textSecondary,
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   itemDetails: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
     color: COLORS.textSecondary,
-    marginBottom: 5,
+    marginBottom: wp('1.25%'),
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: wp('2%'),
   },
   quantityButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: wp('7.5%'),
+    height: wp('7.5%'),
+    borderRadius: wp('3.75%'),
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   quantityButtonText: {
     color: COLORS.white,
-    fontSize: 18,
+    fontSize: fontSize.lg,
     fontWeight: 'bold',
   },
   quantityText: {
-    marginHorizontal: 15,
-    fontSize: 16,
+    marginHorizontal: spacing.md,
+    fontSize: fontSize.md,
     fontWeight: '600',
     color: COLORS.text,
-    minWidth: 30,
+    minWidth: wp('7.5%'),
     textAlign: 'center',
   },
   itemTotal: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     fontWeight: 'bold',
     color: COLORS.primary,
   },
   removeButton: {
-    padding: 5,
+    padding: wp('1.25%'),
   },
   removeButtonText: {
     color: COLORS.error,
-    fontSize: 18,
+    fontSize: fontSize.lg,
     fontWeight: 'bold',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: wp('10%'),
   },
   emptyTitle: {
-    fontSize: 24,
+    fontSize: fontSize.xxl,
     fontWeight: 'bold',
     color: COLORS.text,
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
   emptySubtitle: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     color: COLORS.textSecondary,
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: spacing.xl,
   },
   shopButton: {
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 12,
+    paddingHorizontal: wp('7.5%'),
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -320,13 +321,13 @@ const styles = StyleSheet.create({
   },
   shopButtonText: {
     color: COLORS.white,
-    fontSize: 16,
+    fontSize: fontSize.md,
     fontWeight: '600',
   },
   footer: {
     backgroundColor: COLORS.white,
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
   },
@@ -334,22 +335,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: spacing.md,
   },
   totalLabel: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     color: COLORS.text,
     fontWeight: '500',
   },
   totalAmount: {
-    fontSize: 24,
+    fontSize: fontSize.xxl,
     fontWeight: 'bold',
     color: COLORS.primary,
   },
   checkoutButton: {
     backgroundColor: COLORS.primary,
-    paddingVertical: 15,
-    borderRadius: 12,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -359,7 +360,7 @@ const styles = StyleSheet.create({
   },
   checkoutButtonText: {
     color: COLORS.white,
-    fontSize: 18,
+    fontSize: fontSize.lg,
     fontWeight: '600',
   },
 });

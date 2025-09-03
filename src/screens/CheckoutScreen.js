@@ -19,6 +19,7 @@ import {
 } from '../redux/slices/cartSlice';
 import { addOrder } from '../redux/slices/orderSlice';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
+import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 
 const CheckoutScreen = ({ navigation }) => {
   const dispatch = useDispatch();
@@ -183,12 +184,13 @@ const CheckoutScreen = ({ navigation }) => {
         dispatch(clearCart());
         setLoading(false);
 
-        Alert.alert('Success', 'Order placed successfully!', [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('OrderConfirmation', { orderId: order.id })
-          }
-        ]);
+        // Alert.alert('Success', 'Order placed successfully!', [
+        //   {
+        //     text: 'OK',
+        //     onPress: () => 
+        navigation.navigate('OrderConfirmation', { orderId: order.id })
+        //   }
+        // ]);
       } else {
         throw new Error(response.data?.message || 'Failed to create order');
       }
@@ -374,10 +376,10 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     backgroundColor: COLORS.primary,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
@@ -388,25 +390,26 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   backButton: {
-    paddingVertical: 5,
+    paddingVertical: wp('1.25%'),
   },
   backButtonText: {
     color: COLORS.white,
-    fontSize: 16,
+    fontSize: fontSize.md,
     fontWeight: '500',
   },
   title: {
-    fontSize: 24,
+    fontSize: fontSize.xl,
     fontWeight: '600',
     color: COLORS.white,
     letterSpacing: -0.5,
+    marginLeft:10
   },
   placeholder: {
-    width: 60,
+    width: wp('15%'),
   },
   profileLoadingText: {
     color: COLORS.white,
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '500',
   },
   content: {
@@ -414,11 +417,11 @@ const styles = StyleSheet.create({
   },
   section: {
     backgroundColor: COLORS.cardBackground,
-    marginTop: 15,
-    marginHorizontal: 15,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    borderRadius: 16,
+    marginTop: spacing.md,
+    marginHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.lg,
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
@@ -431,45 +434,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.text,
-    marginBottom: 15,
+    marginBottom: spacing.md,
   },
   orderItem: {
-    paddingVertical: 8,
+    paddingVertical: wp('2%'),
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
   orderItemName: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     fontWeight: '500',
     color: COLORS.text,
   },
   orderItemDetails: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: COLORS.textSecondary,
-    marginTop: 2,
+    marginTop: wp('0.5%'),
   },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 15,
-    marginTop: 10,
+    paddingTop: spacing.md,
+    marginTop: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
   },
   totalLabel: {
-    fontSize: 18,
+    fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.text,
   },
   totalAmount: {
-    fontSize: 20,
+    fontSize: fontSize.xl,
     fontWeight: 'bold',
     color: COLORS.primary,
   },
@@ -477,11 +480,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 8,
-    marginBottom: 10,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
   },
   optionCardSelected: {
     borderColor: COLORS.primary,
@@ -491,7 +494,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionLabel: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     fontWeight: '500',
     color: COLORS.text,
   },

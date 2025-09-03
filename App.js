@@ -8,6 +8,7 @@ import { store, persistor } from './src/redux/store';
 import { AppNavigator } from './src/navigation';
 import { COLORS } from './src/constants';
 import { requestLocationPermission } from './src/utils/locationPermissions';
+import { hp, wp } from './src/utils/dimensions';
 
 const LoadingScreen = () => (
   <View style={styles.loadingContainer}>
@@ -25,7 +26,7 @@ const App = () => {
     <Provider store={store}>
       <PersistGate loading={<LoadingScreen />} persistor={persistor}>
         <SafeAreaProvider>
-          <SafeAreaView style={{ flex: 1 }}>
+          <SafeAreaView style={{ height:hp(100),width:wp(100) }}>
             <AppNavigator />
           </SafeAreaView>
         </SafeAreaProvider>
