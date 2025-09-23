@@ -115,6 +115,12 @@ const productSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    setProducts: (state, action) => {
+      state.products = action.payload;
+    },
+    addProduct: (state, action) => {
+      state.products.push(action.payload);
+    },
   },
 });
 
@@ -123,6 +129,8 @@ export const {
   setLoading,
   setError,
   clearError,
+  setProducts,
+  addProduct,
 } = productSlice.actions;
 
 export default productSlice.reducer;

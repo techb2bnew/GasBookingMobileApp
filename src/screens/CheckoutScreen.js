@@ -6,10 +6,11 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Modal,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '../utils/apiConfig';
 import { COLORS, STRINGS } from '../constants';
 import {
   setDeliveryType,
@@ -30,29 +31,13 @@ const CheckoutScreen = ({ navigation }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [profileError, setProfileError] = useState(null);
+  const [isProfileUpdateModalVisible, setIsProfileUpdateModalVisible] = useState(false);
 
   const fetchUserProfile = async () => {
     try {
       setIsLoadingProfile(true);
       
-      // Get token from AsyncStorage
-      const token = await AsyncStorage.getItem('userToken');
-      
-      if (!token) {
-        console.log('No token found, user not authenticated');
-        setUserProfile(null);
-        return;
-      }
-
-      const response = await axios.get(
-        `${STRINGS.API_BASE_URL}/api/auth/profile`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await apiClient.get('/api/auth/profile');
 
       console.log('Profile API Response:', response.data);
 
@@ -154,15 +139,7 @@ const CheckoutScreen = ({ navigation }) => {
       console.log('Order API Payload:', orderData);
 
       // Make API call
-      const response = await axios.post(
-        `${STRINGS.API_BASE_URL}/api/orders/checkout`,
-        orderData,
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await apiClient.post('/api/orders/checkout', orderData);
 
       console.log('Order API Response:', response.data);
 
@@ -200,8 +177,15 @@ const CheckoutScreen = ({ navigation }) => {
       setLoading(false);
       
       if (error.response) {
-        // API error response
-        Alert.alert('Error', error.response.data?.message || 'Failed to create order. Please try again.');
+        // Check if it's a customerName validation error
+        const errorMessage = error.response.data?.error || error.response.data?.message || '';
+        if (errorMessage.includes('customerName') && errorMessage.includes('must be a string')) {
+          // Show profile update modal
+          setIsProfileUpdateModalVisible(true);
+        } else {
+          // API error response
+          Alert.alert('Error', error.response.data?.message || 'Failed to create order. Please try again.');
+        }
       } else if (error.request) {
         // Network error
         Alert.alert('Error', 'Network error. Please check your connection and try again.');
@@ -293,6 +277,31 @@ const CheckoutScreen = ({ navigation }) => {
       </View>
 
       <ScrollView style={styles.content}>
+        {/* User Details */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Customer Details</Text>
+          <View style={styles.userDetailsContainer}>
+            <View style={styles.userDetailRow}>
+              <Text style={styles.userDetailLabel}>Name:</Text>
+              <Text style={styles.userDetailValue}>
+                {userProfile?.name || 'Not provided'}
+              </Text>
+            </View>
+            {userProfile?.phone && (
+              <View style={styles.userDetailRow}>
+                <Text style={styles.userDetailLabel}>Phone:</Text>
+                <Text style={styles.userDetailValue}>{userProfile.phone}</Text>
+              </View>
+            )}
+            {userProfile?.email && (
+              <View style={styles.userDetailRow}>
+                <Text style={styles.userDetailLabel}>Email:</Text>
+                <Text style={styles.userDetailValue}>{userProfile.email}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
         {/* Order Summary */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Order Summary</Text>
@@ -365,6 +374,39 @@ const CheckoutScreen = ({ navigation }) => {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Profile Update Modal */}
+      <Modal
+        visible={isProfileUpdateModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsProfileUpdateModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.profileUpdateModal}>
+            <Text style={styles.profileUpdateTitle}>Profile Update Required</Text>
+            <Text style={styles.profileUpdateMessage}>
+              Please update your profile data first. Your name is required to place an order.
+            </Text>
+
+            <View style={styles.profileUpdateActions}>
+              <TouchableOpacity
+                style={[styles.profileUpdateButton, styles.cancelButton]}
+                onPress={() => setIsProfileUpdateModalVisible(false)}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.profileUpdateButton, styles.updateProfileButton]}
+                onPress={() => {
+                  setIsProfileUpdateModalVisible(false);
+                  navigation.navigate('Main', { screen: 'Profile' });
+                }}>
+                <Text style={styles.updateProfileButtonText}>Update Profile</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -615,6 +657,88 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 18,
     fontWeight: '600',
+  },
+  // Profile Update Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileUpdateModal: {
+    width: '85%',
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+  },
+  profileUpdateTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  profileUpdateMessage: {
+    fontSize: 15,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 22,
+  },
+  profileUpdateActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  profileUpdateButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: COLORS.lightGray,
+  },
+  cancelButtonText: {
+    color: COLORS.text,
+    fontWeight: '600',
+  },
+  updateProfileButton: {
+    backgroundColor: COLORS.primary,
+  },
+  updateProfileButtonText: {
+    color: COLORS.white,
+    fontWeight: '600',
+  },
+  // User Details Styles
+  userDetailsContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  userDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray,
+  },
+  userDetailLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text,
+    flex: 1,
+  },
+  userDetailValue: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    flex: 2,
+    textAlign: 'right',
   },
 });
 

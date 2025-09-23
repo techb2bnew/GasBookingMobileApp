@@ -11,10 +11,10 @@ import {
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { addToCart } from '../redux/slices/cartSlice';
+import { addToCart, updateQuantity } from '../redux/slices/cartSlice';
 import { COLORS, STRINGS } from '../constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import apiClient from '../utils/apiConfig';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -23,7 +23,7 @@ const WEIGHTS = ['2kg', '5kg', '14.2kg', '19kg'];
 
 const ProductDetailsScreen = ({ route, navigation }) => {
   const dispatch = useDispatch();
-  const { totalItems } = useSelector(state => state.cart);
+  const { totalItems, items } = useSelector(state => state.cart);
   const { product: routeProduct = {} } = route.params || {};
 
   const [product, setProduct] = useState(routeProduct);
@@ -32,6 +32,8 @@ const ProductDetailsScreen = ({ route, navigation }) => {
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [selectedWeight, setSelectedWeight] = useState(routeProduct?.weight);
   const [selectedCategory] = useState(routeProduct?.category || 'LPG');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [hasChanges, setHasChanges] = useState(false);
 
   // Fetch product details by ID from API
   const fetchProductDetails = async (productId) => {
@@ -44,22 +46,9 @@ const ProductDetailsScreen = ({ route, navigation }) => {
       setIsLoadingProduct(true);
       setProductError(null);
 
-      // Get token from AsyncStorage
-      const token = await AsyncStorage.getItem('userToken');
-
-      const headers = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
       console.log('Fetching product details for ID:', productId);
-      console.log('Token available:', !!token);
-      console.log('API URL:', `${STRINGS.API_BASE_URL}/api/products/${productId}`);
 
-      const response = await axios.get(
-        `${STRINGS.API_BASE_URL}/api/products/${productId}`,
-        { headers }
-      );
+      const response = await apiClient.get(`/api/products/${productId}`);
 
       console.log('Product Details API Response:', response.data);
 
@@ -115,6 +104,19 @@ const ProductDetailsScreen = ({ route, navigation }) => {
     }
   }, [routeProduct?.id]);
 
+  // Auto-play image slider for multiple images
+  useEffect(() => {
+    if (product?.images && product.images.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentImageIndex(prevIndex => 
+          (prevIndex + 1) % product.images.length
+        );
+      }, 3000); // Change image every 3 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [product?.images]);
+
   // --- Price calculator ---
   const unitPrice = useMemo(() => {
     // If product has variants, use the selected variant's price
@@ -143,6 +145,39 @@ const ProductDetailsScreen = ({ route, navigation }) => {
 
   const totalPrice = useMemo(() => Math.round(unitPrice * selectedQuantity), [unitPrice, selectedQuantity]);
 
+  // Check if product is already in cart
+  const isProductInCart = useMemo(() => {
+    if (!product?.id || !items || !Array.isArray(items)) return false;
+    
+    return items.some(cartItem => {
+      // Handle different cart item structures
+      const itemProduct = cartItem?.product || cartItem;
+      return itemProduct?.id === product.id && 
+             itemProduct?.weight === selectedWeight;
+    });
+  }, [product?.id, items, selectedWeight]);
+
+  // Track changes in quantity or weight
+  useEffect(() => {
+    if (isProductInCart && items && Array.isArray(items)) {
+      // Check if current selection differs from what's in cart
+      const cartItem = items.find(item => {
+        const itemProduct = item?.product || item;
+        return itemProduct?.id === product?.id && 
+               itemProduct?.weight === selectedWeight;
+      });
+      
+      if (cartItem) {
+        const hasQuantityChange = cartItem.quantity !== selectedQuantity;
+        setHasChanges(hasQuantityChange);
+      } else {
+        setHasChanges(true); // Different weight selected
+      }
+    } else {
+      setHasChanges(false);
+    }
+  }, [isProductInCart, selectedQuantity, selectedWeight, items, product?.id]);
+
   // --- Cart helpers ---
   const pushToCart = (extra = {}) => {
     const cartProduct = {
@@ -153,15 +188,88 @@ const ProductDetailsScreen = ({ route, navigation }) => {
       price: unitPrice, // price per unit
       ...extra,
     };
-    dispatch(addToCart({ product: cartProduct, quantity: selectedQuantity }));
+    
+    console.log('Cart payload to be saved:', {
+      product: cartProduct,
+      quantity: selectedQuantity,
+    });
+
+    // If product is already in cart, update quantity instead of adding
+    if (isProductInCart) {
+      dispatch(updateQuantity({
+        productId: product.id,
+        quantity: selectedQuantity,
+        weight: selectedWeight,
+        category: selectedCategory,
+        type: extra.type || 'default'
+      }));
+    } else {
+      dispatch(addToCart({ product: cartProduct, quantity: selectedQuantity }));
+    }
   };
 
-  const handleAddToCart = () => pushToCart();
+  const handleAddToCart = () => {
+    console.log('Add to Cart clicked:', {
+      isProductInCart,
+      hasChanges,
+      selectedQuantity,
+      selectedWeight
+    });
+    
+    // Always call pushToCart - it will handle whether to add or update
+    pushToCart();
+    navigation.navigate('Cart');
+  };
   const handleRefill = () => pushToCart({ type: 'refill' });
   const handleNewConnection = () => pushToCart({ type: 'new_connection' });
   const handleSpare = () => pushToCart({ type: 'spare' });
 
   const inStock = product?.inStock ?? true;
+
+  // Render hero image with slider
+  const renderHeroImage = () => {
+    const hasMultipleImages = product?.images && product.images.length > 1;
+    const currentImage = product?.images?.[currentImageIndex] || product?.image;
+    
+    return (
+      <View style={styles.heroWrap}>
+        <Image 
+          source={{ uri: currentImage }} 
+          style={styles.heroImg} 
+          resizeMode="contain" 
+        />
+        <View style={styles.heroOverlay} />
+        
+        {/* Image dots for multiple images */}
+        {hasMultipleImages && (
+          <View style={styles.heroImageDots}>
+            {product.images.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.heroImageDot,
+                  index === currentImageIndex && styles.heroActiveImageDot,
+                ]}
+              />
+            ))}
+          </View>
+        )}
+        
+        <View style={styles.heroTags}>
+          <View style={styles.tagPill}>
+            <Icon name="local-gas-station" size={14} color={COLORS.white} />
+            <Text style={styles.tagTxt}>{selectedCategory}</Text>
+          </View>
+          {selectedWeight && (
+            <View style={styles.tagPill}>
+              <Icon name="scale" size={14} color={COLORS.white} />
+              <Text style={styles.tagTxt}>{selectedWeight}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -210,23 +318,8 @@ const ProductDetailsScreen = ({ route, navigation }) => {
         {/* Product Content - Only show when not loading and no error */}
         {!isLoadingProduct && !productError && product && (
           <>
-            {/* Hero Image */}
-            <View style={styles.heroWrap}>
-              <Image source={{ uri: product?.images?.[0] || product?.image }} style={styles.heroImg} resizeMode="contain" />
-              <View style={styles.heroOverlay} />
-              <View style={styles.heroTags}>
-                <View style={styles.tagPill}>
-                  <Icon name="local-gas-station" size={14} color={COLORS.white} />
-                  <Text style={styles.tagTxt}>{selectedCategory}</Text>
-                </View>
-                {selectedWeight && (
-                  <View style={[styles.tagPill, { backgroundColor: COLORS.blackOpacity5 }]}>
-                    <Icon name="scale" size={14} color={COLORS.white} />
-                    <Text style={styles.tagTxt}>{selectedWeight}</Text>
-                  </View>
-                )}
-              </View>
-            </View>
+            {/* Hero Image with Slider */}
+            {renderHeroImage()}
 
             {/* Card: Title & Meta */}
             <View style={styles.card}>
@@ -331,12 +424,23 @@ const ProductDetailsScreen = ({ route, navigation }) => {
         </View>
 
         <TouchableOpacity
-          style={[styles.ctaBtn, (!inStock || isLoadingProduct || productError) && styles.ctaBtnDisabled]}
+          style={[
+            styles.ctaBtn, 
+            (!inStock || isLoadingProduct || productError) && styles.ctaBtnDisabled,
+            isProductInCart && !hasChanges && styles.ctaBtnInCart
+          ]}
           onPress={handleAddToCart}
           disabled={!inStock || isLoadingProduct || productError}>
           <Icon name="add-shopping-cart" size={20} color={COLORS.white} />
           <Text style={styles.ctaTxt}>
-            {isLoadingProduct ? 'Loading...' : !inStock ? 'Out of Stock' : 'Add to Cart'}
+            {isLoadingProduct 
+              ? 'Loading...' 
+              : !inStock 
+                ? 'Out of Stock' 
+                : isProductInCart && !hasChanges
+                  ? 'Already in Cart'
+                  : 'Add to Cart'
+            }
           </Text>
         </TouchableOpacity>
       </View>
@@ -405,6 +509,7 @@ const styles = StyleSheet.create({
     width: screenWidth,
     aspectRatio: 16 / 10,
     backgroundColor: COLORS.lightGrayOpacityColor || COLORS.verylightGrayColor,
+    position: 'relative',
   },
   heroImg: {
     width: '100%',
@@ -414,6 +519,28 @@ const styles = StyleSheet.create({
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.08)',
+  },
+  heroImageDots: {
+    position: 'absolute',
+    bottom: wp('3%'),
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: wp('1%'),
+  },
+  heroImageDot: {
+    width: wp('2%'),
+    height: wp('2%'),
+    borderRadius: wp('1%'),
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  heroActiveImageDot: {
+    backgroundColor: COLORS.white,
+    width: wp('2.5%'),
+    height: wp('2.5%'),
+    borderRadius: wp('1.25%'),
   },
   heroTags: {
     position: 'absolute',
@@ -602,6 +729,9 @@ const styles = StyleSheet.create({
   },
   ctaBtnDisabled: {
     backgroundColor: COLORS.lightShadeBlue || '#9aa3b2',
+  },
+  ctaBtnInCart: {
+    backgroundColor: COLORS.goldColor || '#FFA500',
   },
   ctaTxt: {
     color: COLORS.white,

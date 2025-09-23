@@ -81,6 +81,13 @@ const MenuDrawer = ({ visible, onClose, navigation }) => {
     });
   };
 
+  const handleAddress = () => {
+    // Close menu first, then navigate to Add Address
+    handleMenuCloseWithCallback(() => {
+      navigation.navigate('AddAddress');
+    });
+  };
+
   const handleProfileDetails = () => {
     navigation.navigate('Profile');
     handleMenuClose();
@@ -97,6 +104,20 @@ const MenuDrawer = ({ visible, onClose, navigation }) => {
     setLogoutModalVisible(false);
     dispatch(logout());
     handleMenuClose();
+  };
+
+
+  // Menu handlers
+  const handleTermsAndConditions = () => {
+    handleMenuCloseWithCallback(() => {
+      navigation.navigate('TermsAndConditions');
+    });
+  };
+
+  const handlePrivacyPolicy = () => {
+    handleMenuCloseWithCallback(() => {
+      navigation.navigate('PrivacyPolicy');
+    });
   };
 
   const [safetyModalVisible, setSafetyModalVisible] = React.useState(false);
@@ -153,6 +174,24 @@ const MenuDrawer = ({ visible, onClose, navigation }) => {
                 <TouchableOpacity style={styles.menuItem} onPress={handleKnowYourPrice}>
                   <Icon name="attach-money" size={24} color={COLORS.primary} />
                   <Text style={styles.menuText}>Know Your Price</Text>
+                  <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.menuItem} onPress={handleAddress}>
+                  <Icon name="location-on" size={24} color={COLORS.primary} />
+                  <Text style={styles.menuText}>Address</Text>
+                  <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.menuItem} onPress={handleTermsAndConditions}>
+                  <Icon name="description" size={24} color={COLORS.primary} />
+                  <Text style={styles.menuText}>Terms & Conditions</Text>
+                  <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.menuItem} onPress={handlePrivacyPolicy}>
+                  <Icon name="privacy-tip" size={24} color={COLORS.primary} />
+                  <Text style={styles.menuText}>Privacy Policy</Text>
                   <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
                 </TouchableOpacity>
               </ScrollView>

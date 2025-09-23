@@ -122,7 +122,8 @@ const cartSlice = createSlice({
       state.selectedAddress = action.payload;
     },
     calculateTotals: (state) => {
-      state.totalItems = state.items.reduce((total, item) => total + item.quantity, 0);
+      // Count unique products (not quantities)
+      state.totalItems = state.items.length;
       state.totalAmount = state.items.reduce((total, item) => total + (item.price * item.quantity), 0);
     },
   },

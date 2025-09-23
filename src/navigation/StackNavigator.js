@@ -9,6 +9,8 @@ import OrderConfirmationScreen from '../screens/OrderConfirmationScreen';
 import OrderTrackingScreen from '../screens/OrderTrackingScreen';
 import AddAddressScreen from '../screens/AddAddressScreen';
 import ProductDetailsScreen from '../screens/ProductDetailsScreen';
+import TermsAndConditionsScreen from '../screens/TermsAndConditionsScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 
 // Navigation
 import TabNavigator from './TabNavigator';
@@ -43,6 +45,8 @@ const StackNavigator = () => {
       <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
       <Stack.Screen name="AddAddress" component={AddAddressScreen} />
       <Stack.Screen name="ProductDetails" component={ProductDetailsScreen} />
+      <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
     </Stack.Navigator>
   );
 };

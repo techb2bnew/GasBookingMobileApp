@@ -67,6 +67,15 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
+    tokenExpired: (state) => {
+      state.isAuthenticated = false;
+      state.user = null;
+      state.token = null;
+      state.phoneNumber = '';
+      state.otp = '';
+      state.otpSent = false;
+      state.error = 'Session expired. Please login again.';
+    },
   },
 });
 
@@ -81,7 +90,8 @@ export const {
   verifyOTPFailure,
   logout,
   clearError,
-  resetOTP
+  resetOTP,
+  tokenExpired
 } = authSlice.actions;
 
 export default authSlice.reducer;

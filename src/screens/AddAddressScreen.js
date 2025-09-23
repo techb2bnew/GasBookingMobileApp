@@ -18,14 +18,19 @@ import {
   updateAddress,
   deleteAddress,
   setDefaultAddress,
+  fetchAddresses,
+  addAddressAPI,
+  updateAddressAPI,
+  deleteAddressAPI,
+  clearAddressError,
 } from '../redux/slices/profileSlice';
-import MapPicker from '../components/MapPicker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
+import MapPicker from '../components/MapPicker';
 
 const AddAddressScreen = ({ navigation }) => {
   const dispatch = useDispatch();
-  const { addresses, defaultAddressId } = useSelector(state => state.profile);
+  const { addresses, defaultAddressId, addressLoading, addressError } = useSelector(state => state.profile);
   const insets = useSafeAreaInsets();
   const [errors, setErrors] = useState({});
   const [isEditing, setIsEditing] = useState(false);
@@ -42,12 +47,27 @@ const AddAddressScreen = ({ navigation }) => {
   const [selectedLocation, setSelectedLocation] = useState(null);
 
   useEffect(() => {
+    // Fetch addresses when component mounts
+    dispatch(fetchAddresses());
+  }, [dispatch]);
+
+  useEffect(() => {
     if (addresses.length === 1 && !defaultAddressId) {
       dispatch(setDefaultAddress(addresses[0].id));
     }
   }, [addresses.length, defaultAddressId, dispatch]);
 
-  const handleAddAddress = () => {
+  // Clear address error when component unmounts or when user starts typing
+  useEffect(() => {
+    if (addressError) {
+      const timer = setTimeout(() => {
+        dispatch(clearAddressError());
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [addressError, dispatch]);
+
+  const handleAddAddress = async () => {
     const newErrors = {};
     if (!addressForm.title.trim()) newErrors.title = 'Title is required';
     if (!addressForm.address.trim()) newErrors.address = 'Address is required';
@@ -62,29 +82,45 @@ const AddAddressScreen = ({ navigation }) => {
 
     setErrors({}); // Clear errors if validation passes
 
-    if (editingAddress) {
-      dispatch(updateAddress({ id: editingAddress.id, ...addressForm }));
-      console.log('Success', 'Address updated successfully');
-    } else {
-      const newAddress = {
-        id: Date.now().toString(),
-        ...addressForm,
-      };
-      dispatch(addAddress(newAddress));
-
-      if (addresses.length === 0) {
-        dispatch(setDefaultAddress(newAddress.id));
-        console.log('Success', 'Address added and set as default');
+    try {
+      if (editingAddress) {
+        // Update existing address
+        const result = await dispatch(updateAddressAPI({
+          addressId: editingAddress.id,
+          addressData: addressForm
+        })).unwrap();
+        
+        console.log('Address updated successfully:', result);
+        Alert.alert('Success', 'Address updated successfully');
+        // Refresh addresses after update
+        dispatch(fetchAddresses());
       } else {
-        console.log('Success', 'Address added successfully. Please select a default address.');
+        // Add new address
+        const result = await dispatch(addAddressAPI(addressForm)).unwrap();
+        
+        console.log('Address added successfully:', result);
+        if (addresses.length === 0 && result && result.id) {
+          dispatch(setDefaultAddress(result.id));
+          Alert.alert('Success', 'Address added and set as default');
+        } else {
+          Alert.alert('Success', 'Address added successfully');
+        }
+        // Refresh addresses after adding
+        dispatch(fetchAddresses());
+      }
+
+      // Reset form and close it
+      setAddressForm({ title: '', address: '', city: '', pincode: '', landmark: '' });
+      setEditingAddress(null);
+      setIsEditing(false);
+      setShowForm(false);
+    } catch (error) {
+      console.log('Address save error:', error);
+      // Only show error alert if it's a real error, not a success with error message
+      if (error && typeof error === 'string' && !error.includes('successfully')) {
+        Alert.alert('Error', error);
       }
     }
-
-    // Reset form and close it
-    setAddressForm({ title: '', address: '', city: '', pincode: '', landmark: '' });
-    setEditingAddress(null);
-    setIsEditing(false);
-    setShowForm(false);
   };
 
   const handleEditAddress = (address) => {
@@ -108,13 +144,14 @@ const AddAddressScreen = ({ navigation }) => {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            dispatch(deleteAddress(addressId));
-            if (defaultAddressId === addressId) {
-              const remainingAddresses = addresses.filter(addr => addr.id !== addressId);
-              if (remainingAddresses.length > 0) {
-                dispatch(setDefaultAddress(remainingAddresses[0].id));
-              }
+          onPress: async () => {
+            try {
+              await dispatch(deleteAddressAPI(addressId)).unwrap();
+              Alert.alert('Success', 'Address deleted successfully');
+              // Refresh addresses after deletion
+              dispatch(fetchAddresses());
+            } catch (error) {
+              Alert.alert('Error', error || 'Failed to delete address');
             }
           },
         },
@@ -155,8 +192,7 @@ const AddAddressScreen = ({ navigation }) => {
     <View key={address.id} style={styles.addressItem}>
       <View style={styles.addressHeader}>
         <Text style={styles.addressTitle}>
-          {address.title.split(' ').slice(0, 3).join(' ')}
-          {address.title.split(' ').length > 3 ? '...' : ''}
+          {address.title?.charAt(0).toUpperCase() + address.title?.slice(1).toLowerCase()}
         </Text>
         {defaultAddressId === address.id && (
           <Text style={styles.defaultBadge}>Default</Text>
@@ -274,9 +310,18 @@ const AddAddressScreen = ({ navigation }) => {
         />
       </View>
 
-      <TouchableOpacity style={styles.saveButton} onPress={handleAddAddress}>
+      <TouchableOpacity 
+        style={[styles.saveButton, addressLoading && styles.saveButtonDisabled]} 
+        onPress={handleAddAddress}
+        disabled={addressLoading}
+      >
         <Text style={styles.saveButtonText}>
-          {isEditing ? 'Update Address' : 'Add Address'}
+          {addressLoading 
+            ? 'Saving...' 
+            : isEditing 
+              ? 'Update Address' 
+              : 'Add Address'
+          }
         </Text>
       </TouchableOpacity>
     </View>
@@ -296,8 +341,28 @@ const AddAddressScreen = ({ navigation }) => {
       </View>
 
       <ScrollView style={styles.content}>
+        {/* Loading State */}
+        {addressLoading && (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading addresses...</Text>
+          </View>
+        )}
+
+        {/* Error State */}
+        {addressError && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{addressError}</Text>
+            <TouchableOpacity 
+              style={styles.retryButton}
+              onPress={() => dispatch(fetchAddresses())}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Empty Message */}
-        {addresses.length === 0 && !showForm && (
+        {!addressLoading && !addressError && addresses.length === 0 && !showForm && (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No addresses added yet</Text>
             <Text style={styles.emptySubtext}>Add your first address to get started</Text>
@@ -305,7 +370,7 @@ const AddAddressScreen = ({ navigation }) => {
         )}
 
         {/* Address List */}
-        {addresses.length > 0 && addresses.map(renderAddressItem)}
+        {!addressLoading && !addressError && addresses.length > 0 && addresses.map(renderAddressItem)}
 
         {/* Address Form */}
         {showForm && renderAddressForm()}
@@ -387,7 +452,45 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md,
     alignItems: 'center', marginTop: spacing.md,
   },
+  saveButtonDisabled: {
+    backgroundColor: COLORS.lightGray,
+    opacity: 0.6,
+  },
   saveButtonText: { color: COLORS.white, fontSize: fontSize.md, fontWeight: '600' },
+  loadingContainer: {
+    alignItems: 'center', 
+    paddingVertical: wp('10%'),
+  },
+  loadingText: { 
+    fontSize: fontSize.md, 
+    color: COLORS.textSecondary,
+  },
+  errorContainer: {
+    backgroundColor: COLORS.errorBackground || '#ffebee',
+    margin: spacing.md,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: COLORS.error,
+  },
+  errorText: {
+    color: COLORS.error,
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+  },
+  retryButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    alignSelf: 'center',
+  },
+  retryButtonText: {
+    color: COLORS.white,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
   addressItem: {
     borderWidth: 1, borderColor: COLORS.border, borderRadius: borderRadius.md,
     padding: spacing.md, margin: spacing.md, marginBottom: spacing.sm, backgroundColor: COLORS.white,

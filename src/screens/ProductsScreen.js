@@ -9,16 +9,17 @@ import {
   ScrollView,
   View,
   Text,
+  Modal,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, STRINGS } from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { addToCart } from '../redux/slices/cartSlice';
+import { setProducts } from '../redux/slices/productSlice';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 import MenuDrawer from '../components/MenuDrawer';
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '../utils/apiConfig';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -31,37 +32,43 @@ const ProductsScreen = ({ navigation }) => {
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [productsError, setProductsError] = useState(null);
   const [apiProducts, setApiProducts] = useState([]);
+  const [productImageIndices, setProductImageIndices] = useState({});
+  const [agencies, setAgencies] = useState([]);
+  const [selectedAgencyId, setSelectedAgencyId] = useState('');
+  const [isAgencyModalVisible, setIsAgencyModalVisible] = useState(false);
+  const [isLoadingAgencies, setIsLoadingAgencies] = useState(false);
+  const [agenciesError, setAgenciesError] = useState(null);
   const carouselRef = useRef(null);
+  const carouselIntervalRef = useRef(null);
 
-  // Fetch products from API
-  const fetchProducts = async () => {
+  // Fetch products for selected agency
+  const fetchProducts = async (agencyId) => {
     try {
       setIsLoadingProducts(true);
       setProductsError(null);
 
-      // Get token from AsyncStorage
-      const token = await AsyncStorage.getItem('userToken');
+      const response = await apiClient.get(`/api/products`, {
+        params: { agencyId },
+      });
 
-      const headers = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await axios.get(
-        `${STRINGS.API_BASE_URL}/api/products/status/active`,
-        { headers }
-      );
-
-      console.log('Products API Response:', response.data);
-      console.log('Products Data Structure:', response.data.data);
-      console.log('Products Array:', response.data.data.products);
-      console.log('First Product Sample:', response.data.data.products?.[0]);
-      console.log('Categories Available:', [...new Set(response.data.data.products?.map(p => p.category) || [])]);
+      console.log('=== PRODUCTS API RESPONSE ===');
+      console.log('Agency ID Used:', agencyId);
+      console.log('Full Response:', response);
+      console.log('Response Data:', response.data);
+      console.log('Success Status:', response.data?.success);
+      console.log('Products Data Structure:', response.data?.data);
+      console.log('Products Array:', response.data?.data?.products);
+      console.log('Products Count:', response.data?.data?.products?.length);
+      console.log('First Product Sample:', response.data?.data?.products?.[0]);
+      console.log('Categories Available:', [...new Set(response.data?.data?.products?.map(p => p.category) || [])]);
+      console.log('==============================');
 
       if (response.data && response.data.success) {
         const products = response.data.data.products;
         if (products && Array.isArray(products)) {
           setApiProducts(products);
+          // Store products in Redux for use in other screens
+          dispatch(setProducts(products));
         } else {
           setProductsError('Invalid products data received');
         }
@@ -69,19 +76,96 @@ const ProductsScreen = ({ navigation }) => {
         setProductsError(response.data?.message || 'Failed to fetch products');
       }
     } catch (error) {
+      console.log('=== PRODUCTS API ERROR ===');
       console.error('Error fetching products:', error);
+      console.log('Error Response:', error.response?.data);
+      console.log('Error Status:', error.response?.status);
+      console.log('==========================');
       setProductsError('Failed to load products. Please try again.');
     } finally {
       setIsLoadingProducts(false);
     }
   };
 
-  // Fetch products when component mounts and when screen comes into focus
+  // Fetch agencies list
+  const fetchAgencies = async () => {
+    try {
+      setIsLoadingAgencies(true);
+      setAgenciesError(null);
+      const response = await apiClient.get('/api/agencies/active');
+      
+      console.log('=== AGENCIES API RESPONSE ===');
+      console.log('Full Response:', response);
+      console.log('Response Data:', response.data);
+      console.log('Success Status:', response.data?.success);
+      console.log('Agencies Data:', response.data?.data);
+      console.log('Agencies Array:', response.data?.data?.agencies);
+      console.log('First Agency Sample:', response.data?.data?.agencies?.[0]);
+      console.log('=============================');
+      
+      if (response.data?.success) {
+        const list = response.data.data?.agencies || [];
+        setAgencies(list);
+        if (list.length > 0) {
+          // Try to restore previously selected agency from storage
+          let restoredId = null;
+          try {
+            restoredId = await AsyncStorage.getItem('selectedAgencyId');
+          } catch (e) {
+            // ignore storage errors for restoring
+          }
+          const hasRestored = restoredId && list.some(a => a.id === restoredId);
+          const effectiveId = hasRestored ? restoredId : list[0].id;
+          setSelectedAgencyId(effectiveId);
+          // Save default if none was stored
+          if (!hasRestored) {
+            try { await AsyncStorage.setItem('selectedAgencyId', effectiveId); } catch (e) {}
+          }
+          await fetchProducts(effectiveId);
+        } else {
+          setApiProducts([]);
+        }
+      } else {
+        setAgenciesError(response.data?.message || 'Failed to fetch agencies');
+      }
+    } catch (error) {
+      console.log('=== AGENCIES API ERROR ===');
+      console.error('Error fetching agencies:', error);
+      console.log('Error Response:', error.response?.data);
+      console.log('Error Status:', error.response?.status);
+      console.log('===========================');
+      setAgenciesError('Failed to load agencies. Please try again.');
+    } finally {
+      setIsLoadingAgencies(false);
+    }
+  };
+
+  // Fetch agencies when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      fetchProducts();
+      fetchAgencies();
     }, [])
   );
+
+  // Auto-play image slider for products with multiple images
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProductImageIndices(prevIndices => {
+        const newIndices = {};
+        apiProducts.forEach(product => {
+          if (product.images && product.images.length > 1) {
+            const currentIndex = prevIndices[product.id] || 0;
+            newIndices[product.id] = (currentIndex + 1) % product.images.length;
+          }
+        });
+        return newIndices;
+      });
+    }, 3000); // Change image every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [apiProducts]);
+
+
 
   // Use only API products - no static data fallback
   const allProducts = apiProducts;
@@ -107,50 +191,42 @@ const ProductsScreen = ({ navigation }) => {
       subtitle: 'We are here to help you'
     }
   ];
+    // Auto-play carousel banner
+    useEffect(() => {
+      if (carouselData.length > 1) {
+        carouselIntervalRef.current = setInterval(() => {
+          setCurrentCarouselIndex(prevIndex => {
+            const nextIndex = (prevIndex + 1) % carouselData.length;
+            // Scroll to next slide
+            if (carouselRef.current) {
+              carouselRef.current.scrollToIndex({
+                index: nextIndex,
+                animated: true
+              });
+            }
+            return nextIndex;
+          });
+        }, 4000); // Change slide every 4 seconds
+      }
+  
+      return () => {
+        if (carouselIntervalRef.current) {
+          clearInterval(carouselIntervalRef.current);
+        }
+      };
+    }, [carouselData.length]);
   // Filter products based on selected category
   const filteredProducts = selectedCategory === 'All'
     ? allProducts
     : allProducts.filter(item => {
       console.log('Filtering item:', item.productName, 'Category:', item.category, 'Selected:', selectedCategory);
-      return item.category === selectedCategory;
+      // Convert both to lowercase for comparison
+      const itemCategory = item.category?.toLowerCase();
+      const selectedCategoryLower = selectedCategory.toLowerCase();
+      return itemCategory === selectedCategoryLower;
     });
 
-  const handleAddToCart = (product) => {
-    // Extract first variant data for cart
-    const firstVariant = product?.variants?.[0];
-    console.log('Original Product:', product);
-    console.log('First Variant:', firstVariant);
 
-    if (firstVariant) {
-      const cartProduct = {
-        ...product,
-        weight: firstVariant.label,
-        price: firstVariant.price,
-        stock: firstVariant.stock,
-        inStock: firstVariant.stock > 0
-      };
-      console.log('Cart Product:', cartProduct);
-      dispatch(addToCart({ product: cartProduct, quantity: 1 }));
-    } else {
-      console.log('No variants found for product:', product);
-    }
-    // Alert.alert('Success', `${product.productName} added to cart`);
-  };
-
-  const handleRefillCylinder = (product) => {
-    dispatch(addToCart({ product, quantity: 1, type: 'refill' }));
-    // Alert.alert('Success', `${product.name} refill request added to cart`);
-  };
-
-  const handleNewConnection = (product) => {
-    dispatch(addToCart({ product, quantity: 1, type: 'new_connection' }));
-    // Alert.alert('Success', `${product.name} new connection request added to cart`);
-  };
-
-  const handleSpareCylinder = (product) => {
-    dispatch(addToCart({ product, quantity: 1, type: 'spare' }));
-    // Alert.alert('Success', `${product.name} spare cylinder request added to cart`);
-  };
 
   const renderCarouselItem = ({ item, index }) => (
     <View style={styles.carouselItem}>
@@ -176,27 +252,50 @@ const ProductsScreen = ({ navigation }) => {
     </View>
   );
 
-  const renderCategoryTabs = () => (
-    <View style={styles.categoryTabs}>
-      {['All', 'LPG', 'Accessories'].map(cat => (
-        <TouchableOpacity
-          key={cat}
-          style={[
-            styles.categoryButton,
-            selectedCategory === cat && styles.categoryButtonActive,
-          ]}
-          onPress={() => setSelectedCategory(cat)}>
-          <Text
+  const renderCategoryTabs = () => {
+    // Get unique categories from API products
+    const availableCategories = ['All', ...new Set(apiProducts.map(product => 
+      product.category?.charAt(0).toUpperCase() + product.category?.slice(1).toLowerCase()
+    ))];
+    
+    console.log('Available categories:', availableCategories);
+    
+    return (
+      <View style={styles.categoryTabs}>
+        {availableCategories.map(cat => (
+          <TouchableOpacity
+            key={cat}
             style={[
-              styles.categoryText,
-              selectedCategory === cat && styles.categoryTextActive,
-            ]}>
-            {cat}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
+              styles.categoryButton,
+              selectedCategory === cat && styles.categoryButtonActive,
+            ]}
+            onPress={() => setSelectedCategory(cat)}>
+            <Text
+              style={[
+                styles.categoryText,
+                selectedCategory === cat && styles.categoryTextActive,
+              ]}>
+              {cat}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
+  const renderProductImage = (item) => {
+    const currentImageIndex = productImageIndices[item.id] || 0;
+    const hasMultipleImages = item.images && item.images.length > 1;
+    
+    return (
+      <View style={styles.imageContainer}>
+        <Image 
+          source={{ uri: item.images[currentImageIndex] }} 
+          style={styles.productImage} 
+        />
+      </View>
+    );
+  };
 
   const renderProductItem = ({ item }) => {
     // console.log("Rendering Product Item:", item);
@@ -205,33 +304,21 @@ const ProductsScreen = ({ navigation }) => {
       <TouchableOpacity
         style={styles.productCard}
         onPress={() => navigation.navigate('ProductDetails', { product: item })}>
-        <Image source={{ uri: item?.images[0] }} style={styles.productImage} />
+        {renderProductImage(item)}
 
         <View style={styles.productInfo}>
-          <Text style={styles.productName} numberOfLines={2}>{item?.productName}</Text>
-          <Text style={styles.productPrice}>₹{item?.variants?.[0]?.price || 'N/A'}</Text>
+          <Text style={styles.productName} numberOfLines={2}>{item?.productName ? item.productName.charAt(0).toUpperCase() + item.productName.slice(1) : item?.productName}</Text>
+          <Text style={styles.weightText}>
+            Starting at <Text style={styles.priceText}>₹{item?.variants?.[0]?.price || 'N/A'}</Text>
+          </Text>
 
           {item?.variants?.[0]?.label && (
             <View style={styles.weightInfo}>
               <Icon name="scale" size={14} color={COLORS.primary} />
-              <Text style={styles.weightText}>{item.variants[0].label}</Text>
+              <Text style={styles.weightText}>Variants: {item.variants.length}</Text>
             </View>
           )}
 
-          <TouchableOpacity
-            style={styles.addToCartButton}
-            onPress={() => {
-              // console.log("Add to Cart pressed:", item); 
-              handleAddToCart(item);
-            }}
-            disabled={!(item?.variants?.[0]?.stock > 0)}>
-            <View style={styles.buttonContent}>
-              <Icon name="add-shopping-cart" size={14} color={COLORS.white} />
-              <Text style={styles.addToCartText}>
-                {(item?.variants?.[0]?.stock > 0) ? 'Add to Cart' : 'Out of Stock'}
-              </Text>
-            </View>
-          </TouchableOpacity>
 
           {/* {item.category !== 'Accessories' && (
             <View style={styles.quickOptions}>
@@ -291,12 +378,20 @@ const ProductsScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.headerButtons}>
-              <TouchableOpacity
-                style={styles.addressButton}
-                onPress={() => navigation.navigate('AddAddress')}>
-                <Icon name="location-on" size={20} color={COLORS.primary} />
-                <Text style={styles.addressButtonText}>Address</Text>
-              </TouchableOpacity>
+              <View style={styles.agencySelectorContainer}>
+                <TouchableOpacity
+                  style={styles.agencySelector}
+                  onPress={() => setIsAgencyModalVisible(true)}
+                  disabled={isLoadingAgencies}
+                >
+                  <Icon name="store" size={20} color={COLORS.primary} />
+                  <Text style={styles.agencySelectorText} numberOfLines={1}>
+                    {isLoadingAgencies ? 'Loading agencies...' : (agencies.find(a => a.id === selectedAgencyId)?.name || 'Select agency')}
+                  </Text>
+                  <Icon name={'expand-more'} size={20} color={COLORS.textSecondary} />
+                </TouchableOpacity>
+                
+              </View>
               <TouchableOpacity
                 style={styles.cartButton}
                 onPress={() => navigation.navigate('Cart')}>
@@ -326,6 +421,29 @@ const ProductsScreen = ({ navigation }) => {
             onMomentumScrollEnd={(event) => {
               const index = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
               setCurrentCarouselIndex(index);
+            }}
+            onScrollBeginDrag={() => {
+              // Pause auto-play when user starts scrolling
+              if (carouselIntervalRef.current) {
+                clearInterval(carouselIntervalRef.current);
+              }
+            }}
+            onScrollEndDrag={() => {
+              // Resume auto-play after user stops scrolling
+              if (carouselData.length > 1) {
+                carouselIntervalRef.current = setInterval(() => {
+                  setCurrentCarouselIndex(prevIndex => {
+                    const nextIndex = (prevIndex + 1) % carouselData.length;
+                    if (carouselRef.current) {
+                      carouselRef.current.scrollToIndex({
+                        index: nextIndex,
+                        animated: true
+                      });
+                    }
+                    return nextIndex;
+                  });
+                }, 4000);
+              }
             }}
             style={styles.carousel}
           />
@@ -370,7 +488,7 @@ const ProductsScreen = ({ navigation }) => {
                 data={filteredProducts}
                 renderItem={renderProductItem}
                 keyExtractor={(item) => item.id}
-                numColumns={2}
+                numColumns={3}
                 columnWrapperStyle={styles.productRow}
                 scrollEnabled={false}
                 contentContainerStyle={styles.productsContent}
@@ -380,8 +498,56 @@ const ProductsScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
+      {/* Agency Picker Modal */}
+      <Modal
+        visible={isAgencyModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsAgencyModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.agencyModalContent}>
+            <View style={styles.agencyModalHeader}>
+              <Text style={styles.agencyModalTitle}>Select Agency</Text>
+              <TouchableOpacity onPress={() => setIsAgencyModalVisible(false)}>
+                <Icon name="close" size={22} color={COLORS.textPrimary} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.agencyList}>
+              {agencies.map((a) => (
+                <TouchableOpacity
+                  key={a.id}
+                  style={styles.agencyOption}
+                  onPress={async () => {
+                    setIsAgencyModalVisible(false);
+                    if (a.id !== selectedAgencyId) {
+                      setSelectedAgencyId(a.id);
+                      try { await AsyncStorage.setItem('selectedAgencyId', a.id); } catch (e) {}
+                      await fetchProducts(a.id);
+                    }
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.agencyOptionText,
+                      a.id === selectedAgencyId && styles.agencyOptionTextActive,
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {a.name}
+                  </Text>
+                  {a.id === selectedAgencyId && (
+                    <Icon name="check" size={18} color={COLORS.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* Floating Cart Summary */}
-      {totalItems > 0 && (
+      {/* {totalItems > 0 && (
         <View style={styles.floatingCart}>
           <View style={styles.cartSummary}>
             <View style={styles.cartInfo}>
@@ -395,7 +561,7 @@ const ProductsScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         </View>
-      )}
+      )} */}
 
       {/* Menu Drawer */}
       <MenuDrawer
@@ -469,24 +635,97 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
-  addressButton: {
+  agencySelectorContainer: {
+    position: 'relative',
+  },
+  agencySelector: {
     backgroundColor: COLORS.white,
     paddingHorizontal: spacing.md,
     paddingVertical: wp('2%'),
     borderRadius: wp('5%'),
     flexDirection: 'row',
     alignItems: 'center',
+    gap: wp('1%'),
+    minWidth: wp('40%'),
+    maxWidth: wp('50%'),
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 3,
   },
-  addressButtonText: {
+  agencySelectorText: {
     color: COLORS.primary,
     fontWeight: '600',
     fontSize: fontSize.sm,
-    marginLeft: wp('1%'),
+    flex: 1,
+  },
+  agencyDropdown: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.white,
+    borderRadius: wp('2.5%'),
+    marginTop: wp('1%'),
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  agencyModalContent: {
+    backgroundColor: COLORS.white,
+    width: '100%',
+    maxHeight: '70%',
+    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+  },
+  agencyModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  agencyModalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  agencyList: {
+    maxHeight: hp('25%'),
+  },
+  agencyOption: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  agencyOptionText: {
+    color: COLORS.textPrimary,
+    fontSize: fontSize.sm,
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  agencyOptionTextActive: {
+    color: COLORS.primary,
+    fontWeight: '700',
   },
   cartButton: {
     backgroundColor: COLORS.secondary,
@@ -720,42 +959,70 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   productRow: {
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
+    justifyContent: 'flex-start',
+    marginBottom: spacing.sm,
+    paddingHorizontal: wp('1%'),
+    gap: wp('4%'),
   },
   productCard: {
     backgroundColor: COLORS.white,
     borderRadius: borderRadius.md,
-    padding: wp('2%'),
-    width: (screenWidth - 35) / 2,
+    padding: wp('1.5%'),
+    width: (screenWidth - 60) / 3, // Adjusted for gap spacing
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
+  imageContainer: {
+    position: 'relative',
+    marginBottom: spacing.sm,
+  },
   productImage: {
     width: '100%',
-    height: hp('15%'),
+    height: hp('12%'),
     borderRadius: borderRadius.md,
-    marginBottom: spacing.sm,
     resizeMode:"contain"
+  },
+  imageDots: {
+    position: 'absolute',
+    bottom: wp('1%'),
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageDot: {
+    width: wp('1.5%'),
+    height: wp('1.5%'),
+    borderRadius: wp('0.75%'),
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginHorizontal: wp('0.5%'),
+  },
+  activeImageDot: {
+    backgroundColor: COLORS.primary,
+    width: wp('2%'),
+    height: wp('2%'),
+    borderRadius: wp('1%'),
   },
   productInfo: {
     flex: 1,
+    paddingBottom: spacing.sm,
   },
   productName: {
     fontSize: fontSize.xs,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
-    marginBottom: wp('1.25%'),
-    lineHeight: fontSize.lg,
+    marginBottom: wp('1%'),
+    lineHeight: fontSize.sm,
   },
   productPrice: {
-    fontSize: fontSize.md,
+    fontSize: fontSize.sm,
     fontWeight: 'bold',
     color: COLORS.primary,
-    marginBottom: wp('2%'),
+    marginBottom: wp('1%'),
   },
   productDescription: {
     fontSize: fontSize.md,
@@ -769,9 +1036,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   weightText: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
     color: COLORS.textSecondary,
     marginLeft: wp('1%'),
+  },
+  priceText: {
+    fontSize: fontSize.xs,
+    color: COLORS.textPrimary,
+    fontWeight: '800',
   },
   productMeta: {
     flexDirection: 'row',
@@ -824,74 +1096,11 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     marginTop: spacing.sm,
   },
-  addToCartButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    marginVertical: wp('1.25%'),
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: COLORS.white,
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addToCartText: {
-    color: COLORS.white,
-    fontWeight: 'bold',
-    fontSize: fontSize.sm,
-    marginLeft: wp('1.5%'),
-  },
-  quickOptions: {
-    flexDirection: 'row',
-    gap: wp('1%'),
-    marginTop: wp('1.25%'),
-  },
-  quickOption: {
-    backgroundColor: COLORS.secondary,
-    paddingVertical: wp('2%'),
-    paddingHorizontal: wp('2%'),
-    borderRadius: wp('1%'),
-    flex: 1,
-    alignItems: 'center',
-  },
-  quickOptionText: {
-    color: COLORS.white,
-    fontWeight: 'bold',
-    fontSize: fontSize.xs,
-  },
-  buttonDisabled: {
-    backgroundColor: COLORS.gray,
-    opacity: 0.6,
-  },
   productPrice: {
     fontSize: fontSize.md,
     fontWeight: '700',
     color: COLORS.primary,
     letterSpacing: -0.3,
-  },
-  addButton: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-  },
-  addButtonDisabled: {
-    backgroundColor: COLORS.gray,
-  },
-  addButtonText: {
-    color: COLORS.white,
-    fontWeight: '600',
   },
   categoryTabs: {
     flexDirection: 'row',

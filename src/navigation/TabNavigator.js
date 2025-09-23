@@ -1,7 +1,8 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, StyleSheet, Platform, Text } from 'react-native';
+import { View, StyleSheet, Platform, Text, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useSelector } from 'react-redux';
 import { COLORS } from '../constants';
 
 // Screens
@@ -14,6 +15,8 @@ import ProfileScreen from '../screens/ProfileScreen';
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
+  const { profile } = useSelector(state => state.profile);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -177,7 +180,14 @@ const TabNavigator = () => {
           tabBarLabel: () => null, // Hide default label
           tabBarIcon: ({ color, size, focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <Icon name="person" color={color} size={focused ? 26 : 24} />
+              {profile?.profileImage ? (
+                <Image
+                  source={{ uri: profile.profileImage }}
+                  style={[styles.profileTabImage, focused && styles.activeProfileTabImage]}
+                />
+              ) : (
+                <Icon name="person" color={color} size={focused ? 26 : 24} />
+              )}
               <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
                 Profile
               </Text>
@@ -216,6 +226,48 @@ const styles = StyleSheet.create({
   activeTabLabel: {
     color: COLORS.primary,
     fontWeight: '700',
+  },
+  profileTabImage: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  activeProfileTabImage: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
+  profileTabPlaceholder: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLORS.textSecondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  activeProfileTabPlaceholder: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: COLORS.primary,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
+  profileTabPlaceholderText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: COLORS.white,
+  },
+  activeProfileTabPlaceholderText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: COLORS.white,
   },
 });
 

@@ -27,8 +27,8 @@ import {
 } from '../redux/slices/authSlice';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
 import { updateProfile } from '../redux/slices/profileSlice';
-import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '../utils/apiConfig';
 import { hp, wp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 
 const LoginScreen = ({ navigation }) => {
@@ -67,18 +67,10 @@ const LoginScreen = ({ navigation }) => {
     dispatch(sendOTPStart());
 
     try {
-      const response = await axios.post(
-        `${STRINGS.API_BASE_URL}/api/auth/request-otp`,
-        {
-          email: phoneNumber,
-          role: "customer",
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await apiClient.post('/api/auth/request-otp', {
+        email: phoneNumber,
+        role: "customer",
+      });
 
       console.log("OTP API Success:", response.data);
 
@@ -133,19 +125,11 @@ const LoginScreen = ({ navigation }) => {
     dispatch(verifyOTPStart());
 
     try {
-      const response = await axios.post(
-        `${STRINGS.API_BASE_URL}/api/auth/verify-otp`,
-        {
-          email: phoneNumber,
-          otp: otpValue,
-          role: "customer"
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await apiClient.post('/api/auth/verify-otp', {
+        email: phoneNumber,
+        otp: otpValue,
+        role: "customer"
+      });
 
       console.log("Verify OTP API Response:", response.data);
 
@@ -195,18 +179,10 @@ const LoginScreen = ({ navigation }) => {
     dispatch(sendOTPStart());
 
     try {
-      const response = await axios.post(
-        `${STRINGS.API_BASE_URL}/api/auth/request-otp`,
-        {
-          email: phoneNumber,
-          role: "customer",
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await apiClient.post('/api/auth/request-otp', {
+        email: phoneNumber,
+        role: "customer",
+      });
 
       console.log("Resend OTP API Success:", response.data);
 

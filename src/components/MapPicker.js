@@ -338,6 +338,28 @@ const MapPicker = ({ onLocationSelect, initialLocation = null }) => {
     return components;
   };
 
+  const useCurrentLocation = () => {
+    if (currentLocation) {
+      // Set current location as selected location
+      setSelectedLocation(currentLocation);
+      
+      // Parse address components
+      const addressComponents = parseAddressComponents(currentLocation.address);
+      
+      // Create location object with parsed components
+      const locationWithComponents = {
+        ...currentLocation,
+        ...addressComponents
+      };
+      
+      // Automatically confirm and return the location
+      onLocationSelect(locationWithComponents);
+      
+    } else {
+      Alert.alert('Error', 'Current location not available. Please try again.');
+    }
+  };
+
   const confirmLocation = () => {
     if (selectedLocation) {
       // Parse address components
@@ -385,10 +407,17 @@ const MapPicker = ({ onLocationSelect, initialLocation = null }) => {
         {currentLocation && (
           <View style={styles.actionButtons}>
             <TouchableOpacity
+              style={[styles.actionButton, styles.currentLocationButton]}
+              onPress={useCurrentLocation}>
+              <Icon name="my-location" size={20} color={COLORS.white} />
+              <Text style={styles.actionButtonText}>Use Current Location</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
               style={[styles.actionButton, styles.confirmButton]}
               onPress={confirmLocation}>
               <Icon name="check" size={20} color={COLORS.white} />
-              <Text style={styles.actionButtonText}>Confirm Location</Text>
+              <Text style={styles.actionButtonText}>Confirm Selected Location</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -400,19 +429,19 @@ const MapPicker = ({ onLocationSelect, initialLocation = null }) => {
               <View style={styles.instructionItem}>
                 <Icon name="radio-button-checked" size={16} color={COLORS.primary} />
                 <Text style={styles.instructionText}>
-                  Your current location is automatically shown on the map
+                  Click "Use Current Location" to automatically fill address form
                 </Text>
               </View>
               <View style={styles.instructionItem}>
                 <Icon name="radio-button-checked" size={16} color={COLORS.primary} />
                 <Text style={styles.instructionText}>
-                  Tap anywhere on the map to pick a different location
+                  Or tap anywhere on the map to pick a different location
                 </Text>
               </View>
               <View style={styles.instructionItem}>
                 <Icon name="radio-button-checked" size={16} color={COLORS.primary} />
                 <Text style={styles.instructionText}>
-                  Confirm the location to auto-fill the address form
+                  Then confirm the selected location to auto-fill the form
                 </Text>
               </View>
             </>
@@ -554,6 +583,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+  },
+  currentLocationButton: {
+    backgroundColor: COLORS.primary,
   },
   confirmButton: {
     backgroundColor: COLORS.success,

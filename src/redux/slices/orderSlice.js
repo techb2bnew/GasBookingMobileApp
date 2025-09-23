@@ -68,6 +68,9 @@ const orderSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    setOrders: (state, action) => {
+      state.orders = action.payload;
+    },
   },
 });
 
@@ -81,6 +84,7 @@ export const {
   setLoading,
   setError,
   clearError,
+  setOrders,
 } = orderSlice.actions;
 
 export default orderSlice.reducer;
