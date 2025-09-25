@@ -5,7 +5,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Dimensions,
 } from 'react-native';
+import Ionicons from 'react-native-vector-icons/dist/Ionicons';
 import { useSelector } from 'react-redux';
 import { COLORS, STRINGS } from '../constants';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
@@ -45,43 +47,70 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
-        {/* Success Icon */}
-        <View style={styles.successIcon}>
-          <Text style={styles.successIconText}>✓</Text>
+        {/* Header Section */}
+        <View style={styles.headerSection}>
+          <View style={styles.successIcon}>
+            <Ionicons name="checkmark-circle" size={60} color={COLORS.white} />
+          </View>
+          <Text style={styles.title}>{STRINGS.orderConfirmed}</Text>
+          <Text style={styles.subtitle}>
+            Your order has been placed successfully!
+          </Text>
         </View>
-
-        <Text style={styles.title}>{STRINGS.orderConfirmed}</Text>
-        <Text style={styles.subtitle}>
-          Your order has been placed successfully!
-        </Text>
 
         {/* Order Details */}
         <View style={styles.orderCard}>
           <View style={styles.orderHeader}>
-            <Text style={styles.orderIdLabel}>Order ID</Text>
+            <View style={styles.orderIdContainer}>
+              <Ionicons name="receipt" size={20} color={COLORS.primary} />
+              <Text style={styles.orderIdLabel}>Order ID</Text>
+            </View>
             <Text style={styles.orderIdValue}>#{order.id}</Text>
           </View>
 
-          <View style={styles.orderDetail}>
-            <Text style={styles.detailLabel}>Order Date:</Text>
-            <Text style={styles.detailValue}>{formatDate(order.orderDate)}</Text>
-          </View>
-
-          <View style={styles.orderDetail}>
-            <Text style={styles.detailLabel}>Delivery Type:</Text>
-            <Text style={styles.detailValue}>{order.deliveryType}</Text>
-          </View>
-
-          <View style={styles.orderDetail}>
-            <Text style={styles.detailLabel}>Payment Method:</Text>
-            <Text style={styles.detailValue}>{order.paymentMethod}</Text>
-          </View>
-
-          {order.address && (
+          <View style={styles.detailsContainer}>
             <View style={styles.orderDetail}>
-              <Text style={styles.detailLabel}>Delivery Address:</Text>
+              <View style={styles.detailIconContainer}>
+                <Ionicons name="calendar" size={16} color={COLORS.primary} />
+                <Text style={styles.detailLabel}>Order Date:</Text>
+              </View>
+              <Text style={styles.detailValue}>{formatDate(order.orderDate)}</Text>
+            </View>
+
+            <View style={styles.orderDetail}>
+              <View style={styles.detailIconContainer}>
+                <Ionicons 
+                  name={order.deliveryMode === 'pickup' ? 'storefront' : 'home'} 
+                  size={16} 
+                  color={COLORS.primary} 
+                />
+                <Text style={styles.detailLabel}>Delivery Mode:</Text>
+              </View>
+              <Text style={styles.detailValue}>
+                {order.deliveryMode === 'pickup' ? 'Pickup from Agency' : 'Home Delivery'}
+              </Text>
+            </View>
+
+            <View style={styles.orderDetail}>
+              <View style={styles.detailIconContainer}>
+                <Ionicons name="card" size={16} color={COLORS.primary} />
+                <Text style={styles.detailLabel}>Payment Method:</Text>
+              </View>
+              <Text style={styles.detailValue}>
+                {order.deliveryMode === 'pickup' ? 'Cash on Pickup' : 'Cash on Delivery'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Show address only for home delivery */}
+          {order.deliveryMode === 'home_delivery' && order.address && (
+            <View style={styles.orderDetail}>
+              <View style={styles.detailIconContainer}>
+                <Ionicons name="location" size={16} color={COLORS.primary} />
+                <Text style={styles.detailLabel}>Delivery Address:</Text>
+              </View>
               <Text style={styles.detailValue}>
                 {order.address.title}{"\n"}
                 {order.address.address}{"\n"}
@@ -90,39 +119,140 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
             </View>
           )}
 
+          {/* Show agency information for both delivery modes */}
+          {order.agency && (
+            <View style={styles.agencyCard}>
+              <View style={styles.agencyHeader}>
+                <Ionicons name="business" size={20} color={COLORS.primary} />
+                <Text style={styles.agencyTitle}>
+                  {order.deliveryMode === 'pickup' ? 'Pickup Agency' : 'Delivery Agency'}
+                </Text>
+              </View>
+              <View style={styles.agencyDetails}>
+                <Text style={styles.agencyName}>{order.agency.name}</Text>
+                <View style={styles.agencyInfo}>
+                  <Ionicons name="location-outline" size={14} color={COLORS.textSecondary} />
+                  <Text style={styles.agencyAddress}>
+                    {order.agency.address}, {order.agency.city}, {order.agency.pincode}
+                  </Text>
+                </View>
+                <View style={styles.agencyInfo}>
+                  <Ionicons name="call-outline" size={14} color={COLORS.textSecondary} />
+                  <Text style={styles.agencyPhone}>{order.agency.phone}</Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Show estimated delivery/pickup time */}
           <View style={styles.orderDetail}>
-            <Text style={styles.detailLabel}>Estimated Delivery:</Text>
-            <Text style={styles.detailValue}>{formatDate(order.estimatedDelivery)}</Text>
+            <View style={styles.detailIconContainer}>
+              <Ionicons 
+                name={order.deliveryMode === 'pickup' ? 'time' : 'car'} 
+                size={16} 
+                color={COLORS.primary} 
+              />
+              <Text style={styles.detailLabel}>
+                {order.deliveryMode === 'pickup' ? 'Estimated Pickup:' : 'Estimated Delivery:'}
+              </Text>
+            </View>
+            <Text style={styles.detailValue}>
+              {order.deliveryMode === 'pickup' 
+                ? 'Ready for pickup within 24-48 hours' 
+                : formatDate(order.estimatedDelivery)
+              }
+            </Text>
           </View>
         </View>
 
         {/* Order Items */}
         <View style={styles.itemsCard}>
-          <Text style={styles.itemsTitle}>Order Items</Text>
-          {order.items.map((item) => (
-            <View key={item.id} style={styles.orderItem}>
-              <Text style={styles.itemName}>{item.name}</Text>
-              <Text style={styles.itemDetails}>
-                Qty: {item.quantity} × ₹{item.price} = ₹{item.quantity * item.price}
-              </Text>
-            </View>
-          ))}
+          <View style={styles.itemsHeader}>
+            <Ionicons name="list" size={20} color={COLORS.primary} />
+            <Text style={styles.itemsTitle}>Order Items</Text>
+          </View>
+          
+          <View style={styles.itemsList}>
+            {order.items.map((item, index) => (
+              <View key={item.id} style={[styles.orderItem, index === order.items.length - 1 && styles.lastOrderItem]}>
+                <View style={styles.itemInfo}>
+                  <Text style={styles.itemName}>{item.name || item.productName}</Text>
+                  <Text style={styles.itemVariant}>
+                    {item.weight || item.variantLabel} • Qty: {item.quantity}
+                  </Text>
+                </View>
+                <View style={styles.itemPrice}>
+                  <Text style={styles.itemPriceText}>₹{item.quantity * item.price}</Text>
+                  <Text style={styles.itemUnitPrice}>₹{item.price} each</Text>
+                </View>
+              </View>
+            ))}
+          </View>
 
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total Amount:</Text>
+            <View style={styles.totalContainer}>
+              <Ionicons name="wallet" size={20} color={COLORS.primary} />
+              <Text style={styles.totalLabel}>Total Amount</Text>
+            </View>
             <Text style={styles.totalAmount}>₹{order.totalAmount}</Text>
           </View>
         </View>
 
         {/* Status Info */}
         <View style={styles.statusCard}>
-          <Text style={styles.statusTitle}>What's Next?</Text>
-          <Text style={styles.statusText}>
-            • Your order is being processed{"\n"}
-            • You will receive updates on order status{"\n"}
-            • Track your order in the Orders section{"\n"}
-            • Payment will be collected on delivery
-          </Text>
+          <View style={styles.statusHeader}>
+            <Ionicons name="information-circle" size={20} color={COLORS.primary} />
+            <Text style={styles.statusTitle}>What's Next?</Text>
+          </View>
+          <View style={styles.statusList}>
+            {order.deliveryMode === 'pickup' ? (
+              <>
+                <View style={styles.statusItem}>
+                  <Ionicons name="construct" size={16} color={COLORS.success} />
+                  <Text style={styles.statusText}>Your order is being prepared at the agency</Text>
+                </View>
+                <View style={styles.statusItem}>
+                  <Ionicons name="notifications" size={16} color={COLORS.success} />
+                  <Text style={styles.statusText}>You will receive updates on order status</Text>
+                </View>
+                <View style={styles.statusItem}>
+                  <Ionicons name="eye" size={16} color={COLORS.success} />
+                  <Text style={styles.statusText}>Track your order in the Orders section</Text>
+                </View>
+                <View style={styles.statusItem}>
+                  <Ionicons name="card" size={16} color={COLORS.success} />
+                  <Text style={styles.statusText}>Payment will be collected on pickup</Text>
+                </View>
+                <View style={styles.statusItem}>
+                  <Ionicons name="id-card" size={16} color={COLORS.success} />
+                  <Text style={styles.statusText}>Please bring a valid ID for verification</Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.statusItem}>
+                  <Ionicons name="construct" size={16} color={COLORS.success} />
+                  <Text style={styles.statusText}>Your order is being processed</Text>
+                </View>
+                <View style={styles.statusItem}>
+                  <Ionicons name="notifications" size={16} color={COLORS.success} />
+                  <Text style={styles.statusText}>You will receive updates on order status</Text>
+                </View>
+                <View style={styles.statusItem}>
+                  <Ionicons name="eye" size={16} color={COLORS.success} />
+                  <Text style={styles.statusText}>Track your order in the Orders section</Text>
+                </View>
+                <View style={styles.statusItem}>
+                  <Ionicons name="card" size={16} color={COLORS.success} />
+                  <Text style={styles.statusText}>Payment will be collected on delivery</Text>
+                </View>
+                <View style={styles.statusItem}>
+                  <Ionicons name="home" size={16} color={COLORS.success} />
+                  <Text style={styles.statusText}>Please ensure someone is available to receive the order</Text>
+                </View>
+              </>
+            )}
+          </View>
         </View>
 
         {/* Action Buttons */}
@@ -130,12 +260,14 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
           <TouchableOpacity
             style={styles.trackButton}
             onPress={() => navigation.navigate("Main", { screen: "Tracking", orderId: orderId })}>
+            <Ionicons name="eye" size={20} color={COLORS.white} />
             <Text style={styles.trackButtonText}>{STRINGS.trackOrder}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.continueButton}
             onPress={() => navigation.navigate('Main')}>
+            <Ionicons name="storefront" size={20} color={COLORS.primary} />
             <Text style={styles.continueButtonText}>Continue Shopping</Text>
           </TouchableOpacity>
         </View>
@@ -157,20 +289,24 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     alignItems: 'center',
   },
+  headerSection: {
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+  },
   successIcon: {
-    width: wp('20%'),
-    height: wp('20%'),
-    borderRadius: wp('10%'),
+    width: wp('25%'),
+    height: wp('25%'),
+    borderRadius: wp('12.5%'),
     backgroundColor: COLORS.success,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: wp('10%'),
+    marginTop: wp('5%'),
     marginBottom: spacing.lg,
-  },
-  successIconText: {
-    color: COLORS.white,
-    fontSize: fontSize.xxl,
-    fontWeight: 'bold',
+    shadowColor: COLORS.success,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   title: {
     fontSize: fontSize.xxl,
@@ -183,7 +319,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: COLORS.textSecondary,
     textAlign: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
+    lineHeight: 22,
   },
   orderCard: {
     backgroundColor: COLORS.cardBackground,
@@ -192,10 +329,7 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: spacing.lg,
     shadowColor: COLORS.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
     elevation: 6,
@@ -209,25 +343,40 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
+  orderIdContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: wp('1.25%'),
+  },
   orderIdLabel: {
     fontSize: fontSize.sm,
     color: COLORS.textSecondary,
-    marginBottom: wp('1.25%'),
+    marginLeft: spacing.xs,
   },
   orderIdValue: {
     fontSize: fontSize.xl,
     fontWeight: 'bold',
     color: COLORS.primary,
   },
+  detailsContainer: {
+    marginBottom: spacing.md,
+  },
   orderDetail: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  detailIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   detailLabel: {
     fontSize: fontSize.sm,
     color: COLORS.textSecondary,
+    marginLeft: spacing.xs,
     flex: 1,
   },
   detailValue: {
@@ -237,6 +386,51 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'right',
   },
+  // Agency Card Styles
+  agencyCard: {
+    backgroundColor: COLORS.primary + '10',
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginVertical: spacing.sm,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
+  },
+  agencyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  agencyTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: COLORS.primary,
+    marginLeft: spacing.xs,
+  },
+  agencyDetails: {
+    marginLeft: spacing.lg,
+  },
+  agencyName: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: spacing.xs,
+  },
+  agencyInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  agencyAddress: {
+    fontSize: fontSize.sm,
+    color: COLORS.textSecondary,
+    marginLeft: spacing.xs,
+    flex: 1,
+  },
+  agencyPhone: {
+    fontSize: fontSize.sm,
+    color: COLORS.textSecondary,
+    marginLeft: spacing.xs,
+  },
   itemsCard: {
     backgroundColor: COLORS.cardBackground,
     borderRadius: borderRadius.lg,
@@ -244,36 +438,63 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: spacing.lg,
     shadowColor: COLORS.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
     elevation: 6,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
+  itemsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
   itemsTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.text,
+    marginLeft: spacing.xs,
+  },
+  itemsList: {
     marginBottom: spacing.md,
   },
   orderItem: {
-    paddingVertical: wp('2%'),
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+  },
+  lastOrderItem: {
+    borderBottomWidth: 0,
+  },
+  itemInfo: {
+    flex: 1,
   },
   itemName: {
     fontSize: fontSize.md,
     fontWeight: '500',
     color: COLORS.text,
+    marginBottom: spacing.xs,
   },
-  itemDetails: {
+  itemVariant: {
     fontSize: fontSize.sm,
     color: COLORS.textSecondary,
-    marginTop: wp('0.5%'),
+  },
+  itemPrice: {
+    alignItems: 'flex-end',
+  },
+  itemPriceText: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  itemUnitPrice: {
+    fontSize: fontSize.xs,
+    color: COLORS.textSecondary,
+    marginTop: spacing.xs,
   },
   totalRow: {
     flexDirection: 'row',
@@ -281,13 +502,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: spacing.md,
     marginTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    borderTopWidth: 2,
+    borderTopColor: COLORS.primary,
+  },
+  totalContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   totalLabel: {
     fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.text,
+    marginLeft: spacing.xs,
   },
   totalAmount: {
     fontSize: fontSize.xl,
@@ -301,24 +527,36 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: spacing.xl,
     shadowColor: COLORS.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  statusHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
   },
   statusTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.text,
+    marginLeft: spacing.xs,
+  },
+  statusList: {
+    marginLeft: spacing.lg,
+  },
+  statusItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     marginBottom: spacing.sm,
   },
   statusText: {
     fontSize: fontSize.sm,
     color: COLORS.textSecondary,
-    lineHeight: fontSize.lg,
+    marginLeft: spacing.sm,
+    flex: 1,
+    lineHeight: 20,
   },
   buttonContainer: {
     width: '100%',
@@ -328,7 +566,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.sm,
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -340,6 +580,7 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: fontSize.md,
     fontWeight: '600',
+    marginLeft: spacing.xs,
   },
   continueButton: {
     backgroundColor: COLORS.white,
@@ -347,7 +588,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -358,6 +601,7 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontSize: fontSize.md,
     fontWeight: '600',
+    marginLeft: spacing.xs,
   },
   autoRedirectText: {
     fontSize: fontSize.sm,

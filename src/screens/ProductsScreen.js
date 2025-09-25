@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {
   FlatList,
   TouchableOpacity,
@@ -11,21 +11,21 @@ import {
   Text,
   Modal,
 } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { useFocusEffect } from '@react-navigation/native';
-import { COLORS, STRINGS } from '../constants';
+import {useDispatch, useSelector} from 'react-redux';
+import {useFocusEffect} from '@react-navigation/native';
+import {COLORS, STRINGS} from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { setProducts } from '../redux/slices/productSlice';
-import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
+import {setProducts} from '../redux/slices/productSlice';
+import {wp, hp, fontSize, spacing, borderRadius} from '../utils/dimensions';
 import MenuDrawer from '../components/MenuDrawer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../utils/apiConfig';
 
-const { width: screenWidth } = Dimensions.get('window');
+const {width: screenWidth} = Dimensions.get('window');
 
-const ProductsScreen = ({ navigation }) => {
+const ProductsScreen = ({navigation}) => {
   const dispatch = useDispatch();
-  const { totalItems, totalAmount } = useSelector(state => state.cart);
+  const {totalItems, totalAmount} = useSelector(state => state.cart);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -42,13 +42,13 @@ const ProductsScreen = ({ navigation }) => {
   const carouselIntervalRef = useRef(null);
 
   // Fetch products for selected agency
-  const fetchProducts = async (agencyId) => {
+  const fetchProducts = async agencyId => {
     try {
       setIsLoadingProducts(true);
       setProductsError(null);
 
       const response = await apiClient.get(`/api/products`, {
-        params: { agencyId },
+        params: {agencyId},
       });
 
       console.log('=== PRODUCTS API RESPONSE ===');
@@ -60,7 +60,9 @@ const ProductsScreen = ({ navigation }) => {
       console.log('Products Array:', response.data?.data?.products);
       console.log('Products Count:', response.data?.data?.products?.length);
       console.log('First Product Sample:', response.data?.data?.products?.[0]);
-      console.log('Categories Available:', [...new Set(response.data?.data?.products?.map(p => p.category) || [])]);
+      console.log('Categories Available:', [
+        ...new Set(response.data?.data?.products?.map(p => p.category) || []),
+      ]);
       console.log('==============================');
 
       if (response.data && response.data.success) {
@@ -93,7 +95,7 @@ const ProductsScreen = ({ navigation }) => {
       setIsLoadingAgencies(true);
       setAgenciesError(null);
       const response = await apiClient.get('/api/agencies/active');
-      
+
       console.log('=== AGENCIES API RESPONSE ===');
       console.log('Full Response:', response);
       console.log('Response Data:', response.data);
@@ -102,7 +104,7 @@ const ProductsScreen = ({ navigation }) => {
       console.log('Agencies Array:', response.data?.data?.agencies);
       console.log('First Agency Sample:', response.data?.data?.agencies?.[0]);
       console.log('=============================');
-      
+
       if (response.data?.success) {
         const list = response.data.data?.agencies || [];
         setAgencies(list);
@@ -119,7 +121,9 @@ const ProductsScreen = ({ navigation }) => {
           setSelectedAgencyId(effectiveId);
           // Save default if none was stored
           if (!hasRestored) {
-            try { await AsyncStorage.setItem('selectedAgencyId', effectiveId); } catch (e) {}
+            try {
+              await AsyncStorage.setItem('selectedAgencyId', effectiveId);
+            } catch (e) {}
           }
           await fetchProducts(effectiveId);
         } else {
@@ -144,7 +148,7 @@ const ProductsScreen = ({ navigation }) => {
   useFocusEffect(
     React.useCallback(() => {
       fetchAgencies();
-    }, [])
+    }, []),
   );
 
   // Auto-play image slider for products with multiple images
@@ -165,8 +169,6 @@ const ProductsScreen = ({ navigation }) => {
     return () => clearInterval(interval);
   }, [apiProducts]);
 
-
-
   // Use only API products - no static data fallback
   const allProducts = apiProducts;
 
@@ -174,63 +176,72 @@ const ProductsScreen = ({ navigation }) => {
   const carouselData = [
     {
       id: '1',
-      image: 'https://media.istockphoto.com/id/2065176225/photo/a-truck-equipped-with-a-unit-for-transporting-liquefied-household-gas-for-delivery-to-the.jpg?s=2048x2048&w=is&k=20&c=pzxFHnc77bQJDd85rqlsvj2_8uCCKWehlpQtSvtiI84=',
+      image:
+        'https://media.istockphoto.com/id/2065176225/photo/a-truck-equipped-with-a-unit-for-transporting-liquefied-household-gas-for-delivery-to-the.jpg?s=2048x2048&w=is&k=20&c=pzxFHnc77bQJDd85rqlsvj2_8uCCKWehlpQtSvtiI84=',
       title: 'Special Offer',
-      subtitle: 'Get 10% off on first order'
+      subtitle: 'Get 10% off on first order',
     },
     {
       id: '2',
-      image: 'https://media.istockphoto.com/id/1207561811/photo/colleagues-loading-gas-cylinder-on-to-tanker-truck.jpg?s=1024x1024&w=is&k=20&c=By3SZrAZMRCRhosNypjce8FyS-cjHSWyr_3M1y3Ryt8=',
+      image:
+        'https://media.istockphoto.com/id/1207561811/photo/colleagues-loading-gas-cylinder-on-to-tanker-truck.jpg?s=1024x1024&w=is&k=20&c=By3SZrAZMRCRhosNypjce8FyS-cjHSWyr_3M1y3Ryt8=',
       title: 'Fast Delivery',
-      subtitle: 'Same day delivery available'
+      subtitle: 'Same day delivery available',
     },
     {
       id: '3',
-      image: 'https://media.istockphoto.com/id/1082712970/photo/filling-the-domestic-gas-tank-with-lpg.jpg?s=1024x1024&w=is&k=20&c=XRHt393LbnMkbFKCwp8nGIb7qzzEUAaXG4-hv18J5qc=',
+      image:
+        'https://media.istockphoto.com/id/1082712970/photo/filling-the-domestic-gas-tank-with-lpg.jpg?s=1024x1024&w=is&k=20&c=XRHt393LbnMkbFKCwp8nGIb7qzzEUAaXG4-hv18J5qc=',
       title: '24x7 Support',
-      subtitle: 'We are here to help you'
-    }
+      subtitle: 'We are here to help you',
+    },
   ];
-    // Auto-play carousel banner
-    useEffect(() => {
-      if (carouselData.length > 1) {
-        carouselIntervalRef.current = setInterval(() => {
-          setCurrentCarouselIndex(prevIndex => {
-            const nextIndex = (prevIndex + 1) % carouselData.length;
-            // Scroll to next slide
-            if (carouselRef.current) {
-              carouselRef.current.scrollToIndex({
-                index: nextIndex,
-                animated: true
-              });
-            }
-            return nextIndex;
-          });
-        }, 4000); // Change slide every 4 seconds
+  // Auto-play carousel banner
+  useEffect(() => {
+    if (carouselData.length > 1) {
+      carouselIntervalRef.current = setInterval(() => {
+        setCurrentCarouselIndex(prevIndex => {
+          const nextIndex = (prevIndex + 1) % carouselData.length;
+          // Scroll to next slide
+          if (carouselRef.current) {
+            carouselRef.current.scrollToIndex({
+              index: nextIndex,
+              animated: true,
+            });
+          }
+          return nextIndex;
+        });
+      }, 4000); // Change slide every 4 seconds
+    }
+
+    return () => {
+      if (carouselIntervalRef.current) {
+        clearInterval(carouselIntervalRef.current);
       }
-  
-      return () => {
-        if (carouselIntervalRef.current) {
-          clearInterval(carouselIntervalRef.current);
-        }
-      };
-    }, [carouselData.length]);
+    };
+  }, [carouselData.length]);
   // Filter products based on selected category
-  const filteredProducts = selectedCategory === 'All'
-    ? allProducts
-    : allProducts.filter(item => {
-      console.log('Filtering item:', item.productName, 'Category:', item.category, 'Selected:', selectedCategory);
-      // Convert both to lowercase for comparison
-      const itemCategory = item.category?.toLowerCase();
-      const selectedCategoryLower = selectedCategory.toLowerCase();
-      return itemCategory === selectedCategoryLower;
-    });
+  const filteredProducts =
+    selectedCategory === 'All'
+      ? allProducts
+      : allProducts.filter(item => {
+          console.log(
+            'Filtering item:',
+            item.productName,
+            'Category:',
+            item.category,
+            'Selected:',
+            selectedCategory,
+          );
+          // Convert both to lowercase for comparison
+          const itemCategory = item.category?.toLowerCase();
+          const selectedCategoryLower = selectedCategory.toLowerCase();
+          return itemCategory === selectedCategoryLower;
+        });
 
-
-
-  const renderCarouselItem = ({ item, index }) => (
+  const renderCarouselItem = ({item, index}) => (
     <View style={styles.carouselItem}>
-      <Image source={{ uri: item.image }} style={styles.carouselImage} />
+      <Image source={{uri: item.image}} style={styles.carouselImage} />
       <View style={styles.carouselOverlay}>
         <Text style={styles.carouselTitle}>{item.title}</Text>
         <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>
@@ -254,12 +265,17 @@ const ProductsScreen = ({ navigation }) => {
 
   const renderCategoryTabs = () => {
     // Get unique categories from API products
-    const availableCategories = ['All', ...new Set(apiProducts.map(product => 
-      product.category?.charAt(0).toUpperCase() + product.category?.slice(1).toLowerCase()
-    ))];
-    
-    console.log('Available categories:', availableCategories);
-    
+    const availableCategories = [
+      'All',
+      ...new Set(
+        apiProducts.map(
+          product =>
+            product.category?.charAt(0).toUpperCase() +
+            product.category?.slice(1).toLowerCase(),
+        ),
+      ),
+    ];
+
     return (
       <View style={styles.categoryTabs}>
         {availableCategories.map(cat => (
@@ -283,42 +299,51 @@ const ProductsScreen = ({ navigation }) => {
     );
   };
 
-  const renderProductImage = (item) => {
+  const renderProductImage = item => {
     const currentImageIndex = productImageIndices[item.id] || 0;
     const hasMultipleImages = item.images && item.images.length > 1;
-    
+
     return (
       <View style={styles.imageContainer}>
-        <Image 
-          source={{ uri: item.images[currentImageIndex] }} 
-          style={styles.productImage} 
+        <Image
+          source={{uri: item.images[currentImageIndex]}}
+          style={styles.productImage}
         />
       </View>
     );
   };
 
-  const renderProductItem = ({ item }) => {
+  const renderProductItem = ({item}) => {
     // console.log("Rendering Product Item:", item);
 
     return (
       <TouchableOpacity
         style={styles.productCard}
-        onPress={() => navigation.navigate('ProductDetails', { product: item })}>
+        onPress={() => navigation.navigate('ProductDetails', {product: item})}>
         {renderProductImage(item)}
 
         <View style={styles.productInfo}>
-          <Text style={styles.productName} numberOfLines={2}>{item?.productName ? item.productName.charAt(0).toUpperCase() + item.productName.slice(1) : item?.productName}</Text>
+          <Text style={styles.productName} numberOfLines={2}>
+            {item?.productName
+              ? item.productName.charAt(0).toUpperCase() +
+                item.productName.slice(1)
+              : item?.productName}
+          </Text>
           <Text style={styles.weightText}>
-            Starting at <Text style={styles.priceText}>₹{item?.variants?.[0]?.price || 'N/A'}</Text>
+            Starting at{' '}
+            <Text style={styles.priceText}>
+              ₹{item?.variants?.[0]?.price || 'N/A'}
+            </Text>
           </Text>
 
           {item?.variants?.[0]?.label && (
             <View style={styles.weightInfo}>
               <Icon name="scale" size={14} color={COLORS.primary} />
-              <Text style={styles.weightText}>Variants: {item.variants.length}</Text>
+              <Text style={styles.weightText}>
+                Variants: {item.variants.length}
+              </Text>
             </View>
           )}
-
 
           {/* {item.category !== 'Accessories' && (
             <View style={styles.quickOptions}>
@@ -358,7 +383,6 @@ const ProductsScreen = ({ navigation }) => {
     );
   };
 
-
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -377,21 +401,7 @@ const ProductsScreen = ({ navigation }) => {
               </View>
             </View>
 
-            <View style={styles.headerButtons}>
-              <View style={styles.agencySelectorContainer}>
-                <TouchableOpacity
-                  style={styles.agencySelector}
-                  onPress={() => setIsAgencyModalVisible(true)}
-                  disabled={isLoadingAgencies}
-                >
-                  <Icon name="store" size={20} color={COLORS.primary} />
-                  <Text style={styles.agencySelectorText} numberOfLines={1}>
-                    {isLoadingAgencies ? 'Loading agencies...' : (agencies.find(a => a.id === selectedAgencyId)?.name || 'Select agency')}
-                  </Text>
-                  <Icon name={'expand-more'} size={20} color={COLORS.textSecondary} />
-                </TouchableOpacity>
-                
-              </View>
+            {/* <View style={styles.headerButtons}>
               <TouchableOpacity
                 style={styles.cartButton}
                 onPress={() => navigation.navigate('Cart')}>
@@ -401,6 +411,25 @@ const ProductsScreen = ({ navigation }) => {
                     <Text style={styles.cartBadgeText}>{totalItems}</Text>
                   </View>
                 )}
+              </TouchableOpacity>
+            </View> */}
+            <View style={styles.agencySelectorContainer}>
+              <TouchableOpacity
+                style={styles.agencySelector}
+                onPress={() => setIsAgencyModalVisible(true)}
+                disabled={isLoadingAgencies}>
+                <Icon name="store" size={20} color={COLORS.primary} />
+                <Text style={styles.agencySelectorText} numberOfLines={1}>
+                  {isLoadingAgencies
+                    ? 'Loading agencies...'
+                    : agencies.find(a => a.id === selectedAgencyId)?.name ||
+                      'Select agency'}
+                </Text>
+                <Icon
+                  name={'expand-more'}
+                  size={20}
+                  color={COLORS.textSecondary}
+                />
               </TouchableOpacity>
             </View>
           </View>
@@ -414,12 +443,14 @@ const ProductsScreen = ({ navigation }) => {
             ref={carouselRef}
             data={carouselData}
             renderItem={renderCarouselItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={item => item.id}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={(event) => {
-              const index = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
+            onMomentumScrollEnd={event => {
+              const index = Math.round(
+                event.nativeEvent.contentOffset.x / screenWidth,
+              );
               setCurrentCarouselIndex(index);
             }}
             onScrollBeginDrag={() => {
@@ -437,7 +468,7 @@ const ProductsScreen = ({ navigation }) => {
                     if (carouselRef.current) {
                       carouselRef.current.scrollToIndex({
                         index: nextIndex,
-                        animated: true
+                        animated: true,
                       });
                     }
                     return nextIndex;
@@ -462,14 +493,18 @@ const ProductsScreen = ({ navigation }) => {
           ) : productsError ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{productsError}</Text>
-              <TouchableOpacity style={styles.retryButton} onPress={fetchProducts}>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={fetchProducts}>
                 <Text style={styles.retryButtonText}>Retry</Text>
               </TouchableOpacity>
             </View>
           ) : filteredProducts.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No products found</Text>
-              <TouchableOpacity style={styles.refreshButton} onPress={fetchProducts}>
+              <TouchableOpacity
+                style={styles.refreshButton}
+                onPress={fetchProducts}>
                 <Text style={styles.refreshButtonText}>Refresh</Text>
               </TouchableOpacity>
             </View>
@@ -487,7 +522,7 @@ const ProductsScreen = ({ navigation }) => {
               <FlatList
                 data={filteredProducts}
                 renderItem={renderProductItem}
-                keyExtractor={(item) => item.id}
+                keyExtractor={item => item.id}
                 numColumns={3}
                 columnWrapperStyle={styles.productRow}
                 scrollEnabled={false}
@@ -503,8 +538,7 @@ const ProductsScreen = ({ navigation }) => {
         visible={isAgencyModalVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setIsAgencyModalVisible(false)}
-      >
+        onRequestClose={() => setIsAgencyModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.agencyModalContent}>
             <View style={styles.agencyModalHeader}>
@@ -514,7 +548,7 @@ const ProductsScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.agencyList}>
-              {agencies.map((a) => (
+              {agencies.map(a => (
                 <TouchableOpacity
                   key={a.id}
                   style={styles.agencyOption}
@@ -522,18 +556,19 @@ const ProductsScreen = ({ navigation }) => {
                     setIsAgencyModalVisible(false);
                     if (a.id !== selectedAgencyId) {
                       setSelectedAgencyId(a.id);
-                      try { await AsyncStorage.setItem('selectedAgencyId', a.id); } catch (e) {}
+                      try {
+                        await AsyncStorage.setItem('selectedAgencyId', a.id);
+                      } catch (e) {}
                       await fetchProducts(a.id);
                     }
-                  }}
-                >
+                  }}>
                   <Text
                     style={[
                       styles.agencyOptionText,
-                      a.id === selectedAgencyId && styles.agencyOptionTextActive,
+                      a.id === selectedAgencyId &&
+                        styles.agencyOptionTextActive,
                     ]}
-                    numberOfLines={2}
-                  >
+                    numberOfLines={2}>
                     {a.name}
                   </Text>
                   {a.id === selectedAgencyId && (
@@ -581,7 +616,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: 'transparent',
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {width: 0, height: 3},
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 8,
@@ -610,7 +645,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
@@ -637,6 +672,7 @@ const styles = StyleSheet.create({
   },
   agencySelectorContainer: {
     position: 'relative',
+    alignItems: 'flex-end',
   },
   agencySelector: {
     backgroundColor: COLORS.white,
@@ -649,7 +685,7 @@ const styles = StyleSheet.create({
     minWidth: wp('40%'),
     maxWidth: wp('50%'),
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 3,
@@ -671,7 +707,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 5,
@@ -733,7 +769,7 @@ const styles = StyleSheet.create({
     borderRadius: wp('6.25%'),
     position: 'relative',
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 3,
@@ -900,7 +936,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     backgroundColor: COLORS.background,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
@@ -917,7 +953,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: -2 },
+    shadowOffset: {width: 0, height: -2},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
@@ -948,7 +984,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderRadius: wp('2.5%'),
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 3,
@@ -970,7 +1006,7 @@ const styles = StyleSheet.create({
     padding: wp('1.5%'),
     width: (screenWidth - 60) / 3, // Adjusted for gap spacing
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -983,7 +1019,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: hp('12%'),
     borderRadius: borderRadius.md,
-    resizeMode:"contain"
+    resizeMode: 'contain',
   },
   imageDots: {
     position: 'absolute',
@@ -1106,10 +1142,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: spacing.sm,
     backgroundColor: COLORS.white,
-    justifyContent: "space-evenly",
+    justifyContent: 'space-evenly',
     alignItems: 'center',
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
@@ -1124,7 +1160,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 2,
@@ -1138,7 +1174,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
     shadowColor: COLORS.primary,
     shadowOpacity: 0.4,
-    transform: [{ scale: 1.05 }],
+    transform: [{scale: 1.05}],
   },
   categoryText: {
     fontSize: fontSize.sm,
@@ -1156,4 +1192,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProductsScreen;
-

@@ -229,10 +229,6 @@ const CartScreen = ({ navigation }) => {
                       <Text style={styles.totalLabel}>Total Amount</Text>
                       <Text style={styles.totalAmount}>₹{totalAmount}</Text>
                     </View>
-                    <View style={styles.savingsBadge}>
-                      <Ionicons name="gift-outline" size={14} color={COLORS.success} />
-                      <Text style={styles.savingsBadgeText}>Free Delivery</Text>
-                    </View>
                   </View>
                 </>
               )}

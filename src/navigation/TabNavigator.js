@@ -11,6 +11,7 @@ import OrdersScreen from '../screens/OrdersScreen';
 import SupportScreen from '../screens/SupportScreen';
 import TrackingScreen from '../screens/TrackingScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import CartScreen from '../screens/CartScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -108,8 +109,8 @@ const TabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Tracking"
-        component={TrackingScreen}
+        name="Cart"
+        component={CartScreen}
         // options={{
         //   tabBarLabel: ({ focused }) => (
         //     <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
@@ -126,9 +127,9 @@ const TabNavigator = () => {
           tabBarLabel: () => null, // Hide default label
           tabBarIcon: ({ color, size, focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <Icon name="local-shipping" color={color} size={focused ? 26 : 24} />
+              <Icon name="shopping-cart" color={color} size={focused ? 26 : 24} />
               <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
-                Tracking
+                Cart
               </Text>
             </View>
           ),

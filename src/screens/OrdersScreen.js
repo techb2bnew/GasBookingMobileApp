@@ -10,6 +10,7 @@ import {
   Alert,
   FlatList,
   RefreshControl,
+  Linking,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
@@ -30,9 +31,11 @@ const OrdersScreen = ({ navigation }) => {
   const { products } = useSelector(state => state.products);
   const [modalVisible, setModalVisible] = useState(false);
   const [reorderModalVisible, setReorderModalVisible] = useState(false);
+  const [agentModalVisible, setAgentModalVisible] = useState(false);
   const [currentAction, setCurrentAction] = useState(null);
   const [reasonsList, setReasonsList] = useState([]);
   const [currentReorderId, setCurrentReorderId] = useState(null);
+  const [currentAgent, setCurrentAgent] = useState(null);
   
   // Local states for UI
   const [refreshing, setRefreshing] = useState(false);
@@ -175,6 +178,36 @@ const OrdersScreen = ({ navigation }) => {
     }
   };
 
+  // Return order API call
+  const returnOrderAPI = async (orderId, reason) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      
+      const payload = {
+        reason: reason,
+        adminNotes: `Customer returned order: ${reason}`
+      };
+
+      console.log('Returning order:', orderId, 'with reason:', reason);
+      console.log('API Payload:', payload);
+
+      const response = await apiClient.put(`/api/orders/${orderId}/return`, payload);
+
+      console.log('Return order API response:', response.data);
+
+      if (response.data && response.data.success) {
+        // Refresh orders after successful return
+        await fetchOrders();
+        return true;
+      } else {
+        throw new Error(response.data?.message || 'Failed to return order');
+      }
+    } catch (error) {
+      console.error('Error returning order:', error);
+      throw error;
+    }
+  };
+
   // Refresh orders
   const onRefresh = async () => {
     setRefreshing(true);
@@ -225,8 +258,14 @@ const OrdersScreen = ({ navigation }) => {
     if (!currentAction) return;
 
     if (currentAction.type === 'return') {
-      dispatch(returnOrder({ orderId: currentAction.orderId, reason }));
-      Alert.alert('Order Returned', `Order ${currentAction.orderId} returned for reason: ${reason}`);
+      try {
+        console.log('Submitting return order with reason:', reason);
+        await returnOrderAPI(currentAction.orderId, reason);
+        Alert.alert('Order Returned', 'Order returned successfully.');
+      } catch (error) {
+        console.error('Return order error:', error);
+        Alert.alert('Error', 'Failed to return order. Please try again.');
+      }
     } else if (currentAction.type === 'cancel') {
       try {
         console.log('Submitting cancel order with reason:', reason);
@@ -252,17 +291,19 @@ const OrdersScreen = ({ navigation }) => {
 
   const getStatusStyle = (status) => {
     switch (status) {
-      case 'Pending':
+      case 'pending':
         return styles.statusPending;
-      case 'Accepted':
+      case 'confirmed':
+      case 'accepted':
         return styles.statusAccepted;
-      case 'Out for Delivery':
+      case 'assigned':
+      case 'out for delivery':
         return styles.statusOutForDelivery;
-      case 'Delivered':
+      case 'delivered':
         return styles.statusDelivered;
-      case 'Cancelled':
+      case 'cancelled':
         return styles.statusCancelled;
-      case 'Returned':
+      case 'returned':
         return styles.statusReturned;
       default:
         return {};
@@ -301,6 +342,35 @@ const OrdersScreen = ({ navigation }) => {
     setCurrentReorderId(null);
   };
 
+  // Handle view agent
+  const handleViewAgent = (agent) => {
+    setCurrentAgent(agent);
+    setAgentModalVisible(true);
+  };
+
+  // Handle call agent
+  const handleCallAgent = (phoneNumber) => {
+    const phoneUrl = `tel:${phoneNumber}`;
+    Linking.canOpenURL(phoneUrl)
+      .then(supported => {
+        if (supported) {
+          Linking.openURL(phoneUrl);
+        } else {
+          Alert.alert('Error', 'Unable to make phone calls on this device');
+        }
+      })
+      .catch(err => {
+        console.error('Error opening phone dialer:', err);
+        Alert.alert('Error', 'Unable to make phone calls');
+      });
+  };
+
+  // Handle close agent modal
+  const handleCloseAgentModal = () => {
+    setAgentModalVisible(false);
+    setCurrentAgent(null);
+  };
+
   const handleAction = (type, orderId) => {
     setCurrentAction({ type, orderId });
     setReasonsList(type === 'cancel' ? cancelReasons : returnReasons);
@@ -336,7 +406,10 @@ const OrdersScreen = ({ navigation }) => {
           </View>
           <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
             <View style={styles.statusDot} />
-            <Text style={styles.statusText}>{item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : item.status}</Text>
+            <Text style={styles.statusText}>
+              {item.status === 'assigned' ? 'Out for Delivery' : 
+               item.status ? `Order ${item.status.charAt(0).toUpperCase() + item.status.slice(1)}` : item.status}
+            </Text>
           </View>
         </View>
 
@@ -347,7 +420,6 @@ const OrdersScreen = ({ navigation }) => {
             <Text style={styles.summaryLabel}>{item.items.length} Items</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Ionicons name="wallet-outline" size={14} color={COLORS.primary} />
             <Text style={styles.totalAmount}>₹{item.totalAmount}</Text>
           </View>
         </View>
@@ -407,13 +479,24 @@ const OrdersScreen = ({ navigation }) => {
 
         {/* Action Buttons with Better Design */}
         <View style={styles.actionButtons}>
-          {item.status !== 'cancelled' && item.status !== 'returned' && (
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={() => handleTrackOrder(item)}>
-              <Ionicons name="location-outline" size={14} color={COLORS.white} />
-              <Text style={styles.primaryButtonText}>Track Order</Text>
-            </TouchableOpacity>
+          {(item.status === 'assigned') && (
+            <>
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={() => handleTrackOrder(item)}>
+                <Ionicons name="location-outline" size={14} color={COLORS.white} />
+                <Text style={styles.primaryButtonText}>Track Order</Text>
+              </TouchableOpacity>
+              
+              {item.assignedAgent && (
+                <TouchableOpacity
+                  style={styles.secondaryButton}
+                  onPress={() => handleViewAgent(item.assignedAgent)}>
+                  <Ionicons name="person-outline" size={14} color={COLORS.primary} />
+                  <Text style={styles.secondaryButtonText}>View Agent</Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
           
           {item.status === 'cancelled' && (
@@ -538,7 +621,6 @@ const OrdersScreen = ({ navigation }) => {
             <Text style={styles.modalTitle}>Confirm Reorder</Text>
             <Text style={styles.reorderModalText}>
               Are you sure you want to reorder this order?
-              This will change the order status to pending.
             </Text>
             <View style={styles.modalActions}>
               <TouchableOpacity
@@ -550,6 +632,72 @@ const OrdersScreen = ({ navigation }) => {
                 style={styles.submitButton}
                 onPress={handleReorderConfirm}>
                 <Text style={styles.submitButtonText}>Reorder</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Agent Details Modal */}
+      <Modal
+        visible={agentModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCloseAgentModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.agentModalContainer}>
+            <View style={styles.agentModalHeader}>
+              <Text style={styles.agentModalTitle}>Delivery Agent Details</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={handleCloseAgentModal}>
+                <Ionicons name="close" size={20} color={COLORS.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            
+            {currentAgent && (
+              <View style={styles.agentDetailsContainer}>
+                <View style={styles.agentDetailItem}>
+                  <View style={styles.agentDetailIcon}>
+                    <Ionicons name="person" size={20} color={COLORS.primary} />
+                  </View>
+                  <View style={styles.agentDetailInfo}>
+                    <Text style={styles.agentDetailLabel}>Agent Name</Text>
+                    <Text style={styles.agentDetailValue}>{currentAgent.name}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.agentDetailItem}>
+                  <View style={styles.agentDetailIcon}>
+                    <Ionicons name="call" size={20} color={COLORS.primary} />
+                  </View>
+                  <View style={styles.agentDetailInfo}>
+                    <Text style={styles.agentDetailLabel}>Phone Number</Text>
+                    <TouchableOpacity onPress={() => handleCallAgent(currentAgent.phone)}>
+                      <Text style={styles.agentPhoneNumber}>{currentAgent.phone}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.agentDetailItem}>
+                  <View style={styles.agentDetailIcon}>
+                    <Ionicons name="car" size={20} color={COLORS.primary} />
+                  </View>
+                  <View style={styles.agentDetailInfo}>
+                    <Text style={styles.agentDetailLabel}>Vehicle Number</Text>
+                    <Text style={styles.agentDetailValue}>{currentAgent.vehicleNumber}</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            <View style={styles.agentModalActions}>
+              <TouchableOpacity
+                style={styles.callAgentButton}
+                onPress={() => currentAgent && handleCallAgent(currentAgent.phone)}>
+                <Ionicons name="call" size={16} color={COLORS.white} />
+                <Text style={styles.callAgentButtonText}>Call Agent</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -586,21 +734,21 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   ordersList: {
-    padding: spacing.md,
+    padding: spacing.sm,
   },
   orderCard: {
     backgroundColor: COLORS.white,
-    borderRadius: borderRadius.lg,
-    padding: spacing.sm,
-    marginBottom: spacing.xs,
+    borderRadius: borderRadius.md,
+    padding: spacing.xs,
+    marginBottom: spacing.xs / 2,
     shadowColor: COLORS.shadow,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
@@ -608,7 +756,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.xs / 2,
     paddingBottom: spacing.xs / 2,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
@@ -673,11 +821,11 @@ const styles = StyleSheet.create({
   orderSummary: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.xs,
-    paddingVertical: spacing.xs / 2,
-    backgroundColor: COLORS.lightGray + '20',
+    marginBottom: spacing.xs / 2,
+    paddingVertical: spacing.xs / 3,
+    backgroundColor: COLORS.lightGray + '15',
     borderRadius: borderRadius.sm,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
   },
   summaryItem: {
     flexDirection: 'row',
@@ -696,7 +844,7 @@ const styles = StyleSheet.create({
     marginLeft: spacing.xs,
   },
   productPreview: {
-    marginBottom: spacing.xs,
+    marginBottom: spacing.xs / 2,
   },
   previewHeader: {
     flexDirection: 'row',
@@ -731,16 +879,16 @@ const styles = StyleSheet.create({
   productItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.lightGray + '20',
-    padding: spacing.xs / 2,
+    backgroundColor: COLORS.lightGray + '15',
+    padding: spacing.xs / 3,
     borderRadius: borderRadius.sm,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: COLORS.border,
   },
   productImageContainer: {
-    width: 30,
-    height: 30,
-    marginRight: spacing.xs,
+    width: 24,
+    height: 24,
+    marginRight: spacing.xs / 2,
     borderRadius: borderRadius.sm,
     overflow: 'hidden',
     backgroundColor: COLORS.lightGray,
@@ -787,24 +935,24 @@ const styles = StyleSheet.create({
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: spacing.xs,
-    paddingTop: spacing.xs,
-    borderTopWidth: 1,
+    marginTop: spacing.xs / 2,
+    paddingTop: spacing.xs / 2,
+    borderTopWidth: 0.5,
     borderTopColor: COLORS.border,
-    gap: spacing.xs,
+    gap: spacing.xs / 2,
   },
   primaryButton: {
     backgroundColor: COLORS.primary,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: borderRadius.sm,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 1,
   },
   primaryButtonText: {
     color: COLORS.white,
@@ -814,12 +962,12 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     backgroundColor: COLORS.primary + '15',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: borderRadius.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: COLORS.primary,
   },
   secondaryButtonText: {
@@ -830,12 +978,12 @@ const styles = StyleSheet.create({
   },
   outlineButton: {
     backgroundColor: COLORS.white,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: borderRadius.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: COLORS.error,
   },
   outlineButtonText: {
@@ -979,6 +1127,99 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: fontSize.md,
     fontWeight: '600',
+  },
+  // Agent Modal Styles
+  agentModalContainer: {
+    width: wp('90%'),
+    backgroundColor: COLORS.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    elevation: 8,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+  },
+  agentModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  agentModalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  closeButton: {
+    padding: spacing.xs,
+    borderRadius: borderRadius.sm,
+    backgroundColor: COLORS.lightGray + '20',
+  },
+  agentDetailsContainer: {
+    marginBottom: spacing.lg,
+  },
+  agentDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border + '30',
+  },
+  agentDetailIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.md,
+    backgroundColor: COLORS.primary + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  agentDetailInfo: {
+    flex: 1,
+  },
+  agentDetailLabel: {
+    fontSize: fontSize.sm,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  agentDetailValue: {
+    fontSize: fontSize.md,
+    color: COLORS.text,
+    fontWeight: '600',
+  },
+  agentPhoneNumber: {
+    fontSize: fontSize.md,
+    color: COLORS.primary,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  agentModalActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  callAgentButton: {
+    backgroundColor: COLORS.success,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: COLORS.success,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  callAgentButtonText: {
+    color: COLORS.white,
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    marginLeft: spacing.xs,
   },
 });
 

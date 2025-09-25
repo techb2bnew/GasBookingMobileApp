@@ -5,8 +5,10 @@ const initialState = {
   totalAmount: 0,
   totalItems: 0,
   deliveryType: 'Home Delivery',
+  deliveryMode: 'home_delivery', // 'home_delivery' or 'pickup' - default to home delivery
   paymentMethod: 'Cash on Delivery',
   selectedAddress: null,
+  selectedAgency: null,
 };
 
 const cartSlice = createSlice({
@@ -121,6 +123,16 @@ const cartSlice = createSlice({
     setSelectedAddress: (state, action) => {
       state.selectedAddress = action.payload;
     },
+    setDeliveryMode: (state, action) => {
+      state.deliveryMode = action.payload;
+      // Reset selected agency when switching to home delivery
+      if (action.payload === 'home_delivery') {
+        state.selectedAgency = null;
+      }
+    },
+    setSelectedAgency: (state, action) => {
+      state.selectedAgency = action.payload;
+    },
     calculateTotals: (state) => {
       // Count unique products (not quantities)
       state.totalItems = state.items.length;
@@ -135,8 +147,10 @@ export const {
   updateQuantity,
   clearCart,
   setDeliveryType,
+  setDeliveryMode,
   setPaymentMethod,
   setSelectedAddress,
+  setSelectedAgency,
   calculateTotals,
 } = cartSlice.actions;
 
