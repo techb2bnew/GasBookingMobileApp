@@ -6,9 +6,12 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
+  BackHandler,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
 import { useSelector } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
+import { CommonActions } from '@react-navigation/native';
 import { COLORS, STRINGS } from '../constants';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 
@@ -18,10 +21,50 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
     state.orders.orders.find(order => order.id === orderId)
   );
 
+  // Handle all types of back navigation to redirect to home page
+  useFocusEffect(
+    React.useCallback(() => {
+      // Handle Hardware back button (Android physical back button)
+      const onBackPress = () => {
+        navigation.dispatch(
+          CommonActions.navigate({
+            name: 'Main',
+            params: {
+              screen: 'Products',
+            },
+          })
+        );
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      // Also handle any other navigation events that might indicate back behavior
+      const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+        // Prevent default behavior
+        e.preventDefault();
+        // Navigate to home instead
+        navigation.dispatch(
+          CommonActions.navigate({
+            name: 'Main',
+            params: {
+              screen: 'Products',
+            },
+          })
+        );
+      });
+
+      return () => {
+        subscription?.remove();
+        unsubscribe();
+      };
+    }, [navigation])
+  );
+
   useEffect(() => {
-    // Auto navigate to orders after 5 seconds
+    // Auto navigate to orders after 5 seconds (keeping original behavior for social proof)
     const timer = setTimeout(() => {
-      navigation.navigate('Orders');
+      navigation.navigate('Main', { screen: 'Orders' });
     }, 5000);
 
     return () => clearTimeout(timer);

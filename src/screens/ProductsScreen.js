@@ -107,6 +107,7 @@ const ProductsScreen = ({navigation}) => {
 
       if (response.data?.success) {
         const list = response.data.data?.agencies || [];
+        console.log('*** AGENCIES LOADED ***', list.length, list.map(a => a.name));
         setAgencies(list);
         if (list.length > 0) {
           // Try to restore previously selected agency from storage
@@ -416,7 +417,10 @@ const ProductsScreen = ({navigation}) => {
             <View style={styles.agencySelectorContainer}>
               <TouchableOpacity
                 style={styles.agencySelector}
-                onPress={() => setIsAgencyModalVisible(true)}
+                onPress={() => {
+                  console.log('*** AGENCY MODAL TRIGGERED ***', agencies.length, isAgencyModalVisible);
+                  setIsAgencyModalVisible(true);
+                }}
                 disabled={isLoadingAgencies}>
                 <Icon name="store" size={20} color={COLORS.primary} />
                 <Text style={styles.agencySelectorText} numberOfLines={1}>
@@ -536,47 +540,110 @@ const ProductsScreen = ({navigation}) => {
       {/* Agency Picker Modal */}
       <Modal
         visible={isAgencyModalVisible}
-        transparent
-        animationType="fade"
+        transparent={true}
+        animationType="slide"
         onRequestClose={() => setIsAgencyModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.agencyModalContent}>
             <View style={styles.agencyModalHeader}>
               <Text style={styles.agencyModalTitle}>Select Agency</Text>
-              <TouchableOpacity onPress={() => setIsAgencyModalVisible(false)}>
-                <Icon name="close" size={22} color={COLORS.textPrimary} />
+              <TouchableOpacity 
+                onPress={() => setIsAgencyModalVisible(false)}
+                style={{padding: 5}}>
+                <Icon name="close" size={24} color={COLORS.textPrimary} />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.agencyList}>
-              {agencies.map(a => (
-                <TouchableOpacity
-                  key={a.id}
-                  style={styles.agencyOption}
-                  onPress={async () => {
-                    setIsAgencyModalVisible(false);
-                    if (a.id !== selectedAgencyId) {
-                      setSelectedAgencyId(a.id);
-                      try {
-                        await AsyncStorage.setItem('selectedAgencyId', a.id);
-                      } catch (e) {}
-                      await fetchProducts(a.id);
-                    }
-                  }}>
-                  <Text
+            
+            {agencies.length > 0 ? (
+              <ScrollView 
+                style={styles.agencyList}
+                showsVerticalScrollIndicator={true}
+                bounces={true}
+                scrollEnabled={true}>
+                {agencies.map(agency => (
+                  <TouchableOpacity
+                    key={agency.id}
                     style={[
-                      styles.agencyOptionText,
-                      a.id === selectedAgencyId &&
-                        styles.agencyOptionTextActive,
+                      styles.agencyCard,
+                      agency.id === selectedAgencyId && styles.agencyCardSelected
                     ]}
-                    numberOfLines={2}>
-                    {a.name}
-                  </Text>
-                  {a.id === selectedAgencyId && (
-                    <Icon name="check" size={18} color={COLORS.primary} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+                    onPress={async () => {
+                      setIsAgencyModalVisible(false);
+                      if (agency.id !== selectedAgencyId) {
+                        setSelectedAgencyId(agency.id);
+                        try {
+                          await AsyncStorage.setItem('selectedAgencyId', agency.id);
+                        } catch (e) {}
+                        await fetchProducts(agency.id);
+                      }
+                    }}>
+                    <View style={styles.agencyCardContent}>
+                      {/* Agency Image - Full Width */}
+                      <View style={styles.agencyImageContainerFull}>
+                        <Image
+                          source={{uri: agency.profileImage || 'https://via.placeholder.com/150x100'}}
+                          style={styles.agencyImageFull}
+                        />
+                      </View>
+                      
+                      {/* Agency Details - Below Image */}
+                      <View style={styles.agencyDetailsFull}>
+                        <View style={styles.agencyNameContainerFull}>
+                          <Text style={[
+                            styles.agencyNameFull,
+                            agency.id === selectedAgencyId && styles.agencyNameSelected
+                          ]} numberOfLines={1}>
+                            {agency.name}
+                          </Text>
+                        </View>
+                        
+                        {/* Contact Info */}
+                        {agency.phone && (
+                          <View style={styles.agencyInfoRowCompact}>
+                            <Icon name="phone" size={14} color={COLORS.primary} />
+                            <Text style={styles.agencyInfoTextCompact} numberOfLines={1}>
+                              {agency.phone}
+                            </Text>
+                          </View>
+                        )}
+                        
+                        {agency.email && (
+                          <View style={styles.agencyInfoRowCompact}>
+                            <Icon name="email" size={14} color={COLORS.primary} />
+                            <Text style={styles.agencyInfoTextCompact} numberOfLines={1}>
+                              {agency.email}
+                            </Text>
+                          </View>
+                        )}
+                        
+                        {/* Address Info */}
+                        <View style={styles.agencyInfoRowCompact}>
+                          <Icon name="place" size={14} color={COLORS.textSecondary} />
+                          <Text style={styles.agencyInfoTextCompact} numberOfLines={2}>
+                            {agency.address}, {agency.city} - {agency.pincode}
+                          </Text>
+                        </View>
+                        
+                        {agency.landmark && (
+                          <View style={styles.agencyInfoRowCompact}>
+                            <Icon name="pin-drop" size={14} color={COLORS.textSecondary} />
+                            <Text style={styles.agencyInfoTextCompact} numberOfLines={1}>
+                              Near: {agency.landmark}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : (
+              <View style={styles.emptyAgencyState}>
+                <Text style={styles.emptyAgencyText}>
+                  {isLoadingAgencies ? 'Loading agencies...' : 'No agencies available'}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -714,18 +781,28 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.lg,
+    zIndex: 1000,
+    elevation: 10,
   },
   agencyModalContent: {
     backgroundColor: COLORS.white,
-    width: '100%',
-    maxHeight: '70%',
+    width: wp('90%'),
+    height: hp('70%'),
     borderRadius: borderRadius.md,
     overflow: 'hidden',
+    elevation: 20,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   agencyModalHeader: {
     flexDirection: 'row',
@@ -742,26 +819,88 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   agencyList: {
-    maxHeight: hp('25%'),
-  },
-  agencyOption: {
-    paddingVertical: spacing.sm,
+    flex: 1,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  agencyCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
+    shadowColor: COLORS.shadow,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+  },
+  agencyCardSelected: {
+    borderColor: COLORS.primary,
+    borderWidth: 2,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.2,
+    backgroundColor: COLORS.subtle,
+  },
+  agencyCardContent: {
+    padding: 0,
+  },
+  agencyImageContainerFull: {
+    height: hp('15%'),
+    backgroundColor: COLORS.background,
+    borderTopLeftRadius: borderRadius.md,
+    borderTopRightRadius: borderRadius.md,
+    overflow: 'hidden',
+  },
+  agencyImageFull: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  agencyDetailsFull: {
+    padding: spacing.md,
+  },
+  agencyNameContainerFull: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    marginBottom: spacing.sm,
   },
-  agencyOptionText: {
+  agencyNameFull: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
     color: COLORS.textPrimary,
-    fontSize: fontSize.sm,
     flex: 1,
     marginRight: spacing.sm,
   },
-  agencyOptionTextActive: {
+  agencyInfoRowCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    paddingVertical: 1,
+  },
+  agencyInfoTextCompact: {
+    fontSize: fontSize.sm,
+    color: COLORS.textSecondary,
+    marginLeft: spacing.xs,
+    flex: 1,
+    lineHeight: fontSize.sm,
+  },
+  agencyNameSelected: {
     color: COLORS.primary,
-    fontWeight: '700',
+    fontWeight: '800',
+  },
+  emptyAgencyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  emptyAgencyText: {
+    fontSize: fontSize.md,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
   },
   cartButton: {
     backgroundColor: COLORS.secondary,

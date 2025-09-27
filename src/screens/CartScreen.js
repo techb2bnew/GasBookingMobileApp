@@ -386,7 +386,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   priceContainer: {
-    alignItems: 'flex-start',
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   unitPrice: {
     fontSize: fontSize.md,

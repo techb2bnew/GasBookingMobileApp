@@ -8,6 +8,7 @@ import {
   Alert,
   Modal,
   TextInput,
+  Image,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,6 +21,7 @@ import {
   setSelectedAddress,
   setSelectedAgency,
   clearCart,
+  removeFromCart,
 } from '../redux/slices/cartSlice';
 import { addOrder } from '../redux/slices/orderSlice';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
@@ -56,6 +58,7 @@ const CheckoutScreen = ({ navigation }) => {
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [profileError, setProfileError] = useState(null);
   const [isProfileUpdateModalVisible, setIsProfileUpdateModalVisible] = useState(false);
+  const [showAllItems, setShowAllItems] = useState(false);
   const [agencies, setAgencies] = useState([]);
   const [isLoadingAgencies, setIsLoadingAgencies] = useState(false);
   const [isAgencyDetailsModalVisible, setIsAgencyDetailsModalVisible] = useState(false);
@@ -388,7 +391,9 @@ const CheckoutScreen = ({ navigation }) => {
       <View style={[
         styles.radioButton,
         deliveryMode === option.id && styles.radioButtonSelected,
-      ]} />
+      ]}>
+        {deliveryMode === option.id && <View style={styles.radioButtonInner} />}
+      </View>
     </TouchableOpacity>
   );
 
@@ -414,7 +419,9 @@ const CheckoutScreen = ({ navigation }) => {
       <View style={[
         styles.radioButton,
         deliveryType === option.id && styles.radioButtonSelected,
-      ]} />
+      ]}>
+        {deliveryType === option.id && <View style={styles.radioButtonInner} />}
+      </View>
     </TouchableOpacity>
   );
 
@@ -434,10 +441,6 @@ const CheckoutScreen = ({ navigation }) => {
           {option.label}
         </Text>
       </View>
-      <View style={[
-        styles.radioButton,
-        paymentMethod === option.id && styles.radioButtonSelected,
-      ]} />
     </TouchableOpacity>
   );
 
@@ -454,10 +457,6 @@ const CheckoutScreen = ({ navigation }) => {
         <Text style={styles.addressText}>{address.address}</Text>
         <Text style={styles.addressText}>{address.city}, {address.pincode}</Text>
       </View>
-      <View style={[
-        styles.radioButton,
-        selectedAddress?.id === address.id && styles.radioButtonSelected,
-      ]} />
     </TouchableOpacity>
   );
 
@@ -483,10 +482,6 @@ const CheckoutScreen = ({ navigation }) => {
           }}>
           <Text style={styles.viewDetailsButtonText}>View Details</Text>
         </TouchableOpacity>
-        <View style={[
-          styles.radioButton,
-          styles.radioButtonSelected, // Always show as selected
-        ]} />
       </View>
     </View>
   );
@@ -524,40 +519,123 @@ const CheckoutScreen = ({ navigation }) => {
       <ScrollView style={styles.content}>
         {/* User Details */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Customer Details</Text>
-          <View style={styles.userDetailsContainer}>
-            <View style={styles.userDetailRow}>
-              <Text style={styles.userDetailLabel}>Name:</Text>
-              <Text style={styles.userDetailValue}>
-                {userProfile?.name || 'Not provided'}
-              </Text>
+          <View style={styles.userDetailsCard}>
+            <View style={styles.userDetailsHeader}>
+              <View style={styles.userDetailsIconContainer}>
+                {userProfile?.profileImage ? (
+                  <Image
+                    source={{ uri: userProfile.profileImage }}
+                    style={styles.userDetailsProfileImage}
+                    resizeMode="cover"
+                    defaultSource={{ uri: 'https://via.placeholder.com/24x24' }}
+                  />
+                ) : (
+                  <Ionicons name="person-circle-outline" size={24} color={COLORS.primary} />
+                )}
+              </View>
+              <Text style={styles.userDetailsTitle}>Account Information</Text>
             </View>
-            {userProfile?.phone && (
+            
+            <View style={styles.userDetailsContent}>
               <View style={styles.userDetailRow}>
-                <Text style={styles.userDetailLabel}>Phone:</Text>
-                <Text style={styles.userDetailValue}>{userProfile.phone}</Text>
+                <View style={styles.userInfoContainer}>
+                  <Ionicons name="person-outline" size={16} color={COLORS.primary} />
+                  <View style={styles.userInfo}>
+                    <Text style={styles.userDetailLabel}>Name</Text>
+                    <Text style={styles.userDetailValue}>
+                      {userProfile?.name || 'Not provided'}
+                    </Text>
+                  </View>
+                </View>
               </View>
-            )}
-            {userProfile?.email && (
-              <View style={styles.userDetailRow}>
-                <Text style={styles.userDetailLabel}>Email:</Text>
-                <Text style={styles.userDetailValue}>{userProfile.email}</Text>
-              </View>
-            )}
+              
+              {userProfile?.phone && (
+                <View style={styles.userDetailRow}>
+                  <View style={styles.userInfoContainer}>
+                    <Ionicons name="call-outline" size={16} color={COLORS.primary} />
+                    <View style={styles.userInfo}>
+                      <Text style={styles.userDetailLabel}>Phone</Text>
+                      <Text style={styles.userDetailValue}>{userProfile.phone}</Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+              
+              {userProfile?.email && (
+                <View style={[styles.userDetailRow, { borderBottomWidth: 0, marginBottom: 0 }]}>
+                  <View style={styles.userInfoContainer}>
+                    <Ionicons name="mail-outline" size={16} color={COLORS.primary} />
+                    <View style={styles.userInfo}>
+                      <Text style={styles.userDetailLabel}>Email</Text>
+                      <Text style={styles.userDetailValue}>{userProfile.email}</Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+            </View>
           </View>
         </View>
 
         {/* Order Summary */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Order Summary</Text>
-          {items.map((item) => (
+          {(showAllItems ? items : items.slice(0, 2)).map((item) => (
             <View key={item.id} style={styles.orderItem}>
-              <Text style={styles.orderItemName}>{item.productName}</Text>
-              <Text style={styles.orderItemDetails}>
-                Qty: {item.quantity} × ₹{item.price} = ₹{item.quantity * item.price}
-              </Text>
+              <View style={styles.orderItemContent}>
+                <View style={styles.orderItemImageContainer}>
+                  <Image 
+                    source={{
+                      uri: item.images?.[0] || item.image || item.productImage || 'https://via.placeholder.com/60x60'
+                    }} 
+                    style={styles.orderItemImage}
+                  />
+                </View>
+                <View style={styles.orderItemDetailsContainer}>
+                  <Text style={styles.orderItemName}>{item.productName}</Text>
+                  <Text style={styles.orderItemDetails}>
+                    Qty: {item.quantity} × ₹{item.price} = ₹{item.quantity * item.price}
+                  </Text>
+                  {item.weight && (
+                    <Text style={styles.orderItemWeight}>{item.weight}</Text>
+                  )}
+                </View>
+                <TouchableOpacity 
+                  style={styles.deleteButton}
+                  onPress={() => {
+                    console.log('Removing item:', item);
+                    dispatch(removeFromCart({ 
+                      productId: item.id,
+                      weight: item.weight,
+                      category: item.category,
+                      type: item.type
+                    }));
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={16} color="#ff4444" />
+                </TouchableOpacity>
+              </View>
             </View>
           ))}
+          {items.length > 2 && !showAllItems && (
+            <TouchableOpacity 
+              style={styles.viewAllButton} 
+              onPress={() => setShowAllItems(true)}>
+              <Text style={styles.viewAllButtonText}>
+                View All {items.length} Products
+              </Text>
+              <Ionicons name="chevron-down" size={16} color={COLORS.primary} />
+            </TouchableOpacity>
+          )}
+          {items.length > 2 && showAllItems && (
+            <TouchableOpacity 
+              style={styles.viewAllButton} 
+              onPress={() => setShowAllItems(false)}>
+              <Text style={styles.viewAllButtonText}>
+                Show Less
+              </Text>
+              <Ionicons name="chevron-up" size={16} color={COLORS.primary} />
+            </TouchableOpacity>
+          )}
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total Amount:</Text>
             <Text style={styles.totalAmount}>₹{totalAmount}</Text>
@@ -565,18 +643,33 @@ const CheckoutScreen = ({ navigation }) => {
         </View>
 
         {/* Delivery Mode */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Your Delivery Mode</Text>
-          {deliveryModeOptions.map(renderDeliveryModeOption)}
-        </View>
-
-        {/* Delivery Type - Only show for home delivery */}
-        {deliveryMode === 'home_delivery' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{STRINGS.deliveryType}</Text>
-            {deliveryOptions.map(renderDeliveryOption)}
+        <View style={styles.deliveryModeSection}>
+          <Text style={styles.deliveryModeTitle}>Delivery Mode</Text>
+          <View style={styles.deliveryModeContainer}>
+            {deliveryModeOptions.map((option) => (
+              <TouchableOpacity
+                key={option.id}
+                style={[
+                  styles.deliveryModeOption,
+                  deliveryMode === option.id && styles.deliveryModeOptionSelected,
+                ]}
+                onPress={() => dispatch(setDeliveryMode(option.id))}>
+                <View style={[
+                  styles.compactRadioButton,
+                  deliveryMode === option.id && styles.compactRadioButtonSelected,
+                ]}>
+                  {deliveryMode === option.id && <View style={styles.compactRadioButtonInner} />}
+                </View>
+                <Text style={[
+                  styles.deliveryModeLabel,
+                  deliveryMode === option.id && styles.deliveryModeLabelSelected,
+                ]}>
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        )}
+        </View>
 
         {/* Delivery Address - Only show for home delivery */}
         {deliveryMode === 'home_delivery' && deliveryType === 'Home Delivery' && (
@@ -584,24 +677,41 @@ const CheckoutScreen = ({ navigation }) => {
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Delivery Address</Text>
               <TouchableOpacity
-                onPress={() => navigation.navigate('Main', {
-                  screen: 'Profile',
-                })}>
+                onPress={() => navigation.navigate('AddAddress')}>
                 <Text style={styles.manageAddressText}>Manage Addresses</Text>
               </TouchableOpacity>
             </View>
 
-            {addresses.length === 0 ? (
+            {!selectedAddress || addresses.length === 0 ? (
               <View style={styles.noAddressContainer}>
-                <Text style={styles.noAddressText}>No addresses found</Text>
+                <Text style={styles.noAddressText}>
+                  {addresses.length === 0 ? 'No addresses found' : 'No address selected'}
+                </Text>
                 <TouchableOpacity
                   style={styles.addAddressButton}
                   onPress={() => navigation.navigate('AddAddress')}>
-                  <Text style={styles.addAddressButtonText}>Add Address</Text>
+                  <Text style={styles.addAddressButtonText}>
+                    {addresses.length === 0 ? 'Add Address' : 'Select Address'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             ) : (
-              addresses.map(renderAddressOption)
+              <View style={styles.selectedAddressCard}>
+                <View style={styles.selectedAddressContent}>
+                  <View style={styles.addressHeader}>
+                    <Text style={styles.addressTitle}>{selectedAddress.title}</Text>
+                    <View style={styles.defaultIndicator}>
+                      <Ionicons name="star" size={14} color={COLORS.primary} />
+                      <Text style={styles.defaultText}>Default</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.addressText}>{selectedAddress.address}</Text>
+                  <Text style={styles.addressText}>{selectedAddress.city}, {selectedAddress.pincode}</Text>
+                  {selectedAddress.landmark && (
+                    <Text style={styles.addressText}>Landmark: {selectedAddress.landmark}</Text>
+                  )}
+                </View>
+              </View>
             )}
           </View>
         )}
@@ -625,11 +735,13 @@ const CheckoutScreen = ({ navigation }) => {
           </View>
         )}
 
-        {/* Payment Method */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{STRINGS.paymentMethod}</Text>
-          {paymentOptions.map(renderPaymentOption)}
-        </View>
+        {/* Payment Method - Only show for home delivery */}
+        {deliveryMode === 'home_delivery' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{STRINGS.paymentMethod}</Text>
+            {paymentOptions.map(renderPaymentOption)}
+          </View>
+        )}
       </ScrollView>
 
       {/* Footer */}
@@ -821,33 +933,36 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    // justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     backgroundColor: COLORS.primary,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomLeftRadius: borderRadius.md,
+    borderBottomRightRadius: borderRadius.md,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 5,
   },
   backButton: {
-    paddingVertical: wp('1.25%'),
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: borderRadius.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    marginRight: spacing.sm,
   },
   backButtonText: {
     color: COLORS.white,
-    fontSize: fontSize.md,
+    fontSize: fontSize.sm,
     fontWeight: '500',
   },
   title: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.white,
-    letterSpacing: -0.5,
-    marginLeft:10
+    letterSpacing: -0.3,
+    flex: 1,
   },
   placeholder: {
     width: wp('15%'),
@@ -859,19 +974,20 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    paddingBottom: hp('6%'),
   },
   section: {
     backgroundColor: COLORS.cardBackground,
-    marginTop: spacing.md,
-    marginHorizontal: spacing.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
-    borderRadius: borderRadius.lg,
+    marginTop: spacing.xs,
+    marginHorizontal: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.sm,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowRadius: 8,
+    elevation: 3,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
@@ -879,45 +995,178 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
+    paddingBottom: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray,
   },
   sectionTitle: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.sm,
     fontWeight: '600',
     color: COLORS.text,
-    marginBottom: spacing.md,
+    marginBottom: 0,
+    letterSpacing: -0.1,
   },
   orderItem: {
-    paddingVertical: wp('2%'),
+    paddingVertical: spacing.xs,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.lightGray,
+    backgroundColor: COLORS.lightGray + '15',
+    marginBottom: 2,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm,
+  },
+  orderItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  orderItemImageContainer: {
+    marginRight: spacing.sm,
+  },
+  orderItemImage: {
+    width: 50,
+    height: 50,
+    borderRadius: borderRadius.sm,
+    resizeMode: 'cover',
+  },
+  orderItemDetailsContainer: {
+    flex: 1,
   },
   orderItemName: {
-    fontSize: fontSize.md,
-    fontWeight: '500',
+    fontSize: fontSize.sm,
+    fontWeight: '600',
     color: COLORS.text,
+    marginBottom: 2,
   },
   orderItemDetails: {
     fontSize: fontSize.sm,
     color: COLORS.textSecondary,
-    marginTop: wp('0.5%'),
+    fontWeight: '500',
+  },
+  orderItemWeight: {
+    fontSize: fontSize.xs,
+    color: COLORS.primary,
+    fontWeight: '600',
+    marginTop: 1,
+  },
+  deleteButton: {
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs,
+    marginLeft: spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ff444420',
+    borderWidth: 1,
+    borderColor: '#ff444450',
+  },
+  viewAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: COLORS.primary + '10',
+    borderRadius: borderRadius.sm,
+    marginVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '30',
+  },
+  viewAllButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: COLORS.primary,
+    marginRight: spacing.xs,
+  },
+  deliveryModeSection: {
+    backgroundColor: COLORS.cardBackground,
+    marginTop: spacing.xs,
+    marginHorizontal: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  deliveryModeTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 4,
+    letterSpacing: -0.1,
+  },
+  deliveryModeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  deliveryModeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.sm,
+    flex: 1,
+    marginHorizontal: 1,
+  },
+  deliveryModeOptionSelected: {
+    backgroundColor: COLORS.primary + '15',
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  deliveryModeLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    color: COLORS.text,
+    marginLeft: spacing.xs,
+  },
+  deliveryModeLabelSelected: {
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  compactRadioButton: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactRadioButtonSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary + '20',
+  },
+  compactRadioButtonInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.primary,
   },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: spacing.md,
+    paddingTop: spacing.sm,
     marginTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    borderTopWidth: 2,
+    borderTopColor: COLORS.primary,
+    backgroundColor: COLORS.primary + '05',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.sm,
   },
   totalLabel: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.md,
     fontWeight: '600',
     color: COLORS.text,
   },
   totalAmount: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.md,
     fontWeight: 'bold',
     color: COLORS.primary,
   },
@@ -925,70 +1174,102 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: spacing.md,
+    padding: spacing.sm,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.sm,
+    borderRadius: borderRadius.sm,
+    marginBottom: spacing.xs,
+    backgroundColor: COLORS.white,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
   },
   optionCardSelected: {
     borderColor: COLORS.primary,
     backgroundColor: COLORS.primary + '10',
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.15,
   },
   optionContent: {
     flex: 1,
   },
   optionLabel: {
     fontSize: fontSize.md,
-    fontWeight: '500',
+    fontWeight: '600',
     color: COLORS.text,
+    marginBottom: 2,
   },
   optionLabelSelected: {
     color: COLORS.primary,
+    fontWeight: '600',
   },
   optionPrice: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: COLORS.textSecondary,
-    marginTop: 2,
+    marginTop: 1,
+    fontWeight: '500',
   },
   radioButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     borderWidth: 2,
     borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   radioButtonSelected: {
     borderColor: COLORS.primary,
     backgroundColor: COLORS.primary,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.4,
+    elevation: 4,
+  },
+  radioButtonInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.white,
   },
   addressCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    padding: 15,
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 8,
-    marginBottom: 10,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+    backgroundColor: COLORS.white,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   addressCardSelected: {
     borderColor: COLORS.primary,
     backgroundColor: COLORS.primary + '10',
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.15,
   },
   addressContent: {
     flex: 1,
+    marginRight: spacing.sm,
   },
   addressTitle: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     fontWeight: '600',
     color: COLORS.text,
-    marginBottom: 5,
+    marginBottom: spacing.xs,
   },
   addressText: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: COLORS.textSecondary,
     marginBottom: 2,
+    lineHeight: fontSize.md,
   },
   manageAddressText: {
     color: COLORS.primary,
@@ -1019,17 +1300,54 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontWeight: '500',
   },
+  selectedAddressCard: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  selectedAddressContent: {
+    padding: spacing.md,
+  },
+  addressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  defaultIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary + '15',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  defaultText: {
+    fontSize: fontSize.xs,
+    color: COLORS.primary,
+    fontWeight: '600',
+    marginLeft: 2,
+  },
   footer: {
     backgroundColor: COLORS.surface,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderTopLeftRadius: borderRadius.md,
+    borderTopRightRadius: borderRadius.md,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    borderTopColor: COLORS.lightGray,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: -2 },
+    shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 8,
     justifyContent: "space-between",
     flexDirection: "row",
     alignItems: "center"
@@ -1038,28 +1356,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerTotalLabel: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: fontSize.lg,
+    fontWeight: '600',
     color: COLORS.text,
+    marginBottom: 2,
   },
   placeOrderButton: {
     backgroundColor: COLORS.primary,
-    padding: 15,
-    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.sm,
     alignItems: 'center',
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
   },
   placeOrderButtonDisabled: {
     backgroundColor: COLORS.gray,
+    borderColor: COLORS.gray,
+    shadowOpacity: 0.2,
   },
   placeOrderButtonText: {
     color: COLORS.white,
-    fontSize: 18,
+    fontSize: fontSize.md,
     fontWeight: '600',
+    letterSpacing: 0.2,
   },
   // Profile Update Modal Styles
   modalOverlay: {
@@ -1150,99 +1475,185 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   // User Details Styles
-  userDetailsContainer: {
-    backgroundColor: COLORS.white,
-    borderRadius: 8,
-    padding: 15,
+  userDetailsCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: borderRadius.md,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
     borderWidth: 1,
     borderColor: COLORS.border,
+    overflow: 'hidden',
+  },
+  userDetailsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary + '08',
+    padding: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border + '50',
+  },
+  userDetailsIconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.xs,
+    overflow: 'hidden',
+  },
+  userDetailsProfileImage: {
+    width: 24,
+    height: 24,
+    borderRadius: 18,
+  },
+  userDetailsTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+    color: COLORS.primary,
+    letterSpacing: -0.2,
+  },
+  userDetailsContent: {
+    backgroundColor: '#ffffff',
+    paddingBottom: 0,
+  },
+  userDetailsContainer: {
+    backgroundColor: COLORS.subtle,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   userDetailRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray,
+    borderBottomColor: COLORS.lightGray + '60',
+    backgroundColor: '#ffffff',
+    marginBottom: 0,
+    paddingHorizontal: spacing.sm,
   },
-  userDetailLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text,
+  userInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
   },
-  userDetailValue: {
-    fontSize: 14,
+  userInfo: {
+    marginLeft: spacing.xs,
+    flex: 1,
+  },
+  userDetailLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
     color: COLORS.textSecondary,
-    flex: 2,
-    textAlign: 'right',
+    marginBottom: 1,
+    letterSpacing: 0,
+  },
+  userDetailValue: {
+    fontSize: fontSize.sm,
+    color: COLORS.text,
+    fontWeight: '600',
+    flex: 1,
   },
   // Agency Styles
   agencyCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    padding: 15,
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 8,
-    marginBottom: 10,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
+    backgroundColor: COLORS.white,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
   agencyCardSelected: {
     borderColor: COLORS.primary,
     backgroundColor: COLORS.primary + '10',
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.2,
   },
   agencyContent: {
     flex: 1,
-    marginRight: 10,
+    marginRight: spacing.sm,
   },
   agencyTitle: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     fontWeight: '600',
     color: COLORS.text,
-    marginBottom: 5,
+    marginBottom: spacing.xs,
   },
   agencyText: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: COLORS.textSecondary,
     marginBottom: 2,
+    lineHeight: fontSize.md,
   },
   agencyPhone: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: COLORS.primary,
-    fontWeight: '500',
-    marginTop: 5,
+    fontWeight: '600',
+    marginTop: spacing.xs,
   },
   agencyActions: {
     alignItems: 'center',
   },
   viewDetailsButton: {
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginBottom: 10,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   viewDetailsButtonText: {
     color: COLORS.white,
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: fontSize.xs,
+    fontWeight: '600',
   },
   loadingContainer: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: spacing.md,
+    backgroundColor: COLORS.subtle,
+    borderRadius: borderRadius.md,
+    marginVertical: spacing.sm,
   },
   loadingText: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     color: COLORS.textSecondary,
+    fontWeight: '500',
   },
   noAgencyContainer: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: spacing.md,
+    backgroundColor: COLORS.subtle,
+    borderRadius: borderRadius.md,
+    marginVertical: spacing.sm,
   },
   noAgencyText: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     color: COLORS.textSecondary,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: fontSize.lg,
   },
   // Agency Details Modal Styles
   agencyDetailsModal: {

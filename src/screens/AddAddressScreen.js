@@ -24,6 +24,7 @@ import {
   deleteAddressAPI,
   clearAddressError,
 } from '../redux/slices/profileSlice';
+import { setSelectedAddress } from '../redux/slices/cartSlice';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 import MapPicker from '../components/MapPicker';
@@ -51,9 +52,20 @@ const AddAddressScreen = ({ navigation }) => {
     dispatch(fetchAddresses());
   }, [dispatch]);
 
+  // Set default address when addresses are loaded
+  useEffect(() => {
+    if (addresses.length > 0 && defaultAddressId) {
+      const defaultAddress = addresses.find(addr => addr.id === defaultAddressId);
+      if (defaultAddress) {
+        dispatch(setSelectedAddress(defaultAddress));
+      }
+    }
+  }, [addresses, defaultAddressId, dispatch]);
+
   useEffect(() => {
     if (addresses.length === 1 && !defaultAddressId) {
       dispatch(setDefaultAddress(addresses[0].id));
+      dispatch(setSelectedAddress(addresses[0]));
     }
   }, [addresses.length, defaultAddressId, dispatch]);
 
@@ -161,6 +173,13 @@ const AddAddressScreen = ({ navigation }) => {
 
   const handleSetDefault = (addressId) => {
     dispatch(setDefaultAddress(addressId));
+    
+    // Find the selected address and set it as selected for checkout
+    const selectedAddress = addresses.find(addr => addr.id === addressId);
+    if (selectedAddress) {
+      dispatch(setSelectedAddress(selectedAddress));
+    }
+    
     console.log('Success', 'Default address updated successfully');
   };
 
@@ -189,20 +208,38 @@ const AddAddressScreen = ({ navigation }) => {
   };
 
   const renderAddressItem = (address) => (
-    <View key={address.id} style={styles.addressItem}>
-      <View style={styles.addressHeader}>
-        <Text style={styles.addressTitle}>
-          {address.title?.charAt(0).toUpperCase() + address.title?.slice(1).toLowerCase()}
-        </Text>
-        {defaultAddressId === address.id && (
-          <Text style={styles.defaultBadge}>Default</Text>
-        )}
-      </View>
-      <Text style={styles.addressText}>{address.address}</Text>
-      <Text style={styles.addressText}>{address.city}, {address.pincode}</Text>
-      {address.landmark && (
-        <Text style={styles.addressText}>Landmark: {address.landmark}</Text>
-      )}
+    <View key={address.id} style={[
+      styles.addressItem,
+      defaultAddressId === address.id && styles.selectedAddressItem
+    ]}>
+      <TouchableOpacity
+        style={styles.addressSelectionArea}
+        onPress={() => handleSetDefault(address.id)}
+        activeOpacity={0.7}>
+        <View style={styles.selectionIndicator}>
+          {defaultAddressId === address.id ? (
+            <Ionicons name="radio-button-on" size={20} color={COLORS.primary} />
+          ) : (
+            <Ionicons name="radio-button-off" size={20} color={COLORS.textSecondary} />
+          )}
+        </View>
+        
+        <View style={styles.addressContent}>
+          <View style={styles.addressHeader}>
+            <Text style={styles.addressTitle}>
+              {address.title?.charAt(0).toUpperCase() + address.title?.slice(1).toLowerCase()}
+            </Text>
+            {defaultAddressId === address.id && (
+              <Text style={styles.defaultBadge}>Default</Text>
+            )}
+          </View>
+          <Text style={styles.addressText}>{address.address}</Text>
+          <Text style={styles.addressText}>{address.city}, {address.pincode}</Text>
+          {address.landmark && (
+            <Text style={styles.addressText}>Landmark: {address.landmark}</Text>
+          )}
+        </View>
+      </TouchableOpacity>
 
       <View style={styles.addressActions}>
         <TouchableOpacity
@@ -210,14 +247,6 @@ const AddAddressScreen = ({ navigation }) => {
           onPress={() => handleEditAddress(address)}>
           <Text style={styles.actionButtonText}>{STRINGS.edit}</Text>
         </TouchableOpacity>
-
-        {defaultAddressId !== address.id && (
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleSetDefault(address.id)}>
-            <Text style={styles.actionButtonText}>{STRINGS.setAsDefault}</Text>
-          </TouchableOpacity>
-        )}
 
         <TouchableOpacity
           style={[styles.actionButton, styles.deleteButton]}
@@ -341,6 +370,13 @@ const AddAddressScreen = ({ navigation }) => {
       </View>
 
       <ScrollView style={styles.content}>
+        {/* Help message for address selection */}
+        {!addressLoading && !addressError && addresses.length > 1 && (
+          <View style={styles.helpContainer}>
+            <Text style={styles.helpText}>Select a default address for checkout</Text>
+          </View>
+        )}
+
         {/* Loading State */}
         {addressLoading && (
           <View style={styles.loadingContainer}>
@@ -494,6 +530,33 @@ const styles = StyleSheet.create({
   addressItem: {
     borderWidth: 1, borderColor: COLORS.border, borderRadius: borderRadius.md,
     padding: spacing.md, margin: spacing.md, marginBottom: spacing.sm, backgroundColor: COLORS.white,
+  },
+  selectedAddressItem: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary + '05',
+  },
+  addressSelectionArea: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  selectionIndicator: {
+    marginRight: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  addressContent: {
+    flex: 1,
+  },
+  helpContainer: {
+    backgroundColor: COLORS.primary + '10',
+    margin: spacing.md,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+  },
+  helpText: {
+    color: COLORS.primary,
+    fontSize: fontSize.sm,
+    fontWeight: '500',
   },
   addressHeader: {
     flexDirection: 'row', justifyContent: 'space-between', marginBottom: wp('2%'),
