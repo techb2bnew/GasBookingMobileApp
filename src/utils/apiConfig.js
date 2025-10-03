@@ -45,12 +45,12 @@ apiClient.interceptors.response.use(
 
       try {
         // Clear stored token
-        await AsyncStorage.removeItem('userToken');
+        await AsyncStorage.multiRemove(['userToken', 'authToken', 'userId', 'userRole', 'agencyId']);
         
         // Dispatch tokenExpired action to clear Redux state with appropriate message
         store.dispatch(tokenExpired());
         
-        console.log('Token expired. User logged out automatically.');
+        console.log('✅ Token expired. User logged out automatically. All auth data cleared.');
         
         // You can also show a toast or alert here if needed
         // Alert.alert('Session Expired', 'Your session has expired. Please login again.');

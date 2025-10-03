@@ -114,7 +114,7 @@ const ProfileScreen = ({ navigation }) => {
         console.error('Session Expired', 'Please login again');
         dispatch(logout());
         // Clear AsyncStorage
-        await AsyncStorage.removeItem('userToken');
+        await AsyncStorage.multiRemove(['userToken', 'authToken', 'userId', 'userRole', 'agencyId']);
       } else {
         console.error('Error', 'Failed to fetch profile. Please try again.');
       }
@@ -220,7 +220,7 @@ const ProfileScreen = ({ navigation }) => {
         // Token expired or invalid, logout user
         console.log('Session Expired', 'Please login again');
         dispatch(logout());
-        await AsyncStorage.removeItem('userToken');
+        await AsyncStorage.multiRemove(['userToken', 'authToken', 'userId', 'userRole', 'agencyId']);
       } else {
         console.log('Error', error.response?.data?.message || 'Failed to update profile. Please try again.');
       }
@@ -275,7 +275,8 @@ const ProfileScreen = ({ navigation }) => {
     } finally {
       // Only logout auth data, keep cart and other data
       dispatch(logout());
-      await AsyncStorage.removeItem('userToken');
+      await AsyncStorage.multiRemove(['userToken', 'authToken', 'userId', 'userRole', 'agencyId']);
+      console.log('✅ Logout successful - All auth data cleared');
       setIsLogoutModalVisible(false);
     }
   };

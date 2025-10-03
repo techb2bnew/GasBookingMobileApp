@@ -225,6 +225,57 @@ const OrdersScreen = ({ navigation }) => {
     }, [])
   );
 
+  // 🔥 SOCKET EVENT LISTENERS - Real-time updates
+  useEffect(() => {
+    // Import socketService
+    const socketService = require('../utils/socketService').default;
+    const socket = socketService.socket;
+    
+    if (socket && socketService.isConnected) {
+      console.log('🎧 OrdersScreen: Setting up socket event listeners...');
+      
+      const handleOrderCreated = (data) => {
+        console.log('📦 OrdersScreen: New order created', data.data);
+        fetchOrders(); // Refresh orders list
+      };
+      
+      const handleOrderStatusUpdated = (data) => {
+        console.log('🔄 OrdersScreen: Order status updated', data.data);
+        console.log('🔄 Order ID:', data.data.orderId, 'New Status:', data.data.status);
+        fetchOrders(); // Refresh orders list
+      };
+      
+      const handleOrderAssigned = (data) => {
+        console.log('👤 OrdersScreen: Order assigned', data.data);
+        fetchOrders(); // Refresh orders list
+      };
+      
+      const handleOrderDelivered = (data) => {
+        console.log('✅ OrdersScreen: Order delivered', data.data);
+        fetchOrders(); // Refresh orders list
+      };
+      
+      // Register listeners
+      socket.on('order:created', handleOrderCreated);
+      socket.on('order:status-updated', handleOrderStatusUpdated);
+      socket.on('order:assigned', handleOrderAssigned);
+      socket.on('order:delivered', handleOrderDelivered);
+      
+      console.log('✅ OrdersScreen: Socket listeners registered');
+      
+      // Cleanup on unmount
+      return () => {
+        console.log('🧹 OrdersScreen: Cleaning up socket listeners');
+        socket.off('order:created', handleOrderCreated);
+        socket.off('order:status-updated', handleOrderStatusUpdated);
+        socket.off('order:assigned', handleOrderAssigned);
+        socket.off('order:delivered', handleOrderDelivered);
+      };
+    } else {
+      console.log('⚠️ OrdersScreen: Socket not connected, listeners not set up');
+    }
+  }, []);
+
   // Fetch products from API
   const fetchProducts = async () => {
     try {
@@ -389,6 +440,12 @@ const OrdersScreen = ({ navigation }) => {
 
 
   const renderOrderItem = ({ item }) => {
+    // Safety check for items array
+    if (!item || !item.items || !Array.isArray(item.items)) {
+      console.warn('⚠️ Order item missing items array:', item?.id);
+      return null;
+    }
+    
     const isExpanded = expandedOrders.has(item.id);
     const showAllProducts = isExpanded || item.items.length <= 1;
     const displayItems = showAllProducts ? item.items : item.items.slice(0, 1);
@@ -585,7 +642,8 @@ const OrdersScreen = ({ navigation }) => {
         <FlatList
           data={orders}
           renderItem={renderOrderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => `${item.id}-${item.status}-${item.lastUpdated || ''}`}
+          extraData={orders}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.ordersList}
           refreshControl={

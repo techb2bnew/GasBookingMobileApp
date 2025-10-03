@@ -15,17 +15,22 @@ import {useDispatch, useSelector} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
 import {COLORS, STRINGS} from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {setProducts} from '../redux/slices/productSlice';
+import {setProducts, updateProductAvailability, updateGlobalProductStatus, clearRefreshFlag} from '../redux/slices/productSlice';
 import {wp, hp, fontSize, spacing, borderRadius} from '../utils/dimensions';
 import MenuDrawer from '../components/MenuDrawer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../utils/apiConfig';
+import { useAgencies } from '../hooks/useAgencies';
+import { useSocket } from '../contexts/SocketContext';
+import { testSocketConnection, testProductAvailabilityEvent } from '../utils/socketTest';
+import socketService from '../utils/socketService';
 
 const {width: screenWidth} = Dimensions.get('window');
 
 const ProductsScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const {totalItems, totalAmount} = useSelector(state => state.cart);
+  const {products: reduxProducts, needsRefresh} = useSelector(state => state.products);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -33,13 +38,27 @@ const ProductsScreen = ({navigation}) => {
   const [productsError, setProductsError] = useState(null);
   const [apiProducts, setApiProducts] = useState([]);
   const [productImageIndices, setProductImageIndices] = useState({});
-  const [agencies, setAgencies] = useState([]);
-  const [selectedAgencyId, setSelectedAgencyId] = useState('');
   const [isAgencyModalVisible, setIsAgencyModalVisible] = useState(false);
-  const [isLoadingAgencies, setIsLoadingAgencies] = useState(false);
-  const [agenciesError, setAgenciesError] = useState(null);
+  const [forceUpdate, setForceUpdate] = useState(0);
+  const [processedEvents, setProcessedEvents] = useState(new Set());
   const carouselRef = useRef(null);
   const carouselIntervalRef = useRef(null);
+
+  // Use Redux-based agencies management
+  const {
+    agencies,
+    selectedAgency,
+    selectedAgencyId,
+    isLoading: isLoadingAgencies,
+    error: agenciesError,
+    fetchAgencies,
+    selectAgency,
+    hasAgencies,
+    hasSelectedAgency
+  } = useAgencies();
+
+  // Socket context for real-time updates
+  const { socket, isConnected } = useSocket();
 
   // Fetch products for selected agency
   const fetchProducts = async agencyId => {
@@ -69,8 +88,9 @@ const ProductsScreen = ({navigation}) => {
         const products = response.data.data.products;
         if (products && Array.isArray(products)) {
           setApiProducts(products);
-          // Store products in Redux for use in other screens
+          // Store products in Redux for use in other screens and real-time updates
           dispatch(setProducts(products));
+          console.log('📦 Products stored in Redux:', products.length);
         } else {
           setProductsError('Invalid products data received');
         }
@@ -89,68 +109,41 @@ const ProductsScreen = ({navigation}) => {
     }
   };
 
-  // Fetch agencies list
-  const fetchAgencies = async () => {
-    try {
-      setIsLoadingAgencies(true);
-      setAgenciesError(null);
-      const response = await apiClient.get('/api/agencies/active');
-
-      console.log('=== AGENCIES API RESPONSE ===');
-      console.log('Full Response:', response);
-      console.log('Response Data:', response.data);
-      console.log('Success Status:', response.data?.success);
-      console.log('Agencies Data:', response.data?.data);
-      console.log('Agencies Array:', response.data?.data?.agencies);
-      console.log('First Agency Sample:', response.data?.data?.agencies?.[0]);
-      console.log('=============================');
-
-      if (response.data?.success) {
-        const list = response.data.data?.agencies || [];
-        console.log('*** AGENCIES LOADED ***', list.length, list.map(a => a.name));
-        setAgencies(list);
-        if (list.length > 0) {
-          // Try to restore previously selected agency from storage
-          let restoredId = null;
-          try {
-            restoredId = await AsyncStorage.getItem('selectedAgencyId');
-          } catch (e) {
-            // ignore storage errors for restoring
-          }
-          const hasRestored = restoredId && list.some(a => a.id === restoredId);
-          const effectiveId = hasRestored ? restoredId : list[0].id;
-          setSelectedAgencyId(effectiveId);
-          // Save default if none was stored
-          if (!hasRestored) {
-            try {
-              await AsyncStorage.setItem('selectedAgencyId', effectiveId);
-            } catch (e) {}
-          }
-          await fetchProducts(effectiveId);
-        } else {
-          setApiProducts([]);
-        }
-      } else {
-        setAgenciesError(response.data?.message || 'Failed to fetch agencies');
-      }
-    } catch (error) {
-      console.log('=== AGENCIES API ERROR ===');
-      console.error('Error fetching agencies:', error);
-      console.log('Error Response:', error.response?.data);
-      console.log('Error Status:', error.response?.status);
-      console.log('===========================');
-      setAgenciesError('Failed to load agencies. Please try again.');
-    } finally {
-      setIsLoadingAgencies(false);
-    }
-  };
+  // Fetch agencies is now handled by the useAgencies hook
 
   // Fetch agencies when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       fetchAgencies();
-    }, []),
+    }, [fetchAgencies]),
   );
+
+  // Fetch products when selected agency changes
+  useEffect(() => {
+    if (selectedAgencyId) {
+      console.log('🔄 Selected agency changed, fetching products for:', selectedAgencyId);
+      fetchProducts(selectedAgencyId);
+      // Clear processed events when agency changes
+      setProcessedEvents(new Set());
+      
+      // Join the specific agency room for real-time updates
+      if (socket && isConnected) {
+        console.log('🏢 Joining agency room for real-time updates:', selectedAgencyId);
+        socketService.joinAgencyRoom(selectedAgencyId);
+      }
+    } else {
+      console.log('⚠️ No agency selected yet');
+      setApiProducts([]);
+    }
+    
+    // Cleanup function to leave agency room when component unmounts or agency changes
+    return () => {
+      if (selectedAgencyId && socket && isConnected) {
+        console.log('🏢 Leaving agency room:', selectedAgencyId);
+        socketService.leaveAgencyRoom(selectedAgencyId);
+      }
+    };
+  }, [selectedAgencyId, socket, isConnected]);
 
   // Auto-play image slider for products with multiple images
   useEffect(() => {
@@ -170,8 +163,122 @@ const ProductsScreen = ({navigation}) => {
     return () => clearInterval(interval);
   }, [apiProducts]);
 
-  // Use only API products - no static data fallback
-  const allProducts = apiProducts;
+  // Listen for real-time product availability changes
+  useEffect(() => {
+    if (!socket || !isConnected || !selectedAgencyId) return;
+
+    const handleProductAvailabilityChange = (data) => {
+      console.log('🔄 ProductsScreen: Product availability changed:', data);
+      console.log('🔄 ProductsScreen: Current selected agency ID:', selectedAgencyId);
+      console.log('🔄 ProductsScreen: Change agency ID:', data.agencyId);
+      
+      // Create a unique event ID to prevent duplicate processing
+      const eventId = `${data.productId}-${data.agencyId}-${data.isActive}-${Date.now()}`;
+      
+      // Check if this event was already processed
+      if (processedEvents.has(eventId)) {
+        console.log('🔄 ProductsScreen: Event already processed, skipping...');
+        return;
+      }
+      
+      // Add to processed events
+      setProcessedEvents(prev => new Set([...prev, eventId]));
+      
+      // Check if this change affects the currently selected agency
+      if (data.agencyId === selectedAgencyId) {
+        console.log('🔄 ProductsScreen: Product availability change affects current agency, updating...');
+        
+        // Dispatch to Redux to update the product list
+        dispatch(updateProductAvailability(data));
+        
+        // Force UI update
+        setForceUpdate(prev => prev + 1);
+        
+        // If product was activated and not in current list, trigger a fresh fetch
+        if (data.isActive && !reduxProducts.find(p => p.id === data.productId)) {
+          console.log('🔄 ProductsScreen: Product was activated but not in list, fetching fresh products...');
+          setTimeout(() => {
+            fetchProducts(selectedAgencyId);
+          }, 500);
+        }
+      } else {
+        console.log('🔄 ProductsScreen: Product availability change does not affect current agency, ignoring...');
+      }
+    };
+
+    // Listen for product availability changes
+    socket.on('product:availability-changed', handleProductAvailabilityChange);
+
+    // Cleanup listener on unmount or when dependencies change
+    return () => {
+      if (socket) {
+        socket.off('product:availability-changed', handleProductAvailabilityChange);
+      }
+    };
+  }, [socket, isConnected, selectedAgencyId, dispatch]);
+
+  // Listen for global product status changes (admin action)
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const handleGlobalProductStatusChange = (data) => {
+      console.log('🌍 ProductsScreen: Global product status changed:', data);
+      console.log('🌍 Product ID:', data.productId);
+      console.log('🌍 Product Name:', data.productName);
+      console.log('🌍 Status:', data.status);
+      console.log('🌍 Affected Agencies:', data.affectedAgencies);
+      console.log('🌍 Current selected agency:', selectedAgencyId);
+      console.log('🌍 Current products count:', allProducts.length);
+      
+      // Dispatch to Redux to update global product status
+      dispatch(updateGlobalProductStatus(data));
+      
+      // Force UI update
+      setForceUpdate(prev => prev + 1);
+      
+      console.log('🌍 ProductsScreen: Global status change handled');
+    };
+
+    // Listen for global product status changes
+    socket.on('product:global-status-changed', handleGlobalProductStatusChange);
+
+    // Cleanup listener on unmount or when dependencies change
+    return () => {
+      if (socket) {
+        socket.off('product:global-status-changed', handleGlobalProductStatusChange);
+      }
+    };
+  }, [socket, isConnected, dispatch]);
+
+  // Handle needsRefresh flag from Redux
+  useEffect(() => {
+    if (needsRefresh && selectedAgencyId) {
+      console.log('🔄 ProductsScreen: needsRefresh flag detected, fetching fresh products...');
+      fetchProducts(selectedAgencyId);
+      dispatch(clearRefreshFlag());
+    }
+  }, [needsRefresh, selectedAgencyId, dispatch]);
+
+  // Test socket connection when socket is available
+  useEffect(() => {
+    if (socket && isConnected) {
+      console.log('🧪 Testing socket connection...');
+      testSocketConnection(socket);
+    }
+  }, [socket, isConnected]);
+
+  // Use Redux products if available, otherwise fallback to API products
+  // Ensure we always have an array to prevent undefined errors
+  // If Redux products is empty array, use it (don't fallback to API products)
+  const allProducts = reduxProducts !== undefined ? reduxProducts : (apiProducts || []);
+  
+  // Debug logging
+  console.log('📦 ProductsScreen: Redux products count:', reduxProducts?.length || 0);
+  console.log('📦 ProductsScreen: API products count:', apiProducts?.length || 0);
+  console.log('📦 ProductsScreen: Using products count:', allProducts?.length || 0);
+  console.log('📦 ProductsScreen: Force update count:', forceUpdate);
+  console.log('📦 ProductsScreen: Redux products:', reduxProducts?.map(p => ({ id: p.id, name: p.productName })) || []);
+  console.log('📦 ProductsScreen: API products:', apiProducts?.map(p => ({ id: p.id, name: p.productName })) || []);
 
   // Carousel banner data
   const carouselData = [
@@ -226,6 +333,7 @@ const ProductsScreen = ({navigation}) => {
     selectedCategory === 'All'
       ? allProducts
       : allProducts.filter(item => {
+          if (!item || !item.category) return false;
           console.log(
             'Filtering item:',
             item.productName,
@@ -301,6 +409,17 @@ const ProductsScreen = ({navigation}) => {
   };
 
   const renderProductImage = item => {
+    if (!item || !item.images || !Array.isArray(item.images) || item.images.length === 0) {
+      return (
+        <View style={styles.imageContainer}>
+          <Image
+            source={{uri: 'https://via.placeholder.com/150x150?text=No+Image'}}
+            style={styles.productImage}
+          />
+        </View>
+      );
+    }
+    
     const currentImageIndex = productImageIndices[item.id] || 0;
     const hasMultipleImages = item.images && item.images.length > 1;
 
@@ -316,6 +435,11 @@ const ProductsScreen = ({navigation}) => {
 
   const renderProductItem = ({item}) => {
     // console.log("Rendering Product Item:", item);
+    
+    // Safety check for undefined item
+    if (!item) {
+      return null;
+    }
 
     return (
       <TouchableOpacity
@@ -328,7 +452,7 @@ const ProductsScreen = ({navigation}) => {
             {item?.productName
               ? item.productName.charAt(0).toUpperCase() +
                 item.productName.slice(1)
-              : item?.productName}
+              : item?.productName || 'Unknown Product'}
           </Text>
           <Text style={styles.weightText}>
             Starting at{' '}
@@ -452,6 +576,7 @@ const ProductsScreen = ({navigation}) => {
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             onMomentumScrollEnd={event => {
+              event.persist();
               const index = Math.round(
                 event.nativeEvent.contentOffset.x / screenWidth,
               );
@@ -524,9 +649,9 @@ const ProductsScreen = ({navigation}) => {
 
               {/* Products Grid */}
               <FlatList
-                data={filteredProducts}
+                data={filteredProducts || []}
                 renderItem={renderProductItem}
-                keyExtractor={item => item.id}
+                keyExtractor={item => item?.id || Math.random().toString()}
                 numColumns={3}
                 columnWrapperStyle={styles.productRow}
                 scrollEnabled={false}
@@ -570,10 +695,8 @@ const ProductsScreen = ({navigation}) => {
                     onPress={async () => {
                       setIsAgencyModalVisible(false);
                       if (agency.id !== selectedAgencyId) {
-                        setSelectedAgencyId(agency.id);
-                        try {
-                          await AsyncStorage.setItem('selectedAgencyId', agency.id);
-                        } catch (e) {}
+                        // Use the selectAgency function from hook
+                        await selectAgency(agency);
                         await fetchProducts(agency.id);
                       }
                     }}>

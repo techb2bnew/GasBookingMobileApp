@@ -8,6 +8,8 @@ import productSlice from './slices/productSlice';
 import cartSlice from './slices/cartSlice';
 import orderSlice from './slices/orderSlice';
 import profileSlice from './slices/profileSlice';
+import agenciesSlice from './slices/agenciesSlice';
+import socketMiddleware from './socketMiddleware';
 
 const persistConfig = {
   key: 'root',
@@ -21,6 +23,7 @@ const rootReducer = combineReducers({
   cart: cartSlice,
   orders: orderSlice,
   profile: profileSlice,
+  agencies: agenciesSlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -32,10 +35,11 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
       },
-    }),
+    }).concat(socketMiddleware),
 });
 
 export const persistor = persistStore(store);
+
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 

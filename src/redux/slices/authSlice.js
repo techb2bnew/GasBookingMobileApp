@@ -76,6 +76,17 @@ const authSlice = createSlice({
       state.otpSent = false;
       state.error = 'Session expired. Please login again.';
     },
+    // Socket event handlers
+    handleForceLogout: (state, action) => {
+      const { type, message } = action.payload;
+      state.isAuthenticated = false;
+      state.user = null;
+      state.token = null;
+      state.phoneNumber = '';
+      state.otp = '';
+      state.otpSent = false;
+      state.error = message || 'You have been logged out.';
+    },
   },
 });
 
@@ -91,7 +102,9 @@ export const {
   logout,
   clearError,
   resetOTP,
-  tokenExpired
+  tokenExpired,
+  // Socket event actions
+  handleForceLogout
 } = authSlice.actions;
 
 export default authSlice.reducer;

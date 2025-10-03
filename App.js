@@ -3,12 +3,14 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Text, View, StyleSheet, SafeAreaView } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 import { store, persistor } from './src/redux/store';
 import { AppNavigator } from './src/navigation';
 import { COLORS } from './src/constants';
 import { requestLocationPermission } from './src/utils/locationPermissions';
 import { hp, wp } from './src/utils/dimensions';
+import { SocketProvider } from './src/contexts/SocketContext';
 
 const LoadingScreen = () => (
   <View style={styles.loadingContainer}>
@@ -26,9 +28,12 @@ const App = () => {
     <Provider store={store}>
       <PersistGate loading={<LoadingScreen />} persistor={persistor}>
         <SafeAreaProvider>
-          <SafeAreaView style={{ height:hp(100),width:wp(100) }}>
-            <AppNavigator />
-          </SafeAreaView>
+          <SocketProvider>
+            <SafeAreaView style={{ height:hp(100),width:wp(100) }}>
+              <AppNavigator />
+              <Toast />
+            </SafeAreaView>
+          </SocketProvider>
         </SafeAreaProvider>
       </PersistGate>
     </Provider>

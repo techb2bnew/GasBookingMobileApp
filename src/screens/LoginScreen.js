@@ -78,10 +78,19 @@ const LoginScreen = ({ navigation }) => {
       // setTimer(30); // ❌ Timer removed - only starts on resend click
     } catch (error) {
       console.error("OTP Request Error:", error);
+      console.error("Error Response:", error.response);
+      console.error("Error Response Data:", error.response?.data);
 
+      // Try multiple possible error message locations
       const message =
-        error.response?.data?.message || "Something went wrong. Please try again.";
+        error.response?.data?.message || 
+        error.response?.data?.error?.message ||
+        error.response?.data?.error || 
+        (typeof error.response?.data === 'string' ? error.response?.data : null) ||
+        error.message || 
+        "Something went wrong. Please try again.";
 
+      console.log("Final Error Message:", message);
       setError(message);
       dispatch(sendOTPFailure(message)); // ✅ Reset loading state on error
     }
@@ -147,8 +156,15 @@ const LoginScreen = ({ navigation }) => {
 
         const token = response.data.data.token;
 
-        // ✅ Save token to secure storage (you'll need to implement this)
-        await AsyncStorage.setItem('userToken', token);
+        // ✅ Save token and user data for API and Socket
+        await AsyncStorage.setItem('userToken', token); // Keep for backward compatibility
+        await AsyncStorage.setItem('authToken', token); // For socket service
+        await AsyncStorage.setItem('userId', userData.id.toString());
+        await AsyncStorage.setItem('userRole', userData.role);
+        
+        console.log('✅ Login successful - Auth data saved for socket');
+        console.log('📝 UserId:', userData.id);
+        console.log('📝 UserRole:', userData.role);
         
         // ✅ Save user data to Redux
         dispatch(verifyOTPSuccess({
@@ -165,8 +181,20 @@ const LoginScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error("Verify OTP Error:", error);
-      dispatch(verifyOTPFailure(error.response?.data?.message || 'Something went wrong'));
-      setError(error.response?.data?.message || 'Something went wrong');
+      console.error("Error Response Data:", error.response?.data);
+      
+      // Try multiple possible error message locations
+      const message = 
+        error.response?.data?.message || 
+        error.response?.data?.error?.message ||
+        error.response?.data?.error || 
+        (typeof error.response?.data === 'string' ? error.response?.data : null) ||
+        error.message || 
+        'Something went wrong';
+      
+      console.log("Final Error Message:", message);
+      dispatch(verifyOTPFailure(message));
+      setError(message);
     }
   };
 
@@ -196,7 +224,18 @@ const LoginScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error("Resend OTP Error:", error);
-      const message = error.response?.data?.message || "Something went wrong. Please try again.";
+      console.error("Error Response Data:", error.response?.data);
+      
+      // Try multiple possible error message locations
+      const message = 
+        error.response?.data?.message || 
+        error.response?.data?.error?.message ||
+        error.response?.data?.error || 
+        (typeof error.response?.data === 'string' ? error.response?.data : null) ||
+        error.message || 
+        "Something went wrong. Please try again.";
+      
+      console.log("Final Error Message:", message);
       setError(message);
       dispatch(sendOTPFailure(message));
     }
@@ -235,6 +274,7 @@ const LoginScreen = ({ navigation }) => {
                   placeholder={STRINGS.enterPhoneNumber}
                   value={phoneNumber}
                   onChangeText={text => dispatch(setPhoneNumber(text))}
+                  autoCapitalize="none"
                   // keyboardType="phone-pad"
                   // maxLength={10}
                 />

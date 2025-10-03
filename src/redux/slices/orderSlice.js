@@ -22,6 +22,78 @@ const orderSlice = createSlice({
         order.lastUpdated = new Date().toISOString();
       }
     },
+    // Socket event handlers
+    handleOrderCreated: (state, action) => {
+      const orderData = action.payload;
+      // Check if order already exists (avoid duplicates)
+      const existingOrder = state.orders.find(order => order.orderId === orderData.orderId);
+      if (!existingOrder) {
+        state.orders.unshift({
+          id: orderData.orderId,
+          orderId: orderData.orderId,
+          orderNumber: orderData.orderNumber,
+          customerName: orderData.customerName,
+          customerEmail: orderData.customerEmail,
+          totalAmount: orderData.totalAmount,
+          status: orderData.status || 'pending',
+          createdAt: new Date().toISOString(),
+          lastUpdated: new Date().toISOString(),
+        });
+      }
+    },
+    handleOrderStatusUpdated: (state, action) => {
+      const { orderId, orderNumber, status, assignedAgentId } = action.payload;
+      const order = state.orders.find(order => 
+        order.id === orderId || 
+        order.orderId === orderId || 
+        order.orderNumber === orderNumber
+      );
+      if (order) {
+        order.status = status;
+        if (assignedAgentId) {
+          order.assignedAgentId = assignedAgentId;
+        }
+        order.lastUpdated = new Date().toISOString();
+        console.log('✅ Order status updated in Redux:', order.orderNumber, status);
+      } else {
+        console.log('⚠️ Order not found in Redux:', orderId, orderNumber);
+      }
+    },
+    handleOrderAssigned: (state, action) => {
+      const { orderId, orderNumber, agentId, agentName, assignedAgentId } = action.payload;
+      const order = state.orders.find(order => 
+        order.id === orderId || 
+        order.orderId === orderId || 
+        order.orderNumber === orderNumber
+      );
+      if (order) {
+        order.assignedAgentId = assignedAgentId || agentId;
+        order.agentName = agentName;
+        order.status = 'assigned';
+        order.lastUpdated = new Date().toISOString();
+        console.log('✅ Order assigned in Redux:', order.orderNumber, agentName);
+      } else {
+        console.log('⚠️ Order not found in Redux for assignment:', orderId, orderNumber);
+      }
+    },
+    handleOrderDelivered: (state, action) => {
+      const { orderId, orderNumber, deliveryProof, paymentReceived } = action.payload;
+      const order = state.orders.find(order => 
+        order.id === orderId || 
+        order.orderId === orderId || 
+        order.orderNumber === orderNumber
+      );
+      if (order) {
+        order.status = 'delivered';
+        order.deliveryProof = deliveryProof;
+        order.paymentReceived = paymentReceived;
+        order.deliveredAt = new Date().toISOString();
+        order.lastUpdated = new Date().toISOString();
+        console.log('✅ Order delivered in Redux:', order.orderNumber);
+      } else {
+        console.log('⚠️ Order not found in Redux for delivery:', orderId, orderNumber);
+      }
+    },
     setCurrentOrder: (state, action) => {
       state.currentOrder = action.payload;
     },
@@ -85,6 +157,11 @@ export const {
   setError,
   clearError,
   setOrders,
+  // Socket event actions
+  handleOrderCreated,
+  handleOrderStatusUpdated,
+  handleOrderAssigned,
+  handleOrderDelivered,
 } = orderSlice.actions;
 
 export default orderSlice.reducer;
