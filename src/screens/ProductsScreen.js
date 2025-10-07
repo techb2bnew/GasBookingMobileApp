@@ -386,24 +386,30 @@ const ProductsScreen = ({navigation}) => {
     ];
 
     return (
-      <View style={styles.categoryTabs}>
-        {availableCategories.map(cat => (
-          <TouchableOpacity
-            key={cat}
-            style={[
-              styles.categoryButton,
-              selectedCategory === cat && styles.categoryButtonActive,
-            ]}
-            onPress={() => setSelectedCategory(cat)}>
-            <Text
+      <View style={styles.categoryTabsContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryTabs}
+          style={styles.categoryScrollView}>
+          {availableCategories.map(cat => (
+            <TouchableOpacity
+              key={cat}
               style={[
-                styles.categoryText,
-                selectedCategory === cat && styles.categoryTextActive,
-              ]}>
-              {cat}
-            </Text>
-          </TouchableOpacity>
-        ))}
+                styles.categoryButton,
+                selectedCategory === cat && styles.categoryButtonActive,
+              ]}
+              onPress={() => setSelectedCategory(cat)}>
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === cat && styles.categoryTextActive,
+                ]}>
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
     );
   };
@@ -1400,12 +1406,8 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     letterSpacing: -0.3,
   },
-  categoryTabs: {
-    flexDirection: 'row',
-    paddingVertical: spacing.sm,
+  categoryTabsContainer: {
     backgroundColor: COLORS.white,
-    justifyContent: 'space-evenly',
-    alignItems: 'center',
     shadowColor: COLORS.shadow,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
@@ -1413,6 +1415,16 @@ const styles = StyleSheet.create({
     elevation: 3,
     borderWidth: 1,
     borderColor: COLORS.border,
+  },
+  categoryScrollView: {
+    flexGrow: 0,
+  },
+  categoryTabs: {
+    flexDirection: 'row',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    alignItems: 'center',
+    minWidth: '100%',
   },
   categoryButton: {
     paddingVertical: wp('1.25%'),
