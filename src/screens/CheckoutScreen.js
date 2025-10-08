@@ -39,7 +39,8 @@ const CheckoutScreen = ({ navigation }) => {
   
   const { 
     items = [], 
-    totalAmount = 0, 
+    totalAmount = 0,
+    totalItems = 0,
     deliveryType = 'Home Delivery', 
     deliveryMode = 'home_delivery', 
     paymentMethod = 'Cash on Delivery', 
@@ -63,6 +64,19 @@ const CheckoutScreen = ({ navigation }) => {
   const [isLoadingAgencies, setIsLoadingAgencies] = useState(false);
   const [isAgencyDetailsModalVisible, setIsAgencyDetailsModalVisible] = useState(false);
   const [selectedAgencyForDetails, setSelectedAgencyForDetails] = useState(null);
+  
+  // Tax calculation states
+  const [taxData, setTaxData] = useState(null);
+  const [isLoadingTax, setIsLoadingTax] = useState(false);
+  const [finalTotalAmount, setFinalTotalAmount] = useState(totalAmount);
+  
+  // Coupon states
+  const [coupons, setCoupons] = useState([]);
+  const [isLoadingCoupons, setIsLoadingCoupons] = useState(false);
+  const [isCouponModalVisible, setIsCouponModalVisible] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [couponDiscount, setCouponDiscount] = useState(0);
   
   // Profile update form states
   const [profileFormData, setProfileFormData] = useState({
@@ -146,6 +160,157 @@ const CheckoutScreen = ({ navigation }) => {
     }
   };
 
+  const fetchTaxCalculation = async () => {
+    try {
+      setIsLoadingTax(true);
+      
+      console.log('Calculating tax for amount:', totalAmount);
+      
+      const response = await apiClient.post('/api/tax/calculate', {
+        amount: totalAmount
+      });
+
+      console.log('Tax Calculation API Response:', response.data);
+
+      if (response.data && response.data.success) {
+        const taxInfo = response.data.data;
+        setTaxData(taxInfo);
+        // Calculate final amount with tax and discount
+        const amountAfterTax = taxInfo.totalAmount;
+        const finalAmount = amountAfterTax - couponDiscount;
+        setFinalTotalAmount(finalAmount);
+        console.log('Tax calculated:', taxInfo);
+      } else {
+        console.log('Failed to calculate tax:', response.data?.message);
+        setTaxData(null);
+        setFinalTotalAmount(totalAmount - couponDiscount);
+      }
+
+    } catch (error) {
+      console.error('Error calculating tax:', error);
+      setTaxData(null);
+      setFinalTotalAmount(totalAmount - couponDiscount);
+    } finally {
+      setIsLoadingTax(false);
+    }
+  };
+
+  const fetchCoupons = async () => {
+    try {
+      setIsLoadingCoupons(true);
+      
+      const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
+      
+      if (!agencyId) {
+        console.log('No agency ID available for fetching coupons');
+        setCoupons([]);
+        return;
+      }
+      
+      console.log('Fetching coupons for agency:', agencyId);
+      
+      const response = await apiClient.get(`/api/coupons/customer?agencyId=${agencyId}`);
+
+      console.log('Coupons API Response:', response.data);
+
+      if (response.data && response.data.success) {
+        setCoupons(response.data.data.coupons || []);
+      } else {
+        console.log('Failed to fetch coupons:', response.data?.message);
+        setCoupons([]);
+      }
+
+    } catch (error) {
+      console.error('Error fetching coupons:', error);
+      setCoupons([]);
+    } finally {
+      setIsLoadingCoupons(false);
+    }
+  };
+
+  const applyCoupon = async (couponCode) => {
+    try {
+      setIsApplyingCoupon(true);
+      
+      const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
+      
+      if (!agencyId) {
+        Alert.alert('Error', 'Agency information not available');
+        setIsApplyingCoupon(false);
+        return;
+      }
+      
+      const payload = {
+        code: couponCode,
+        amount: totalAmount,
+        agencyId: agencyId
+      };
+      
+      console.log('=== APPLY COUPON REQUEST ===');
+      console.log('Coupon Code:', couponCode);
+      console.log('Agency ID:', agencyId);
+      console.log('Payload:', JSON.stringify(payload, null, 2));
+      
+      const response = await apiClient.post('/api/coupons/apply', payload);
+
+      console.log('=== APPLY COUPON RESPONSE ===');
+      console.log('Response:', JSON.stringify(response.data, null, 2));
+
+      if (response.data && response.data.success) {
+        const couponData = response.data.data;
+        setAppliedCoupon(couponData);
+        setCouponDiscount(couponData.discountAmount);
+        
+        // Recalculate final amount with discount
+        if (taxData) {
+          const finalAmount = taxData.totalAmount - couponData.discountAmount;
+          setFinalTotalAmount(finalAmount);
+        } else {
+          setFinalTotalAmount(totalAmount - couponData.discountAmount);
+        }
+        
+        setIsCouponModalVisible(false);
+        Alert.alert('Success', `Coupon applied! You saved ₹${couponData.discountAmount}`);
+      } else {
+        // Handle API error response
+        const errorMsg = response.data?.error || response.data?.message || 'Failed to apply coupon';
+        Alert.alert('Coupon Error', errorMsg);
+      }
+
+    } catch (error) {
+      console.error('Error applying coupon:', error);
+      
+      // Handle different error cases
+      if (error.response?.data) {
+        const errorMsg = error.response.data.error || error.response.data.message || 'Failed to apply coupon';
+        Alert.alert('Coupon Error', errorMsg);
+      } else if (error.request) {
+        Alert.alert('Network Error', 'Please check your internet connection and try again.');
+      } else {
+        Alert.alert('Error', 'Failed to apply coupon. Please try again.');
+      }
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
+    
+    // Recalculate final amount without discount
+    if (taxData) {
+      setFinalTotalAmount(taxData.totalAmount);
+    } else {
+      setFinalTotalAmount(totalAmount);
+    }
+  };
+
+  const handleCouponPress = () => {
+    fetchCoupons();
+    setIsCouponModalVisible(true);
+  };
+
   const updateProfile = async () => {
     try {
       setIsUpdatingProfile(true);
@@ -207,7 +372,12 @@ const CheckoutScreen = ({ navigation }) => {
     
     // Fetch selected agency for both delivery modes (needed for agencyId in API)
     fetchSelectedAgency();
-  }, [addresses, defaultAddressId, selectedAddress, dispatch, deliveryMode]);
+    
+    // Fetch tax calculation
+    if (totalAmount > 0) {
+      fetchTaxCalculation();
+    }
+  }, [addresses, defaultAddressId, selectedAddress, dispatch, deliveryMode, totalAmount, couponDiscount]);
 
   // Populate form data when user profile is loaded
   useEffect(() => {
@@ -281,8 +451,7 @@ const CheckoutScreen = ({ navigation }) => {
         productName: item.productName || item.name,
         variantLabel: item.weight || 'default',
         variantPrice: item.price,
-        quantity: item.quantity,
-        total: item.quantity * item.price
+        quantity: item.quantity
       }));
 
       // Prepare API payload with actual user data
@@ -292,7 +461,8 @@ const CheckoutScreen = ({ navigation }) => {
         customerPhone: userProfile?.phone,
         deliveryMode: deliveryMode,
         items: formattedItems,
-        paymentMethod: deliveryMode === 'pickup' ? 'Cash on Pickup' : (paymentMethod === 'Cash on Delivery' ? 'cash_on_delivery' : 'cash_on_delivery')
+        paymentMethod: deliveryMode === 'pickup' ? 'Cash on Pickup' : (paymentMethod === 'Cash on Delivery' ? 'cash_on_delivery' : 'cash_on_delivery'),
+        ...(appliedCoupon && { couponCode: appliedCoupon.couponCode })
       };
 
       // Add address or agency based on delivery mode
@@ -576,9 +746,9 @@ const CheckoutScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Order Summary */}
+        {/* Order Items */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Order Summary</Text>
+          <Text style={styles.sectionTitle}>Order Items</Text>
           {(showAllItems ? items : items.slice(0, 2)).map((item) => (
             <View key={item.id} style={styles.orderItem}>
               <View style={styles.orderItemContent}>
@@ -636,10 +806,114 @@ const CheckoutScreen = ({ navigation }) => {
               <Ionicons name="chevron-up" size={16} color={COLORS.primary} />
             </TouchableOpacity>
           )}
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total Amount:</Text>
-            <Text style={styles.totalAmount}>₹{totalAmount}</Text>
+        </View>
+
+        {/* Apply Coupon Section */}
+        <View style={styles.section}>
+          <View style={styles.couponSection}>
+            <View style={styles.couponIconContainer}>
+              <Ionicons name="pricetag-outline" size={20} color={COLORS.primary} />
+              <Text style={styles.couponSectionTitle}>Apply Coupon</Text>
+            </View>
+            
+            {appliedCoupon ? (
+              <View style={styles.appliedCouponContainer}>
+                <View style={styles.appliedCouponInfo}>
+                  <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
+                  <View style={styles.appliedCouponText}>
+                    <Text style={styles.appliedCouponCode}>{appliedCoupon.couponCode}</Text>
+                    <Text style={styles.appliedCouponSavings}>
+                      You saved ₹{appliedCoupon.discountAmount}!
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity 
+                  style={styles.removeCouponButton}
+                  onPress={removeCoupon}>
+                  <Ionicons name="close-circle" size={24} color={COLORS.error} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={styles.viewCouponsButton}
+                onPress={handleCouponPress}>
+                <Text style={styles.viewCouponsButtonText}>View Coupons</Text>
+                <Ionicons name="chevron-forward" size={18} color={COLORS.primary} />
+              </TouchableOpacity>
+            )}
           </View>
+        </View>
+
+        {/* Order Summary with Tax Breakdown */}
+        <View style={styles.section}>
+          <View style={styles.summaryHeader}>
+            <Ionicons name="receipt-outline" size={20} color={COLORS.primary} />
+            <Text style={styles.summaryHeaderTitle}>Order Summary</Text>
+          </View>
+          
+          {isLoadingTax ? (
+            <View style={styles.summaryLoadingContainer}>
+              <Text style={styles.summaryLoadingText}>Calculating charges...</Text>
+            </View>
+          ) : taxData ? (
+            <>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Subtotal ({totalItems} items)</Text>
+                <Text style={styles.summaryValue}>₹{taxData.baseAmount}</Text>
+              </View>
+              
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Delivery Fee</Text>
+                <Text style={styles.freeDelivery}>Free</Text>
+              </View>
+              
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>
+                  Tax Charge
+                </Text>
+                <Text style={styles.summaryValue}>₹{taxData.taxAmount}</Text>
+              </View>
+              
+              {taxData.platformCharge && taxData.platformCharge > 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Platform Charge</Text>
+                  <Text style={styles.summaryValue}>₹{taxData.platformCharge}</Text>
+                </View>
+              )}
+              
+              {appliedCoupon && couponDiscount > 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, styles.discountLabel]}>
+                    Coupon Discount ({appliedCoupon.couponCode})
+                  </Text>
+                  <Text style={styles.discountValue}>-₹{couponDiscount}</Text>
+                </View>
+              )}
+              
+              <View style={styles.summaryDivider} />
+              
+              <View style={styles.summaryTotalRow}>
+                <View>
+                  <Text style={styles.summaryTotalLabel}>Total Amount</Text>
+                  <Text style={styles.summaryTotalSubtext}>
+                    {appliedCoupon && couponDiscount > 0 
+                      ? `After discount of ₹${couponDiscount}` 
+                      : `Including tax${taxData.platformCharge > 0 ? ' & charges' : ''}`}
+                  </Text>
+                </View>
+                <Text style={styles.summaryTotalAmount}>
+                  ₹{appliedCoupon && couponDiscount > 0 
+                    ? taxData.totalAmount - couponDiscount 
+                    : taxData.totalAmount}
+                </Text>
+              </View>
+            </>
+          ) : (
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total Amount:</Text>
+              <Text style={styles.totalAmount}>₹{totalAmount}</Text>
+            </View>
+          )}
         </View>
 
         {/* Delivery Mode */}
@@ -747,14 +1021,20 @@ const CheckoutScreen = ({ navigation }) => {
       {/* Footer */}
       <View style={styles.footer}>
         <View style={styles.footerTotal}>
-          <Text style={styles.footerTotalLabel}>Total: ₹{totalAmount}</Text>
+          <Text style={styles.footerTotalLabel}>Total: ₹{finalTotalAmount}</Text>
+          {/* {taxData && (
+            <Text style={styles.footerTotalSubtext}>
+              Including ₹{taxData.taxAmount} tax
+              {taxData.platformCharge > 0 ? ` + ₹${taxData.platformCharge} platform charge` : ''}
+            </Text>
+          )} */}
         </View>
         <TouchableOpacity
-          style={[styles.placeOrderButton, (loading || isLoadingProfile || !userProfile) && styles.placeOrderButtonDisabled]}
+          style={[styles.placeOrderButton, (loading || isLoadingProfile || !userProfile || isLoadingTax) && styles.placeOrderButtonDisabled]}
           onPress={handlePlaceOrder}
-          disabled={loading || isLoadingProfile || !userProfile}>
+          disabled={loading || isLoadingProfile || !userProfile || isLoadingTax}>
           <Text style={styles.placeOrderButtonText}>
-            {loading ? 'Placing Order...' : isLoadingProfile ? 'Loading Profile...' : !userProfile ? 'Profile Required' : STRINGS.placeOrder}
+            {loading ? 'Placing Order...' : isLoadingProfile ? 'Loading Profile...' : isLoadingTax ? 'Calculating...' : !userProfile ? 'Profile Required' : STRINGS.placeOrder}
           </Text>
         </TouchableOpacity>
       </View>
@@ -919,6 +1199,79 @@ const CheckoutScreen = ({ navigation }) => {
               }}>
               <Text style={styles.errorModalButtonText}>OK</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Coupon Modal */}
+      <Modal
+        visible={isCouponModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsCouponModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.couponModal}>
+            <View style={styles.couponModalHeader}>
+              <Text style={styles.couponModalTitle}>Available Coupons</Text>
+              <TouchableOpacity onPress={() => setIsCouponModalVisible(false)}>
+                <Ionicons name="close" size={28} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+
+            {isLoadingCoupons ? (
+              <View style={styles.couponLoadingContainer}>
+                <Text style={styles.couponLoadingText}>Loading coupons...</Text>
+              </View>
+            ) : coupons.length === 0 ? (
+              <View style={styles.noCouponsContainer}>
+                <Ionicons name="pricetag-outline" size={60} color={COLORS.textSecondary} />
+                <Text style={styles.noCouponsText}>No coupons available</Text>
+              </View>
+            ) : (
+              <ScrollView style={styles.couponsList} showsVerticalScrollIndicator={false}>
+                {coupons.map((coupon) => {
+                  const now = new Date();
+                  const expiryDateTime = new Date(`${coupon.expiryDate}T${coupon.expiryTime}`);
+                  const isExpired = expiryDateTime < now;
+                  
+                  return (
+                    <TouchableOpacity
+                      key={coupon.id}
+                      style={[styles.couponCard, isExpired && styles.couponCardExpired]}
+                      onPress={() => !isExpired && applyCoupon(coupon.code)}
+                      disabled={isExpired || isApplyingCoupon}>
+                      <View style={styles.couponLeft}>
+                        <View style={styles.couponDiscountBadge}>
+                          <Text style={styles.couponDiscountText}>
+                            {coupon.discountType === 'fixed' 
+                              ? `₹${coupon.discountValue}` 
+                              : `${coupon.discountValue}%`}
+                          </Text>
+                          <Text style={styles.couponDiscountSubtext}>OFF</Text>
+                        </View>
+                      </View>
+                      
+                      <View style={styles.couponRight}>
+                        <Text style={styles.couponCode}>{coupon.code}</Text>
+                        <Text style={styles.couponMinAmount}>
+                          Min order: ₹{coupon.minAmount}
+                          {coupon.maxAmount && ` | Max: ₹${coupon.maxAmount}`}
+                        </Text>
+                        <Text style={[styles.couponExpiry, isExpired && styles.couponExpired]}>
+                          {isExpired ? 'Expired' : `Valid till ${coupon.expiryDate}`}
+                        </Text>
+                      </View>
+                      
+                      {!isExpired && (
+                        <View style={styles.couponApplyButton}>
+                          <Text style={styles.couponApplyText}>APPLY</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            )}
           </View>
         </View>
       </Modal>
@@ -1360,6 +1713,284 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.text,
     marginBottom: 2,
+  },
+  footerTotalSubtext: {
+    fontSize: fontSize.xs,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  // Order Summary Styles
+  summaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    paddingBottom: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  summaryHeaderTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginLeft: spacing.xs,
+  },
+  summaryLoadingContainer: {
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+  },
+  summaryLoadingText: {
+    fontSize: fontSize.sm,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.xs / 2,
+  },
+  summaryLabel: {
+    fontSize: fontSize.sm,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  summaryValue: {
+    fontSize: fontSize.sm,
+    color: COLORS.text,
+    fontWeight: '600',
+  },
+  freeDelivery: {
+    fontSize: fontSize.sm,
+    color: COLORS.success,
+    fontWeight: '600',
+  },
+  summaryDivider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginVertical: spacing.sm,
+  },
+  summaryTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary + '10',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.xs,
+  },
+  summaryTotalLabel: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 2,
+  },
+  summaryTotalSubtext: {
+    fontSize: fontSize.xs,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  summaryTotalAmount: {
+    fontSize: fontSize.xl,
+    fontWeight: '800',
+    color: COLORS.primary,
+  },
+  discountLabel: {
+    color: COLORS.success,
+  },
+  discountValue: {
+    fontSize: fontSize.sm,
+    color: COLORS.success,
+    fontWeight: '700',
+  },
+  // Coupon Section Styles
+  couponSection: {
+    paddingVertical: spacing.xs,
+  },
+  couponIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  couponSectionTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginLeft: spacing.xs,
+  },
+  appliedCouponContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.success + '15',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: COLORS.success + '40',
+  },
+  appliedCouponInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  appliedCouponText: {
+    marginLeft: spacing.sm,
+    flex: 1,
+  },
+  appliedCouponCode: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    color: COLORS.success,
+    marginBottom: 2,
+  },
+  appliedCouponSavings: {
+    fontSize: fontSize.xs,
+    color: COLORS.success,
+    fontWeight: '500',
+  },
+  removeCouponButton: {
+    padding: spacing.xs / 2,
+  },
+  viewCouponsButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary + '10',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: COLORS.primary + '60',
+  },
+  viewCouponsButtonText: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  // Coupon Modal Styles
+  couponModal: {
+    width: '100%',
+    maxHeight: '80%',
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    position: 'absolute',
+    bottom: 0,
+  },
+  couponModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  couponModalTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  couponLoadingContainer: {
+    paddingVertical: spacing.xxl,
+    alignItems: 'center',
+  },
+  couponLoadingText: {
+    fontSize: fontSize.md,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  noCouponsContainer: {
+    paddingVertical: spacing.xxl * 2,
+    alignItems: 'center',
+  },
+  noCouponsText: {
+    fontSize: fontSize.lg,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+    marginTop: spacing.md,
+  },
+  couponsList: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  couponCard: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.white,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
+    padding: spacing.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary + '40',
+    borderStyle: 'dashed',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  couponCardExpired: {
+    opacity: 0.5,
+    borderColor: COLORS.textSecondary,
+  },
+  couponLeft: {
+    marginRight: spacing.md,
+    justifyContent: 'center',
+  },
+  couponDiscountBadge: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    minWidth: wp('18%'),
+  },
+  couponDiscountText: {
+    fontSize: fontSize.lg,
+    fontWeight: '800',
+    color: COLORS.white,
+  },
+  couponDiscountSubtext: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: COLORS.white,
+    marginTop: 2,
+  },
+  couponRight: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  couponCode: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: spacing.xs / 2,
+  },
+  couponMinAmount: {
+    fontSize: fontSize.xs,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+    marginBottom: spacing.xs / 2,
+  },
+  couponExpiry: {
+    fontSize: fontSize.xs,
+    color: COLORS.primary,
+    fontWeight: '500',
+  },
+  couponExpired: {
+    color: COLORS.error,
+  },
+  couponApplyButton: {
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  couponApplyText: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+    color: COLORS.primary,
   },
   placeOrderButton: {
     backgroundColor: COLORS.primary,

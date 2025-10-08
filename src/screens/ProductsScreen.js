@@ -168,9 +168,7 @@ const ProductsScreen = ({navigation}) => {
     if (!socket || !isConnected || !selectedAgencyId) return;
 
     const handleProductAvailabilityChange = (data) => {
-      console.log('🔄 ProductsScreen: Product availability changed:', data);
-      console.log('🔄 ProductsScreen: Current selected agency ID:', selectedAgencyId);
-      console.log('🔄 ProductsScreen: Change agency ID:', data.agencyId);
+
       
       // Create a unique event ID to prevent duplicate processing
       const eventId = `${data.productId}-${data.agencyId}-${data.isActive}-${Date.now()}`;
@@ -273,12 +271,7 @@ const ProductsScreen = ({navigation}) => {
   const allProducts = reduxProducts !== undefined ? reduxProducts : (apiProducts || []);
   
   // Debug logging
-  console.log('📦 ProductsScreen: Redux products count:', reduxProducts?.length || 0);
-  console.log('📦 ProductsScreen: API products count:', apiProducts?.length || 0);
-  console.log('📦 ProductsScreen: Using products count:', allProducts?.length || 0);
-  console.log('📦 ProductsScreen: Force update count:', forceUpdate);
-  console.log('📦 ProductsScreen: Redux products:', reduxProducts?.map(p => ({ id: p.id, name: p.productName })) || []);
-  console.log('📦 ProductsScreen: API products:', apiProducts?.map(p => ({ id: p.id, name: p.productName })) || []);
+
 
   // Carousel banner data
   const carouselData = [

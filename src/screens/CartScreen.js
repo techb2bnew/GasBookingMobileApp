@@ -19,7 +19,6 @@ import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 const CartScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { items, totalAmount, totalItems } = useSelector(state => state.cart);
-  const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
 
   const handleUpdateQuantity = (item, newQuantity) => {
     if (newQuantity <= 0) {
@@ -189,56 +188,10 @@ const CartScreen = ({ navigation }) => {
           />
 
           <View style={styles.footer}>
-            <View style={styles.summaryContainer}>
-              <TouchableOpacity 
-                style={styles.summaryHeader}
-                onPress={() => setIsSummaryExpanded(!isSummaryExpanded)}
-                activeOpacity={0.7}>
-                <View style={styles.summaryHeaderLeft}>
-                  <Ionicons name="receipt-outline" size={20} color={COLORS.primary} />
-                  <Text style={styles.summaryTitle}>Order Summary</Text>
-                </View>
-                <Ionicons 
-                  name={isSummaryExpanded ? "chevron-up" : "chevron-down"} 
-                  size={20} 
-                  color={COLORS.textSecondary} 
-                />
-              </TouchableOpacity>
-              
-              {isSummaryExpanded && (
-                <>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Items ({totalItems})</Text>
-                    <Text style={styles.summaryValue}>₹{totalAmount}</Text>
-                  </View>
-                  
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Delivery Fee</Text>
-                    <Text style={styles.freeDelivery}>Free</Text>
-                  </View>
-                  
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Tax & Charges</Text>
-                    <Text style={styles.summaryValue}>₹0</Text>
-                  </View>
-                  
-                  <View style={styles.divider} />
-                  
-                  <View style={styles.totalRow}>
-                    <View style={styles.totalContainer}>
-                      <Text style={styles.totalLabel}>Total Amount</Text>
-                      <Text style={styles.totalAmount}>₹{totalAmount}</Text>
-                    </View>
-                  </View>
-                </>
-              )}
-              
-              {!isSummaryExpanded && (
-                <View style={styles.collapsedSummary}>
-                  <Text style={styles.collapsedText}>Total: ₹{totalAmount}</Text>
-                  <Text style={styles.collapsedSubtext}>{totalItems} items</Text>
-                </View>
-              )}
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalLabel}>Total Amount</Text>
+              <Text style={styles.totalAmount}>₹{totalAmount}</Text>
+              <Text style={styles.itemsCount}>{totalItems} items</Text>
             </View>
 
             <TouchableOpacity
@@ -524,78 +477,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-  },
-  summaryContainer: {
-    marginBottom: spacing.sm,
-  },
-  summaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: borderRadius.md,
-    backgroundColor: COLORS.lightGray + '30',
-  },
-  summaryHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  summaryTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginLeft: spacing.sm,
-  },
-  collapsedSummary: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    backgroundColor: COLORS.lightGray + '20',
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.sm,
-  },
-  collapsedText: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    color: COLORS.primary,
-  },
-  collapsedSubtext: {
-    fontSize: fontSize.sm,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  summaryLabel: {
-    fontSize: fontSize.sm,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
-  },
-  summaryValue: {
-    fontSize: fontSize.sm,
-    color: COLORS.text,
-    fontWeight: '600',
-  },
-  freeDelivery: {
-    fontSize: fontSize.sm,
-    color: COLORS.success,
-    fontWeight: '600',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-    marginVertical: spacing.sm,
-    borderRadius: 1,
-  },
-  totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -604,29 +485,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   totalLabel: {
-    fontSize: fontSize.md,
-    color: COLORS.text,
-    fontWeight: '600',
-    marginBottom: spacing.xs / 2,
+    fontSize: fontSize.sm,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+    marginBottom: 4,
   },
   totalAmount: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.xxl,
     fontWeight: '700',
     color: COLORS.primary,
+    marginBottom: 2,
   },
-  savingsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.success + '15',
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xs / 2,
-    borderRadius: borderRadius.sm,
-  },
-  savingsBadgeText: {
+  itemsCount: {
     fontSize: fontSize.xs,
-    color: COLORS.success,
-    fontWeight: '600',
-    marginLeft: spacing.xs / 2,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
   },
   checkoutButton: {
     backgroundColor: COLORS.primary,
