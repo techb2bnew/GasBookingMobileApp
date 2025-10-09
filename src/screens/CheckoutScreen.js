@@ -70,6 +70,12 @@ const CheckoutScreen = ({ navigation }) => {
   const [isLoadingTax, setIsLoadingTax] = useState(false);
   const [finalTotalAmount, setFinalTotalAmount] = useState(totalAmount);
   
+  // Delivery charges states
+  const [deliveryChargeData, setDeliveryChargeData] = useState(null);
+  const [isLoadingDeliveryCharge, setIsLoadingDeliveryCharge] = useState(false);
+  const [deliveryChargeError, setDeliveryChargeError] = useState(null);
+  const [deliveryCharge, setDeliveryCharge] = useState(0);
+  
   // Coupon states
   const [coupons, setCoupons] = useState([]);
   const [isLoadingCoupons, setIsLoadingCoupons] = useState(false);
@@ -175,23 +181,101 @@ const CheckoutScreen = ({ navigation }) => {
       if (response.data && response.data.success) {
         const taxInfo = response.data.data;
         setTaxData(taxInfo);
-        // Calculate final amount with tax and discount
+        // Calculate final amount with tax, delivery charge and discount
         const amountAfterTax = taxInfo.totalAmount;
-        const finalAmount = amountAfterTax - couponDiscount;
+        const finalAmount = amountAfterTax + deliveryCharge - couponDiscount;
         setFinalTotalAmount(finalAmount);
         console.log('Tax calculated:', taxInfo);
       } else {
         console.log('Failed to calculate tax:', response.data?.message);
         setTaxData(null);
-        setFinalTotalAmount(totalAmount - couponDiscount);
+        setFinalTotalAmount(totalAmount + deliveryCharge - couponDiscount);
       }
 
     } catch (error) {
       console.error('Error calculating tax:', error);
       setTaxData(null);
-      setFinalTotalAmount(totalAmount - couponDiscount);
+      setFinalTotalAmount(totalAmount + deliveryCharge - couponDiscount);
     } finally {
       setIsLoadingTax(false);
+    }
+  };
+
+  const fetchDeliveryCharges = async () => {
+    // Only fetch delivery charges for home delivery mode
+    if (deliveryMode !== 'home_delivery') {
+      setDeliveryChargeData(null);
+      setDeliveryChargeError(null);
+      setDeliveryCharge(0);
+      return;
+    }
+
+    try {
+      // Check if we have all required data
+      const customerId = userProfile?.id;
+      const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
+      const addressId = selectedAddress?.id;
+
+      if (!customerId || !agencyId || !addressId) {
+        console.log('Missing IDs for delivery charges');
+        setDeliveryChargeData(null);
+        setDeliveryChargeError(null);
+        setDeliveryCharge(0);
+        return;
+      }
+
+      setIsLoadingDeliveryCharge(true);
+      setDeliveryChargeError(null);
+      
+      const payload = {
+        customerId,
+        agencyId,
+        addressId
+      };
+
+      console.log('Fetching delivery charges for:', addressId);
+
+      const response = await apiClient.post('/api/delivery-charges/calculate', payload);
+
+      if (response.data && response.data.success) {
+        const chargeData = response.data.data;
+        setDeliveryChargeData(chargeData);
+        setDeliveryChargeError(null);
+        
+        // Round down the delivery charge (34.75 becomes 34)
+        const roundedCharge = Math.floor(chargeData.deliveryCharge);
+        setDeliveryCharge(roundedCharge);
+        
+        console.log('Delivery charge:', roundedCharge, chargeData.chargeType, chargeData.distance?.distanceText);
+      } else {
+        setDeliveryChargeData(null);
+        setDeliveryChargeError(null);
+        setDeliveryCharge(0);
+      }
+
+    } catch (error) {
+      console.error('Error calculating delivery charges:', error);
+      
+      // Check if it's an error response (out of radius)
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        if (errorData.success === false && errorData.error) {
+          setDeliveryChargeError(errorData.error);
+          setDeliveryChargeData(null);
+          setDeliveryCharge(0);
+          console.log('Delivery not available:', errorData.error);
+        } else {
+          setDeliveryChargeData(null);
+          setDeliveryChargeError(null);
+          setDeliveryCharge(0);
+        }
+      } else {
+        setDeliveryChargeData(null);
+        setDeliveryChargeError(null);
+        setDeliveryCharge(0);
+      }
+    } finally {
+      setIsLoadingDeliveryCharge(false);
     }
   };
 
@@ -261,12 +345,12 @@ const CheckoutScreen = ({ navigation }) => {
         setAppliedCoupon(couponData);
         setCouponDiscount(couponData.discountAmount);
         
-        // Recalculate final amount with discount
+        // Recalculate final amount with discount and delivery charge
         if (taxData) {
-          const finalAmount = taxData.totalAmount - couponData.discountAmount;
+          const finalAmount = taxData.totalAmount + deliveryCharge - couponData.discountAmount;
           setFinalTotalAmount(finalAmount);
         } else {
-          setFinalTotalAmount(totalAmount - couponData.discountAmount);
+          setFinalTotalAmount(totalAmount + deliveryCharge - couponData.discountAmount);
         }
         
         setIsCouponModalVisible(false);
@@ -298,11 +382,11 @@ const CheckoutScreen = ({ navigation }) => {
     setAppliedCoupon(null);
     setCouponDiscount(0);
     
-    // Recalculate final amount without discount
+    // Recalculate final amount without discount but with delivery charge
     if (taxData) {
-      setFinalTotalAmount(taxData.totalAmount);
+      setFinalTotalAmount(taxData.totalAmount + deliveryCharge);
     } else {
-      setFinalTotalAmount(totalAmount);
+      setFinalTotalAmount(totalAmount + deliveryCharge);
     }
   };
 
@@ -377,7 +461,29 @@ const CheckoutScreen = ({ navigation }) => {
     if (totalAmount > 0) {
       fetchTaxCalculation();
     }
-  }, [addresses, defaultAddressId, selectedAddress, dispatch, deliveryMode, totalAmount, couponDiscount]);
+  }, [addresses, defaultAddressId, selectedAddress, dispatch, deliveryMode, totalAmount, couponDiscount, deliveryCharge]);
+
+  // Separate useEffect for delivery charges - calls when address changes or required data becomes available
+  useEffect(() => {
+    const fetchCharges = async () => {
+      if (deliveryMode !== 'home_delivery') {
+        setDeliveryChargeData(null);
+        setDeliveryChargeError(null);
+        setDeliveryCharge(0);
+        return;
+      }
+
+      const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
+      
+      if (!userProfile?.id || !agencyId || !selectedAddress?.id) {
+        return;
+      }
+
+      await fetchDeliveryCharges();
+    };
+
+    fetchCharges();
+  }, [deliveryMode, userProfile?.id, selectedAgency?.agencyId, selectedAgency?.id, selectedAddress?.id]);
 
   // Populate form data when user profile is loaded
   useEffect(() => {
@@ -689,7 +795,17 @@ const CheckoutScreen = ({ navigation }) => {
       <ScrollView style={styles.content}>
         {/* User Details */}
         <View style={styles.section}>
-          <View style={styles.userDetailsCard}>
+          <TouchableOpacity 
+            style={styles.userDetailsCard}
+            onPress={() => {
+              setProfileFormData({
+                name: userProfile?.name || '',
+                email: userProfile?.email || '',
+                phone: userProfile?.phone || '',
+              });
+              setIsProfileUpdateModalVisible(true);
+            }}
+            activeOpacity={0.7}>
             <View style={styles.userDetailsHeader}>
               <View style={styles.userDetailsIconContainer}>
                 {userProfile?.profileImage ? (
@@ -704,6 +820,7 @@ const CheckoutScreen = ({ navigation }) => {
                 )}
               </View>
               <Text style={styles.userDetailsTitle}>Account Information</Text>
+              <Ionicons name="create-outline" size={20} color={COLORS.primary} style={styles.editIcon} />
             </View>
             
             <View style={styles.userDetailsContent}>
@@ -743,7 +860,12 @@ const CheckoutScreen = ({ navigation }) => {
                 </View>
               )}
             </View>
-          </View>
+            
+            <View style={styles.tapToEditHint}>
+              <Ionicons name="hand-left-outline" size={14} color={COLORS.textSecondary} />
+              <Text style={styles.tapToEditText}>Tap to edit your information</Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* Order Items */}
@@ -851,9 +973,11 @@ const CheckoutScreen = ({ navigation }) => {
             <Text style={styles.summaryHeaderTitle}>Order Summary</Text>
           </View>
           
-          {isLoadingTax ? (
+          {isLoadingTax || isLoadingDeliveryCharge ? (
             <View style={styles.summaryLoadingContainer}>
-              <Text style={styles.summaryLoadingText}>Calculating charges...</Text>
+              <Text style={styles.summaryLoadingText}>
+                {isLoadingDeliveryCharge ? 'Calculating delivery charges...' : 'Calculating charges...'}
+              </Text>
             </View>
           ) : taxData ? (
             <>
@@ -863,9 +987,32 @@ const CheckoutScreen = ({ navigation }) => {
               </View>
               
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Delivery Fee</Text>
-                <Text style={styles.freeDelivery}>Free</Text>
+                {deliveryMode === 'home_delivery' &&
+                <Text style={styles.summaryLabel}>
+                  
+                  Delivery Fee
+                  {deliveryChargeData?.distance?.distanceText && (
+                    <Text style={styles.distanceText}> ({deliveryChargeData.distance.distanceText})</Text>
+                  )}
+                </Text>
+}
+                {deliveryMode === 'home_delivery' ? (
+                  deliveryCharge > 0 ? (
+                    <Text style={styles.summaryValue}>₹{deliveryCharge}</Text>
+                  ) : (
+                    <Text style={styles.freeDelivery}>Free</Text>
+                  )
+                ) : (
+                  null
+                )}
               </View>
+              
+              {deliveryChargeError && (
+                <View style={styles.deliveryErrorContainer}>
+                  <Ionicons name="warning" size={16} color={COLORS.error} />
+                  <Text style={styles.deliveryErrorText}>{deliveryChargeError}</Text>
+                </View>
+              )}
               
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>
@@ -898,20 +1045,20 @@ const CheckoutScreen = ({ navigation }) => {
                   <Text style={styles.summaryTotalSubtext}>
                     {appliedCoupon && couponDiscount > 0 
                       ? `After discount of ₹${couponDiscount}` 
-                      : `Including tax${taxData.platformCharge > 0 ? ' & charges' : ''}`}
+                      : `Including ${deliveryMode === 'home_delivery' && deliveryCharge > 0 ? 'delivery, ' : ''}tax${taxData.platformCharge > 0 ? ' & charges' : ''}`}
                   </Text>
                 </View>
                 <Text style={styles.summaryTotalAmount}>
                   ₹{appliedCoupon && couponDiscount > 0 
-                    ? taxData.totalAmount - couponDiscount 
-                    : taxData.totalAmount}
+                    ? taxData.totalAmount + deliveryCharge - couponDiscount 
+                    : taxData.totalAmount + deliveryCharge}
                 </Text>
               </View>
             </>
           ) : (
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total Amount:</Text>
-              <Text style={styles.totalAmount}>₹{totalAmount}</Text>
+              <Text style={styles.totalAmount}>₹{totalAmount + deliveryCharge}</Text>
             </View>
           )}
         </View>
@@ -1030,11 +1177,17 @@ const CheckoutScreen = ({ navigation }) => {
           )} */}
         </View>
         <TouchableOpacity
-          style={[styles.placeOrderButton, (loading || isLoadingProfile || !userProfile || isLoadingTax) && styles.placeOrderButtonDisabled]}
+          style={[styles.placeOrderButton, (loading || isLoadingProfile || !userProfile || isLoadingTax || isLoadingDeliveryCharge || deliveryChargeError) && styles.placeOrderButtonDisabled]}
           onPress={handlePlaceOrder}
-          disabled={loading || isLoadingProfile || !userProfile || isLoadingTax}>
+          disabled={loading || isLoadingProfile || !userProfile || isLoadingTax || isLoadingDeliveryCharge || deliveryChargeError}>
           <Text style={styles.placeOrderButtonText}>
-            {loading ? 'Placing Order...' : isLoadingProfile ? 'Loading Profile...' : isLoadingTax ? 'Calculating...' : !userProfile ? 'Profile Required' : STRINGS.placeOrder}
+            {loading ? 'Placing Order...' : 
+             isLoadingProfile ? 'Loading Profile...' : 
+             isLoadingTax ? 'Calculating...' : 
+             isLoadingDeliveryCharge ? 'Checking Delivery...' :
+             deliveryChargeError ? 'Delivery Not Available' :
+             !userProfile ? 'Profile Required' : 
+             STRINGS.placeOrder}
           </Text>
         </TouchableOpacity>
       </View>
@@ -1765,6 +1918,30 @@ const styles = StyleSheet.create({
     color: COLORS.success,
     fontWeight: '600',
   },
+  distanceText: {
+    fontSize: fontSize.xs,
+    color: COLORS.textSecondary,
+    fontWeight: '400',
+  },
+  deliveryErrorContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: COLORS.error + '15',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    marginVertical: spacing.xs,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.error,
+  },
+  deliveryErrorText: {
+    fontSize: fontSize.xs,
+    color: COLORS.error,
+    fontWeight: '600',
+    flex: 1,
+    marginLeft: spacing.xs,
+    lineHeight: fontSize.sm,
+  },
   summaryDivider: {
     height: 1,
     backgroundColor: COLORS.border,
@@ -2142,10 +2319,31 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   userDetailsTitle: {
+    flex: 1,
     fontSize: fontSize.sm,
     fontWeight: '700',
     color: COLORS.primary,
     letterSpacing: -0.2,
+  },
+  editIcon: {
+    marginLeft: spacing.xs,
+  },
+  tapToEditHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: COLORS.primary + '05',
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border + '30',
+    gap: spacing.xs,
+  },
+  tapToEditText: {
+    fontSize: fontSize.xs,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+    fontStyle: 'italic',
   },
   userDetailsContent: {
     backgroundColor: '#ffffff',

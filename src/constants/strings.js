@@ -5,8 +5,8 @@ export const STRINGS = {
   // Authentication
   login: 'Login',
   logout: 'Logout',
-  enterPhoneNumber: 'Enter Phone Number',
-  phoneNumber: 'Phone Number',
+  enterPhoneNumber: 'Enter Your Email',
+  phoneNumber: 'Enter Email',
   sendOTP: 'Send OTP',
   verifyOTP: 'Verify OTP',
   enterOTP: 'Enter OTP',
@@ -92,7 +92,7 @@ export const STRINGS = {
   phone: "+919876543210",
 
 
-  API_BASE_URL: "https://5f35add6671f.ngrok-free.app",
-  SOCKET_URL: "https://5f35add6671f.ngrok-free.app"
+  API_BASE_URL: "https://656dfec79780.ngrok-free.app",
+  SOCKET_URL: "https://656dfec79780.ngrok-free.app"
 };
 

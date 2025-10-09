@@ -12,7 +12,7 @@ import {
   Linking,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import OTPTextInput from 'react-native-otp-textinput';
+import FastOTPInput from '../components/FastOTPInput';
 import { COLORS, STRINGS } from '../constants';
 import {
   setPhoneNumber,
@@ -293,12 +293,12 @@ const LoginScreen = ({ navigation }) => {
                 <Text style={styles.label}>{STRINGS.enterOTP}</Text>
                 <Text style={styles.otpInfo}>OTP sent to {phoneNumber}</Text>
 
-                <OTPTextInput
+                <FastOTPInput
+                  length={6}
+                  value={otpValue}
+                  onChangeText={setOtpValue}
                   containerStyle={styles.otpContainer}
-                  textInputStyle={styles.otpInput}
-                  handleTextChange={setOtpValue}
-                  inputCount={6}
-                  keyboardType="numeric"
+                  inputStyle={styles.otpInput}
                 />
 
                 {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -469,18 +469,15 @@ const styles = StyleSheet.create({
     gap: wp('1%'),
   },
   otpInput: {
-    // flex: 1,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: borderRadius.md,
     backgroundColor: COLORS.white,
     color: COLORS.text,
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xl,
     fontWeight: '700',
-    height: hp(6),
-    width: wp(10),
-    textAlign: 'center',
-    marginRight: wp('0.5%'),
+    height: hp(6.5),
+    width: wp(12),
   },
   resendButton: {
     alignItems: 'center',
