@@ -179,7 +179,10 @@ const ProductDetailsScreen = ({ route, navigation }) => {
   }, [isProductInCart, selectedQuantity, selectedWeight, items, product?.id]);
 
   // --- Cart helpers ---
-  const pushToCart = (extra = {}) => {
+  const pushToCart = async (extra = {}) => {
+    // Get selected agency ID from AsyncStorage
+    const selectedAgencyId = await AsyncStorage.getItem('selectedAgencyId');
+    
     const cartProduct = {
       ...product,
       weight: selectedWeight,
@@ -192,6 +195,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
     console.log('Cart payload to be saved:', {
       product: cartProduct,
       quantity: selectedQuantity,
+      agencyId: selectedAgencyId,
     });
 
     // If product is already in cart, update quantity instead of adding
@@ -204,11 +208,11 @@ const ProductDetailsScreen = ({ route, navigation }) => {
         type: extra.type || 'default'
       }));
     } else {
-      dispatch(addToCart({ product: cartProduct, quantity: selectedQuantity }));
+      dispatch(addToCart({ product: cartProduct, quantity: selectedQuantity, agencyId: selectedAgencyId }));
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     console.log('Add to Cart clicked:', {
       isProductInCart,
       hasChanges,
@@ -217,12 +221,12 @@ const ProductDetailsScreen = ({ route, navigation }) => {
     });
     
     // Always call pushToCart - it will handle whether to add or update
-    pushToCart();
+    await pushToCart();
     navigation.navigate('Cart');
   };
-  const handleRefill = () => pushToCart({ type: 'refill' });
-  const handleNewConnection = () => pushToCart({ type: 'new_connection' });
-  const handleSpare = () => pushToCart({ type: 'spare' });
+  const handleRefill = async () => await pushToCart({ type: 'refill' });
+  const handleNewConnection = async () => await pushToCart({ type: 'new_connection' });
+  const handleSpare = async () => await pushToCart({ type: 'spare' });
 
   const inStock = product?.inStock ?? true;
 

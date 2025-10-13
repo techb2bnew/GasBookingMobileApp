@@ -119,7 +119,7 @@ const PrivacyPolicyScreen = ({ navigation }) => {
         <View style={styles.headerIconContainer}>
           <Icon name="shield" size={40} color={COLORS.success} />
         </View>
-        <Text style={styles.contentTitle}>Gas Booking Privacy Policy</Text>
+        <Text style={styles.contentTitle}>LEADWAY GAS Privacy Policy</Text>
         <Text style={styles.contentSubtitle}>
           Your privacy and data security are our top priorities
         </Text>

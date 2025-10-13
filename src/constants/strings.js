@@ -1,6 +1,6 @@
 export const STRINGS = {
   // App
-  appName: 'Gas Booking',
+  appName: 'LEADWAY GAS',
 
   // Authentication
   login: 'Login',
@@ -27,7 +27,7 @@ export const STRINGS = {
 
   // Products
   products: 'Products',
-  gasBooking: 'Gas Booking',
+  gasBooking: 'LEADWAY GAS',
   lpgCylinder: 'LPG Cylinder',
   accessories: 'Accessories',
   addToCart: 'Add to Cart',
@@ -92,7 +92,7 @@ export const STRINGS = {
   phone: "+919876543210",
 
 
-  API_BASE_URL: "https://656dfec79780.ngrok-free.app",
-  SOCKET_URL: "https://656dfec79780.ngrok-free.app"
+  API_BASE_URL: "https://cb2e17a44a53.ngrok-free.app",
+  SOCKET_URL: "https://cb2e17a44a53.ngrok-free.app"
 };
 

@@ -16,7 +16,7 @@ import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 const FAQ_DATA = [
   {
     question: 'How do I book a gas cylinder?',
-    answer: 'You can book a gas cylinder through the \'Gas Booking\' section of the app. Simply select the cylinder type and add it to your cart, then proceed to checkout.',
+    answer: 'You can book a gas cylinder through the \'LEADWAY GAS\' section of the app. Simply select the cylinder type and add it to your cart, then proceed to checkout.',
   },
   {
     question: 'What payment methods are available?',

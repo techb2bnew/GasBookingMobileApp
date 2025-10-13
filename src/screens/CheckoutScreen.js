@@ -26,6 +26,7 @@ import {
 import { addOrder } from '../redux/slices/orderSlice';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
+import { usePricingEvents } from '../hooks/useSocketEvents';
 
 const CheckoutScreen = ({ navigation }) => {
   console.log('CheckoutScreen rendering...');
@@ -68,7 +69,7 @@ const CheckoutScreen = ({ navigation }) => {
   // Tax calculation states
   const [taxData, setTaxData] = useState(null);
   const [isLoadingTax, setIsLoadingTax] = useState(false);
-  const [finalTotalAmount, setFinalTotalAmount] = useState(totalAmount);
+  const [finalTotalAmount, setFinalTotalAmount] = useState(() => parseFloat(totalAmount) || 0);
   
   // Delivery charges states
   const [deliveryChargeData, setDeliveryChargeData] = useState(null);
@@ -181,21 +182,47 @@ const CheckoutScreen = ({ navigation }) => {
       if (response.data && response.data.success) {
         const taxInfo = response.data.data;
         setTaxData(taxInfo);
-        // Calculate final amount with tax, delivery charge and discount
-        const amountAfterTax = taxInfo.totalAmount;
-        const finalAmount = amountAfterTax + deliveryCharge - couponDiscount;
-        setFinalTotalAmount(finalAmount);
+        
+        // Safe calculation with proper number conversion
+        const amountAfterTax = parseFloat(taxInfo.totalAmount) || 0;
+        const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+        const safeCouponDiscount = parseFloat(couponDiscount) || 0;
+        const finalAmount = amountAfterTax + safeDeliveryCharge - safeCouponDiscount;
+        
+        // Ensure finalAmount is not NaN
+        setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+        
         console.log('Tax calculated:', taxInfo);
+        console.log('Final amount breakdown:', {
+          amountAfterTax,
+          safeDeliveryCharge,
+          safeCouponDiscount,
+          finalAmount
+        });
       } else {
         console.log('Failed to calculate tax:', response.data?.message);
         setTaxData(null);
-        setFinalTotalAmount(totalAmount + deliveryCharge - couponDiscount);
+        
+        // Safe fallback calculation
+        const safeTotal = parseFloat(totalAmount) || 0;
+        const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+        const safeCouponDiscount = parseFloat(couponDiscount) || 0;
+        const finalAmount = safeTotal + safeDeliveryCharge - safeCouponDiscount;
+        
+        setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
       }
 
     } catch (error) {
       console.error('Error calculating tax:', error);
       setTaxData(null);
-      setFinalTotalAmount(totalAmount + deliveryCharge - couponDiscount);
+      
+      // Safe error fallback calculation
+      const safeTotal = parseFloat(totalAmount) || 0;
+      const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+      const safeCouponDiscount = parseFloat(couponDiscount) || 0;
+      const finalAmount = safeTotal + safeDeliveryCharge - safeCouponDiscount;
+      
+      setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
     } finally {
       setIsLoadingTax(false);
     }
@@ -239,12 +266,25 @@ const CheckoutScreen = ({ navigation }) => {
 
       if (response.data && response.data.success) {
         const chargeData = response.data.data;
+        
+        // Check if delivery charge is not configured
+        if (chargeData.chargeType === 'not_configured') {
+          console.log('Delivery charge not configured:', chargeData.message);
+          setDeliveryChargeData(null);
+          setDeliveryChargeError(null); // No error, just not configured
+          setDeliveryCharge(0);
+          return;
+        }
+        
         setDeliveryChargeData(chargeData);
         setDeliveryChargeError(null);
         
-        // Round down the delivery charge (34.75 becomes 34)
-        const roundedCharge = Math.floor(chargeData.deliveryCharge);
-        setDeliveryCharge(roundedCharge);
+        // Safe number conversion and rounding
+        const chargeValue = parseFloat(chargeData.deliveryCharge) || 0;
+        const roundedCharge = Math.floor(chargeValue); // Round down
+        
+        // Ensure it's a valid number
+        setDeliveryCharge(isNaN(roundedCharge) ? 0 : Math.max(0, roundedCharge));
         
         console.log('Delivery charge:', roundedCharge, chargeData.chargeType, chargeData.distance?.distanceText);
       } else {
@@ -256,14 +296,25 @@ const CheckoutScreen = ({ navigation }) => {
     } catch (error) {
       console.error('Error calculating delivery charges:', error);
       
-      // Check if it's an error response (out of radius)
+      // Check if it's an error response (out of radius or not configured)
       if (error.response?.data) {
         const errorData = error.response.data;
         if (errorData.success === false && errorData.error) {
-          setDeliveryChargeError(errorData.error);
-          setDeliveryChargeData(null);
-          setDeliveryCharge(0);
-          console.log('Delivery not available:', errorData.error);
+          const errorMessage = errorData.error;
+          
+          // Check if delivery charges are not configured (404 or specific message)
+          if (errorMessage.includes('not found') || errorMessage.includes('not configured')) {
+            console.log('Delivery charges not configured for this agency');
+            setDeliveryChargeError(null); // Don't show as error, just no charge
+            setDeliveryChargeData(null);
+            setDeliveryCharge(0);
+          } else {
+            // Other errors like out of radius
+            setDeliveryChargeError(errorMessage);
+            setDeliveryChargeData(null);
+            setDeliveryCharge(0);
+            console.log('Delivery not available:', errorMessage);
+          }
         } else {
           setDeliveryChargeData(null);
           setDeliveryChargeError(null);
@@ -324,14 +375,18 @@ const CheckoutScreen = ({ navigation }) => {
         return;
       }
       
+      // IMPORTANT: Use base amount (before tax) for coupon calculation
+      const baseAmount = parseFloat(taxData?.baseAmount || totalAmount) || 0;
+      
       const payload = {
         code: couponCode,
-        amount: totalAmount,
+        amount: baseAmount, // Use base amount, not total with tax
         agencyId: agencyId
       };
       
       console.log('=== APPLY COUPON REQUEST ===');
       console.log('Coupon Code:', couponCode);
+      console.log('Base Amount (for coupon):', baseAmount);
       console.log('Agency ID:', agencyId);
       console.log('Payload:', JSON.stringify(payload, null, 2));
       
@@ -342,19 +397,51 @@ const CheckoutScreen = ({ navigation }) => {
 
       if (response.data && response.data.success) {
         const couponData = response.data.data;
-        setAppliedCoupon(couponData);
-        setCouponDiscount(couponData.discountAmount);
         
-        // Recalculate final amount with discount and delivery charge
+        // Safe number conversion
+        const safeDiscountAmount = parseFloat(couponData.discountAmount) || 0;
+        
+        console.log('Discount Amount from Backend:', safeDiscountAmount);
+        console.log('Coupon Data from Backend:', couponData);
+        
+        // Store proper coupon info for future comparisons
+        const appliedCouponInfo = {
+          id: couponCode, // Use code as ID for matching (since backend doesn't return coupon ID)
+          code: couponData.couponCode || couponCode,
+          couponCode: couponData.couponCode || couponCode,
+          discountType: couponData.discountType,
+          discountValue: couponData.discountValue,
+          discountAmount: safeDiscountAmount,
+          originalAmount: couponData.originalAmount
+        };
+        
+        console.log('Storing applied coupon:', appliedCouponInfo);
+        
+        setAppliedCoupon(appliedCouponInfo);
+        setCouponDiscount(safeDiscountAmount);
+        
+        // Recalculate final amount with discount and delivery charge - safely
+        const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+        
         if (taxData) {
-          const finalAmount = taxData.totalAmount + deliveryCharge - couponData.discountAmount;
-          setFinalTotalAmount(finalAmount);
+          const taxTotal = parseFloat(taxData.totalAmount) || 0;
+          const finalAmount = taxTotal + safeDeliveryCharge - safeDiscountAmount;
+          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+          
+          console.log('Final calculation:', {
+            taxTotal,
+            deliveryCharge: safeDeliveryCharge,
+            discount: safeDiscountAmount,
+            finalAmount
+          });
         } else {
-          setFinalTotalAmount(totalAmount + deliveryCharge - couponData.discountAmount);
+          const safeTotal = parseFloat(totalAmount) || 0;
+          const finalAmount = safeTotal + safeDeliveryCharge - safeDiscountAmount;
+          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
         }
         
         setIsCouponModalVisible(false);
-        Alert.alert('Success', `Coupon applied! You saved ₹${couponData.discountAmount}`);
+        Alert.alert('Success', `Coupon applied! You saved ₹${Math.round(safeDiscountAmount)}`);
       } else {
         // Handle API error response
         const errorMsg = response.data?.error || response.data?.message || 'Failed to apply coupon';
@@ -382,11 +469,17 @@ const CheckoutScreen = ({ navigation }) => {
     setAppliedCoupon(null);
     setCouponDiscount(0);
     
-    // Recalculate final amount without discount but with delivery charge
+    // Recalculate final amount without discount but with delivery charge - safely
+    const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+    
     if (taxData) {
-      setFinalTotalAmount(taxData.totalAmount + deliveryCharge);
+      const taxTotal = parseFloat(taxData.totalAmount) || 0;
+      const finalAmount = taxTotal + safeDeliveryCharge;
+      setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
     } else {
-      setFinalTotalAmount(totalAmount + deliveryCharge);
+      const safeTotal = parseFloat(totalAmount) || 0;
+      const finalAmount = safeTotal + safeDeliveryCharge;
+      setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
     }
   };
 
@@ -441,6 +534,617 @@ const CheckoutScreen = ({ navigation }) => {
     }
   };
 
+  // Socket events for real-time pricing updates
+  usePricingEvents({
+    onTaxUpdated: async (taxConfigData) => {
+      console.log('💰 Tax config updated in real-time:', taxConfigData);
+      
+      // If coupon is applied, suggest removing it since base amount changed
+      if (appliedCoupon && couponDiscount > 0) {
+        Alert.alert(
+          'Tax Updated',
+          'Tax configuration has changed. Your applied coupon will be recalculated automatically.',
+          [{ text: 'OK' }]
+        );
+      }
+      
+      // Tax config update hone pe fresh calculation fetch karo
+      try {
+        setIsLoadingTax(true);
+        
+        const safeTotal = parseFloat(totalAmount) || 0;
+        console.log('Re-calculating tax for amount:', safeTotal);
+        
+        const response = await apiClient.post('/api/tax/calculate', {
+          amount: safeTotal
+        });
+
+        if (response.data && response.data.success) {
+          const taxInfo = response.data.data;
+          setTaxData(taxInfo);
+          
+          console.log('Tax API Response:', taxInfo);
+          console.log('Base Amount:', taxInfo.baseAmount);
+          console.log('Tax Amount:', taxInfo.taxAmount);
+          console.log('Tax Type:', taxInfo.taxType);
+          console.log('Tax Value:', taxInfo.taxValue);
+          console.log('Platform Charge:', taxInfo.platformCharge);
+          console.log('Total Amount (with tax):', taxInfo.totalAmount);
+          
+          // If coupon was applied, re-calculate with NEW base amount
+          let newCouponDiscount = 0;
+          if (appliedCoupon && couponDiscount > 0) {
+            const baseAmount = parseFloat(taxInfo.baseAmount) || 0;
+            
+            if (appliedCoupon.discountType === 'percentage') {
+              newCouponDiscount = (baseAmount * parseFloat(appliedCoupon.discountValue || 0)) / 100;
+            } else {
+              newCouponDiscount = parseFloat(appliedCoupon.discountValue || 0);
+            }
+            
+            newCouponDiscount = isNaN(newCouponDiscount) ? 0 : Math.max(0, newCouponDiscount);
+            setCouponDiscount(newCouponDiscount);
+            
+            console.log('Coupon recalculated with new tax:', {
+              oldDiscount: couponDiscount,
+              newDiscount: newCouponDiscount
+            });
+          }
+          
+          // Safe calculation with updated tax
+          const amountAfterTax = parseFloat(taxInfo.totalAmount) || 0;
+          const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+          const safeCouponDiscount = newCouponDiscount || parseFloat(couponDiscount) || 0;
+          const finalAmount = amountAfterTax + safeDeliveryCharge - safeCouponDiscount;
+          
+          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+          
+          console.log('Final calculation after tax update:', {
+            baseAmount: taxInfo.baseAmount,
+            taxAmount: taxInfo.taxAmount,
+            platformCharge: taxInfo.platformCharge,
+            totalWithTax: amountAfterTax,
+            deliveryCharge: safeDeliveryCharge,
+            couponDiscount: safeCouponDiscount,
+            finalAmount
+          });
+          
+          Alert.alert(
+            'Tax Updated',
+            `Tax: ₹${Math.round(parseFloat(taxInfo.taxAmount) || 0)} | Total: ₹${Math.round(finalAmount)}`,
+            [{ text: 'OK' }]
+          );
+        } else {
+          // Fallback if tax API fails
+          const finalAmount = safeTotal + parseFloat(deliveryCharge || 0) - parseFloat(couponDiscount || 0);
+          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+        }
+      } catch (error) {
+        console.error('Error recalculating tax after socket update:', error);
+        // Fallback calculation
+        const safeTotal = parseFloat(totalAmount) || 0;
+        const finalAmount = safeTotal + parseFloat(deliveryCharge || 0) - parseFloat(couponDiscount || 0);
+        setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+      } finally {
+        setIsLoadingTax(false);
+      }
+    },
+    onTaxDeleted: () => {
+      console.log('💰 Tax deleted');
+      
+      // Recalculate without tax - safely
+      const safeTotal = parseFloat(totalAmount) || 0;
+      const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+      const safeCouponDiscount = parseFloat(couponDiscount) || 0;
+      const finalAmount = safeTotal + safeDeliveryCharge - safeCouponDiscount;
+      
+      setTaxData(null);
+      setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+      
+      console.log('Tax removed calculation:', {
+        baseAmount: safeTotal,
+        deliveryCharge: safeDeliveryCharge,
+        couponDiscount: safeCouponDiscount,
+        finalAmount
+      });
+      
+      Alert.alert(
+        'Tax Removed',
+        `Tax removed. New total: ₹${Math.round(finalAmount)}`,
+        [{ text: 'OK' }]
+      );
+    },
+    onPlatformChargeUpdated: async (chargeData) => {
+      console.log('🏦 Platform charge updated:', chargeData);
+      
+      // Platform charge update hone pe fresh calculation fetch karo
+      try {
+        setIsLoadingTax(true);
+        
+        const safeTotal = parseFloat(totalAmount) || 0;
+        console.log('Re-calculating with platform charge for amount:', safeTotal);
+        
+        const response = await apiClient.post('/api/tax/calculate', {
+          amount: safeTotal
+        });
+
+        if (response.data && response.data.success) {
+          const taxInfo = response.data.data;
+          setTaxData(taxInfo);
+          
+          // Safe calculation
+          const amountAfterTax = parseFloat(taxInfo.totalAmount) || 0;
+          const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+          const safeCouponDiscount = parseFloat(couponDiscount) || 0;
+          const finalAmount = amountAfterTax + safeDeliveryCharge - safeCouponDiscount;
+          
+          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+          
+          Alert.alert(
+            'Platform Charge Updated',
+            `Platform charge is now ₹${chargeData.amount}. New total: ₹${Math.round(finalAmount)}`,
+            [{ text: 'OK' }]
+          );
+        }
+      } catch (error) {
+        console.error('Error recalculating after platform charge update:', error);
+        Alert.alert(
+          'Platform Charge Updated',
+          'Platform charge updated. Please refresh to see new total.',
+          [{ text: 'OK' }]
+        );
+      } finally {
+        setIsLoadingTax(false);
+      }
+    },
+    onPlatformChargeDeleted: async () => {
+      console.log('🏦 Platform charge deleted');
+      
+      // Platform charge delete hone pe fresh calculation fetch karo
+      try {
+        setIsLoadingTax(true);
+        
+        const safeTotal = parseFloat(totalAmount) || 0;
+        const response = await apiClient.post('/api/tax/calculate', {
+          amount: safeTotal
+        });
+
+        if (response.data && response.data.success) {
+          const taxInfo = response.data.data;
+          setTaxData(taxInfo);
+          
+          const amountAfterTax = parseFloat(taxInfo.totalAmount) || 0;
+          const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+          const safeCouponDiscount = parseFloat(couponDiscount) || 0;
+          const finalAmount = amountAfterTax + safeDeliveryCharge - safeCouponDiscount;
+          
+          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+          
+          Alert.alert(
+            'Platform Charge Removed',
+            `Platform charge removed. New total: ₹${Math.round(finalAmount)}`,
+            [{ text: 'OK' }]
+          );
+        }
+      } catch (error) {
+        console.error('Error recalculating after platform charge deletion:', error);
+      } finally {
+        setIsLoadingTax(false);
+      }
+    },
+    onDeliveryChargeCreated: async (deliveryData) => {
+      console.log('🚚 Delivery charge created:', deliveryData);
+      // If this is for current agency, fetch delivery charges
+      const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
+      if (deliveryData.agencyId === agencyId && deliveryMode === 'home_delivery') {
+        console.log('🔄 Fetching delivery charges after creation...');
+        
+        try {
+          const customerId = userProfile?.id;
+          const addressId = selectedAddress?.id;
+
+          if (customerId && agencyId && addressId) {
+            setIsLoadingDeliveryCharge(true);
+            setDeliveryChargeError(null);
+            
+            const payload = {
+              customerId,
+              agencyId,
+              addressId
+            };
+
+            const response = await apiClient.post('/api/delivery-charges/calculate', payload);
+
+            if (response.data && response.data.success) {
+              const chargeData = response.data.data;
+              
+              // Check if delivery charge is not configured
+              if (chargeData.chargeType === 'not_configured') {
+                setDeliveryChargeData(null);
+                setDeliveryChargeError(null);
+                setDeliveryCharge(0);
+                return;
+              }
+              
+              setDeliveryChargeData(chargeData);
+              setDeliveryChargeError(null);
+              
+              const chargeValue = parseFloat(chargeData.deliveryCharge) || 0;
+              const roundedCharge = Math.floor(chargeValue);
+              setDeliveryCharge(isNaN(roundedCharge) ? 0 : Math.max(0, roundedCharge));
+              
+              Alert.alert(
+                'Delivery Charges Now Available',
+                `Delivery charge: ₹${roundedCharge}`,
+                [{ text: 'OK' }]
+              );
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching delivery charges:', error);
+          // Don't show error if charges are just not configured
+          setDeliveryChargeData(null);
+          setDeliveryChargeError(null);
+          setDeliveryCharge(0);
+        } finally {
+          setIsLoadingDeliveryCharge(false);
+        }
+      }
+    },
+    onDeliveryChargeUpdated: async (deliveryData) => {
+      console.log('🚚 Delivery charge updated:', deliveryData);
+      // If this is for current agency, trigger recalculation
+      const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
+      if (deliveryData.agencyId === agencyId && deliveryMode === 'home_delivery') {
+        // Force re-fetch delivery charges immediately
+        console.log('🔄 Re-fetching delivery charges after socket update...');
+        
+        try {
+          const customerId = userProfile?.id;
+          const addressId = selectedAddress?.id;
+
+          if (customerId && agencyId && addressId) {
+            setIsLoadingDeliveryCharge(true);
+            setDeliveryChargeError(null);
+            
+            const payload = {
+              customerId,
+              agencyId,
+              addressId
+            };
+
+            const response = await apiClient.post('/api/delivery-charges/calculate', payload);
+
+            if (response.data && response.data.success) {
+              const chargeData = response.data.data;
+              
+              // Check if delivery charge is not configured
+              if (chargeData.chargeType === 'not_configured') {
+                setDeliveryChargeData(null);
+                setDeliveryChargeError(null);
+                setDeliveryCharge(0);
+                
+                Alert.alert(
+                  'No Delivery Charge',
+                  'Delivery charges not configured. Free delivery!',
+                  [{ text: 'OK' }]
+                );
+                return;
+              }
+              
+              setDeliveryChargeData(chargeData);
+              setDeliveryChargeError(null);
+              
+              // Safe number conversion
+              const chargeValue = parseFloat(chargeData.deliveryCharge) || 0;
+              const roundedCharge = Math.floor(chargeValue);
+              setDeliveryCharge(isNaN(roundedCharge) ? 0 : Math.max(0, roundedCharge));
+              
+              console.log('✅ Delivery charge updated via socket:', roundedCharge);
+              
+              Alert.alert(
+                'Delivery Charge Updated',
+                `New delivery charge: ₹${roundedCharge}`,
+                [{ text: 'OK' }]
+              );
+            }
+          }
+        } catch (error) {
+          console.error('Error re-fetching delivery charges:', error);
+          // Don't show error, just set to 0
+          setDeliveryChargeData(null);
+          setDeliveryChargeError(null);
+          setDeliveryCharge(0);
+        } finally {
+          setIsLoadingDeliveryCharge(false);
+        }
+      }
+    },
+    onDeliveryChargeDeleted: (deliveryData) => {
+      console.log('🚚 Delivery charge deleted:', deliveryData);
+      // If this is for current agency, reset delivery charge
+      const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
+      if (deliveryData.agencyId === agencyId && deliveryMode === 'home_delivery') {
+        setDeliveryChargeData(null);
+        setDeliveryChargeError(null); // No error, just no charges configured
+        setDeliveryCharge(0);
+        
+        // Recalculate total without delivery charge
+        if (taxData) {
+          const taxTotal = parseFloat(taxData.totalAmount) || 0;
+          const safeCouponDiscount = parseFloat(couponDiscount) || 0;
+          const finalAmount = taxTotal - safeCouponDiscount;
+          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+        } else {
+          const safeTotal = parseFloat(totalAmount) || 0;
+          const safeCouponDiscount = parseFloat(couponDiscount) || 0;
+          const finalAmount = safeTotal - safeCouponDiscount;
+          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+        }
+        
+        Alert.alert(
+          'Delivery Charge Removed',
+          'Delivery charges have been removed. No delivery fee will be charged.',
+          [{ text: 'OK' }]
+        );
+      }
+    },
+    onCouponCreated: (couponData) => {
+      console.log('🎟️ New coupon available:', couponData);
+      const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
+      // Only process if it's for current agency
+      if (couponData.agencyId === agencyId) {
+        // Add to coupons list immediately (real-time update)
+        setCoupons(prev => [couponData, ...prev]);
+        
+        const discount = couponData.discountType === 'percentage' 
+          ? `${couponData.discountValue}%` 
+          : `₹${couponData.discountValue}`;
+        
+        Alert.alert(
+          '🎉 New Coupon Available!',
+          `Use code ${couponData.code} to save ${discount}`,
+          [{ text: 'Great!' }]
+        );
+      }
+    },
+    onCouponUpdated: async (couponData) => {
+      console.log('🎟️ Coupon updated:', couponData);
+      
+      const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
+      
+      // Update in coupons list (real-time update)
+      if (couponData.agencyId === agencyId) {
+        setCoupons(prev => prev.map(c => c.id === couponData.id ? couponData : c));
+      }
+      
+      // If this coupon is applied, re-apply it to get correct discount
+      // Match by code since backend doesn't return coupon ID
+      const isApplied = appliedCoupon && (
+        appliedCoupon.code === couponData.code || 
+        appliedCoupon.couponCode === couponData.code ||
+        appliedCoupon.id === couponData.code
+      );
+      
+      if (isApplied) {
+        console.log('🔄 Re-applying updated coupon via backend API...');
+        console.log('Applied coupon:', appliedCoupon);
+        console.log('Updated coupon:', couponData);
+        
+        try {
+          // Use BASE amount (before tax) for coupon calculation
+          const baseAmount = parseFloat(taxData?.baseAmount || totalAmount) || 0;
+          
+          console.log('Re-applying with base amount:', baseAmount);
+          
+          const payload = {
+            code: couponData.code,
+            amount: baseAmount,
+            agencyId: agencyId
+          };
+          
+          const response = await apiClient.post('/api/coupons/apply', payload);
+
+          if (response.data && response.data.success) {
+            const recalculatedCoupon = response.data.data;
+            const safeDiscountAmount = parseFloat(recalculatedCoupon.discountAmount) || 0;
+            
+            console.log('Recalculated discount from backend:', safeDiscountAmount);
+            
+            setAppliedCoupon({
+              id: couponData.code,
+              code: couponData.code,
+              couponCode: couponData.code,
+              discountType: recalculatedCoupon.discountType,
+              discountValue: recalculatedCoupon.discountValue,
+              discountAmount: safeDiscountAmount,
+              originalAmount: recalculatedCoupon.originalAmount
+            });
+            setCouponDiscount(safeDiscountAmount);
+            
+            // Recalculate final total with new discount
+            const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+            
+            if (taxData) {
+              const taxTotal = parseFloat(taxData.totalAmount) || 0;
+              const finalAmount = taxTotal + safeDeliveryCharge - safeDiscountAmount;
+              setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+            } else {
+              const safeTotal = parseFloat(totalAmount) || 0;
+              const finalAmount = safeTotal + safeDeliveryCharge - safeDiscountAmount;
+              setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+            }
+            
+            console.log('Coupon re-applied after update:', {
+              oldDiscount: parseFloat(appliedCoupon?.discountAmount || 0),
+              newDiscount: safeDiscountAmount,
+              finalAmount: finalTotalAmount
+            });
+            
+            Alert.alert(
+              'Coupon Updated',
+              `Coupon ${couponData.code} updated. New discount: ₹${Math.round(safeDiscountAmount)}`,
+              [{ text: 'OK' }]
+            );
+          } else {
+            // Coupon no longer valid, remove it
+            setAppliedCoupon(null);
+            setCouponDiscount(0);
+            
+            // Recalculate without discount
+            if (taxData) {
+              const taxTotal = parseFloat(taxData.totalAmount) || 0;
+              const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+              const finalAmount = taxTotal + safeDeliveryCharge;
+              setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+            }
+            
+            Alert.alert(
+              'Coupon No Longer Valid',
+              `Coupon ${couponData.code} cannot be applied anymore.`,
+              [{ text: 'OK' }]
+            );
+          }
+        } catch (error) {
+          console.error('Error re-applying updated coupon:', error);
+          // Remove coupon if re-application fails
+          setAppliedCoupon(null);
+          setCouponDiscount(0);
+          
+          // Recalculate without discount
+          if (taxData) {
+            const taxTotal = parseFloat(taxData.totalAmount) || 0;
+            const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+            const finalAmount = taxTotal + safeDeliveryCharge;
+            setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+          }
+        }
+      }
+    },
+    onCouponStatusChanged: (couponData) => {
+      console.log('🎟️ Coupon status changed:', couponData);
+      
+      const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
+      
+      // Update in coupons list (real-time update - show/hide based on isActive)
+      if (couponData.agencyId === agencyId) {
+        if (couponData.isActive) {
+          // Coupon activated - add/update in list
+          setCoupons(prev => {
+            const exists = prev.find(c => c.id === couponData.id);
+            if (exists) {
+              return prev.map(c => c.id === couponData.id ? couponData : c);
+            } else {
+              return [couponData, ...prev];
+            }
+          });
+        } else {
+          // Coupon deactivated - remove from list
+          setCoupons(prev => prev.filter(c => c.id !== couponData.id));
+        }
+      }
+      
+      // Check if this coupon is applied (match by code)
+      const isApplied = appliedCoupon && (
+        appliedCoupon.code === couponData.code || 
+        appliedCoupon.couponCode === couponData.code ||
+        appliedCoupon.id === couponData.code
+      );
+      
+      // If applied coupon is deactivated, remove it and recalculate total
+      if (isApplied && !couponData.isActive) {
+        console.log('⚠️ Applied coupon deactivated, removing...');
+        
+        setAppliedCoupon(null);
+        setCouponDiscount(0);
+        
+        // Recalculate total without coupon discount
+        if (taxData) {
+          const taxTotal = parseFloat(taxData.totalAmount) || 0;
+          const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+          const finalAmount = taxTotal + safeDeliveryCharge;
+          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+        } else {
+          const safeTotal = parseFloat(totalAmount) || 0;
+          const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+          const finalAmount = safeTotal + safeDeliveryCharge;
+          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+        }
+        
+        console.log('Discount removed, new total:', finalTotalAmount);
+        
+        Alert.alert(
+          'Coupon Deactivated',
+          `The coupon ${couponData.code} has been removed from your order and discount has been reversed.`,
+          [{ text: 'OK' }]
+        );
+      } else if (couponData.isActive && couponData.agencyId === agencyId && !isApplied) {
+        // Show success message for activation (only for current agency, if not already applied)
+        Alert.alert(
+          'Coupon Activated',
+          `Coupon ${couponData.code} is now available!`,
+          [{ text: 'OK' }]
+        );
+      }
+    },
+    onCouponDeleted: (couponData) => {
+      console.log('🎟️ Coupon deleted:', couponData);
+      
+      const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
+      
+      // Remove from coupons list (real-time update)
+      if (couponData.agencyId === agencyId) {
+        setCoupons(prev => prev.filter(c => c.id !== couponData.id));
+      }
+      
+      // Check if this coupon is applied (match by code)
+      const isApplied = appliedCoupon && (
+        appliedCoupon.code === couponData.code || 
+        appliedCoupon.couponCode === couponData.code ||
+        appliedCoupon.id === couponData.code
+      );
+      
+      // If applied coupon is deleted, remove it and recalculate total
+      if (isApplied) {
+        console.log('⚠️ Applied coupon deleted, removing...');
+        
+        const oldDiscount = parseFloat(couponDiscount) || 0;
+        
+        setAppliedCoupon(null);
+        setCouponDiscount(0);
+        
+        // Recalculate total without coupon discount
+        if (taxData) {
+          const taxTotal = parseFloat(taxData.totalAmount) || 0;
+          const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+          const finalAmount = taxTotal + safeDeliveryCharge;
+          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+        } else {
+          const safeTotal = parseFloat(totalAmount) || 0;
+          const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+          const finalAmount = safeTotal + safeDeliveryCharge;
+          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+        }
+        
+        console.log('Discount removed, old:', oldDiscount, 'new total:', finalTotalAmount);
+        
+        Alert.alert(
+          'Coupon Removed',
+          `The coupon ${couponData.code} has been removed and ₹${Math.round(oldDiscount)} discount has been reversed.`,
+          [{ text: 'OK' }]
+        );
+      }
+    },
+  });
+
+  // Separate useEffect for tax calculation to avoid loops
+  useEffect(() => {
+    // Fetch tax calculation when cart total changes
+    if (totalAmount > 0) {
+      fetchTaxCalculation();
+    }
+  }, [totalAmount]); // Only trigger when totalAmount changes
+
   useEffect(() => {
     // Agar selectedAddress deleted ho chuka hai
     const validSelectedAddress = addresses.find(addr => addr.id === selectedAddress?.id);
@@ -456,12 +1160,7 @@ const CheckoutScreen = ({ navigation }) => {
     
     // Fetch selected agency for both delivery modes (needed for agencyId in API)
     fetchSelectedAgency();
-    
-    // Fetch tax calculation
-    if (totalAmount > 0) {
-      fetchTaxCalculation();
-    }
-  }, [addresses, defaultAddressId, selectedAddress, dispatch, deliveryMode, totalAmount, couponDiscount, deliveryCharge]);
+  }, [addresses, defaultAddressId, selectedAddress, dispatch, deliveryMode]);
 
   // Separate useEffect for delivery charges - calls when address changes or required data becomes available
   useEffect(() => {
@@ -979,11 +1678,13 @@ const CheckoutScreen = ({ navigation }) => {
                 {isLoadingDeliveryCharge ? 'Calculating delivery charges...' : 'Calculating charges...'}
               </Text>
             </View>
-          ) : taxData ? (
+          ) : (totalAmount > 0) ? (
             <>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Subtotal ({totalItems} items)</Text>
-                <Text style={styles.summaryValue}>₹{taxData.baseAmount}</Text>
+                <Text style={styles.summaryValue}>
+                  ₹{Math.round(parseFloat(taxData?.baseAmount || totalAmount) || 0)}
+                </Text>
               </View>
               
               <View style={styles.summaryRow}>
@@ -998,7 +1699,9 @@ const CheckoutScreen = ({ navigation }) => {
 }
                 {deliveryMode === 'home_delivery' ? (
                   deliveryCharge > 0 ? (
-                    <Text style={styles.summaryValue}>₹{deliveryCharge}</Text>
+                    <Text style={styles.summaryValue}>
+                      ₹{Math.round(parseFloat(deliveryCharge) || 0)}
+                    </Text>
                   ) : (
                     <Text style={styles.freeDelivery}>Free</Text>
                   )
@@ -1014,17 +1717,23 @@ const CheckoutScreen = ({ navigation }) => {
                 </View>
               )}
               
+              {/* Tax Charge - Show even if 0 */}
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>
                   Tax Charge
                 </Text>
-                <Text style={styles.summaryValue}>₹{taxData.taxAmount}</Text>
+                <Text style={styles.summaryValue}>
+                  ₹{Math.round(parseFloat(taxData?.taxAmount) || 0)}
+                </Text>
               </View>
               
-              {taxData.platformCharge && taxData.platformCharge > 0 && (
+              {/* Platform Charge - Show only if taxData exists */}
+              {taxData && (
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Platform Charge</Text>
-                  <Text style={styles.summaryValue}>₹{taxData.platformCharge}</Text>
+                  <Text style={styles.summaryValue}>
+                    ₹{Math.round(parseFloat(taxData.platformCharge) || 0)}
+                  </Text>
                 </View>
               )}
               
@@ -1033,7 +1742,9 @@ const CheckoutScreen = ({ navigation }) => {
                   <Text style={[styles.summaryLabel, styles.discountLabel]}>
                     Coupon Discount ({appliedCoupon.couponCode})
                   </Text>
-                  <Text style={styles.discountValue}>-₹{couponDiscount}</Text>
+                  <Text style={styles.discountValue}>
+                    -₹{Math.round(parseFloat(couponDiscount) || 0)}
+                  </Text>
                 </View>
               )}
               
@@ -1044,21 +1755,32 @@ const CheckoutScreen = ({ navigation }) => {
                   <Text style={styles.summaryTotalLabel}>Total Amount</Text>
                   <Text style={styles.summaryTotalSubtext}>
                     {appliedCoupon && couponDiscount > 0 
-                      ? `After discount of ₹${couponDiscount}` 
-                      : `Including ${deliveryMode === 'home_delivery' && deliveryCharge > 0 ? 'delivery, ' : ''}tax${taxData.platformCharge > 0 ? ' & charges' : ''}`}
+                      ? `After discount of ₹${Math.round(parseFloat(couponDiscount) || 0)}` 
+                      : `Including ${deliveryMode === 'home_delivery' && deliveryCharge > 0 ? 'delivery, ' : ''}tax${(taxData?.platformCharge && parseFloat(taxData.platformCharge) > 0) ? ' & charges' : ''}`}
                   </Text>
                 </View>
                 <Text style={styles.summaryTotalAmount}>
-                  ₹{appliedCoupon && couponDiscount > 0 
-                    ? taxData.totalAmount + deliveryCharge - couponDiscount 
-                    : taxData.totalAmount + deliveryCharge}
+                  ₹{(() => {
+                    const taxTotal = parseFloat(taxData?.totalAmount) || parseFloat(totalAmount) || 0;
+                    const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+                    const safeCouponDiscount = parseFloat(couponDiscount) || 0;
+                    const finalAmount = taxTotal + safeDeliveryCharge - (appliedCoupon && couponDiscount > 0 ? safeCouponDiscount : 0);
+                    return Math.round(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+                  })()}
                 </Text>
               </View>
             </>
           ) : (
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total Amount:</Text>
-              <Text style={styles.totalAmount}>₹{totalAmount + deliveryCharge}</Text>
+              <Text style={styles.totalAmount}>
+                ₹{(() => {
+                  const safeTotal = parseFloat(totalAmount) || 0;
+                  const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+                  const total = safeTotal + safeDeliveryCharge;
+                  return Math.round(isNaN(total) ? 0 : Math.max(0, total));
+                })()}
+              </Text>
             </View>
           )}
         </View>
@@ -1168,7 +1890,9 @@ const CheckoutScreen = ({ navigation }) => {
       {/* Footer */}
       <View style={styles.footer}>
         <View style={styles.footerTotal}>
-          <Text style={styles.footerTotalLabel}>Total: ₹{finalTotalAmount}</Text>
+          <Text style={styles.footerTotalLabel}>
+            Total: ₹{Math.round(parseFloat(finalTotalAmount) || 0)}
+          </Text>
           {/* {taxData && (
             <Text style={styles.footerTotalSubtext}>
               Including ₹{taxData.taxAmount} tax

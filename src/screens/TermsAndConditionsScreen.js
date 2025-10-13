@@ -116,7 +116,7 @@ const TermsAndConditionsScreen = ({ navigation }) => {
         />
       }>
       <View style={styles.contentHeader}>
-        <Text style={styles.contentTitle}>Gas Booking Terms & Conditions</Text>
+        <Text style={styles.contentTitle}>LEADWAY GAS Terms & Conditions</Text>
         <Text style={styles.contentSubtitle}>
           Please read these terms carefully before using our services
         </Text>
@@ -129,7 +129,7 @@ const TermsAndConditionsScreen = ({ navigation }) => {
       <View style={styles.footerNote}>
         <Icon name="warning" size={20} color={COLORS.warning} />
         <Text style={styles.footerText}>
-          By using Gas Booking app, you agree to these terms and conditions.
+          By using LEADWAY GAS app, you agree to these terms and conditions.
           Last updated: {termsData.length > 0 ? new Date(termsData[0]?.updatedAt).toLocaleDateString('en-IN') : 'N/A'}
         </Text>
       </View>

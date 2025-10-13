@@ -16,7 +16,12 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     addToCart: (state, action) => {
-      const { product, quantity = 1 } = action.payload;
+      const { product, quantity = 1, agencyId } = action.payload;
+      
+      // Store agency ID when first item is added
+      if (state.items.length === 0 && agencyId) {
+        state.selectedAgency = agencyId;
+      }
       
       // Create a unique key for the product based on its properties
       const productKey = `${product.id}_${product.weight || 'default'}_${product.type || 'default'}_${product.category || 'default'}`;
@@ -113,6 +118,7 @@ const cartSlice = createSlice({
       state.items = [];
       state.totalAmount = 0;
       state.totalItems = 0;
+      state.selectedAgency = null;
     },
     setDeliveryType: (state, action) => {
       state.deliveryType = action.payload;

@@ -1,6 +1,6 @@
 export const COLORS = {
   // Modern Primary Colors
-  primary: '#6366F1',      // Indigo
+  primary: '#035db7',      // Indigo
   secondary: '#8B5CF6',    // Purple
   accent: '#06B6D4',       // Cyan
   

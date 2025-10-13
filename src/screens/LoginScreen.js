@@ -61,6 +61,7 @@ const LoginScreen = ({ navigation }) => {
   const handleSendOTP = async () => {
     if (!phoneNumber || !phoneNumber.includes('@')) {
       setError('Please enter a valid email address');
+      setTimeout(() => setError(''), 3000); // ✅ Clear error after 3 seconds
       return;
     }
     setError(""); // ✅ Clear any previous errors
@@ -92,6 +93,7 @@ const LoginScreen = ({ navigation }) => {
 
       console.log("Final Error Message:", message);
       setError(message);
+      setTimeout(() => setError(''), 3000); // ✅ Clear error after 3 seconds
       dispatch(sendOTPFailure(message)); // ✅ Reset loading state on error
     }
   };
@@ -127,6 +129,7 @@ const LoginScreen = ({ navigation }) => {
   const handleVerifyOTP = async () => {
     if (!otpValue || otpValue.length < 6) {
       setError('Please enter a valid OTP');
+      setTimeout(() => setError(''), 3000); // ✅ Clear error after 3 seconds
       return;
     }
 
@@ -178,6 +181,7 @@ const LoginScreen = ({ navigation }) => {
       } else {
         dispatch(verifyOTPFailure('Invalid OTP'));
         setError('Invalid OTP');
+        setTimeout(() => setError(''), 3000); // ✅ Clear error after 3 seconds
       }
     } catch (error) {
       console.error("Verify OTP Error:", error);
@@ -195,6 +199,7 @@ const LoginScreen = ({ navigation }) => {
       console.log("Final Error Message:", message);
       dispatch(verifyOTPFailure(message));
       setError(message);
+      setTimeout(() => setError(''), 3000); // ✅ Clear error after 3 seconds
     }
   };
 
@@ -219,8 +224,10 @@ const LoginScreen = ({ navigation }) => {
         setTimer(30); // Start resend timer
         setOtpValue(''); // Clear previous OTP input
       } else {
-        setError(response.data?.message || "Failed to resend OTP");
-        dispatch(sendOTPFailure(response.data?.message || "Failed to resend OTP"));
+        const errorMsg = response.data?.message || "Failed to resend OTP";
+        setError(errorMsg);
+        setTimeout(() => setError(''), 3000); // ✅ Clear error after 3 seconds
+        dispatch(sendOTPFailure(errorMsg));
       }
     } catch (error) {
       console.error("Resend OTP Error:", error);
@@ -237,6 +244,7 @@ const LoginScreen = ({ navigation }) => {
       
       console.log("Final Error Message:", message);
       setError(message);
+      setTimeout(() => setError(''), 3000); // ✅ Clear error after 3 seconds
       dispatch(sendOTPFailure(message));
     }
   };

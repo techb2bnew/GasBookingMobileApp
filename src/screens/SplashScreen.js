@@ -88,7 +88,7 @@ const SplashScreen = () => {
         </View>
 
         {/* App Name */}
-        <Text style={styles.appName}>GasBooking</Text>
+        <Text style={styles.appName}>Leadway Gas</Text>
         <Text style={styles.tagline}>Your Gas, Your Way</Text>
 
         {/* Loading Indicator */}
@@ -115,7 +115,7 @@ const SplashScreen = () => {
         ]}
       >
         <Text style={styles.versionText}>Version 1.0.0</Text>
-        <Text style={styles.copyrightText}>© 2024 GasBooking. All rights reserved.</Text>
+        <Text style={styles.copyrightText}>© 2024 Leadway. All rights reserved.</Text>
       </Animated.View>
     </View>
   );

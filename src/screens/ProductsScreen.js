@@ -16,6 +16,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import {COLORS, STRINGS} from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {setProducts, updateProductAvailability, updateGlobalProductStatus, clearRefreshFlag} from '../redux/slices/productSlice';
+import {clearCart} from '../redux/slices/cartSlice';
 import {wp, hp, fontSize, spacing, borderRadius} from '../utils/dimensions';
 import MenuDrawer from '../components/MenuDrawer';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,7 +30,7 @@ const {width: screenWidth} = Dimensions.get('window');
 
 const ProductsScreen = ({navigation}) => {
   const dispatch = useDispatch();
-  const {totalItems, totalAmount} = useSelector(state => state.cart);
+  const {totalItems, totalAmount, items: cartItems, selectedAgency: cartSelectedAgency} = useSelector(state => state.cart);
   const {products: reduxProducts, needsRefresh} = useSelector(state => state.products);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
@@ -692,20 +693,36 @@ const ProductsScreen = ({navigation}) => {
                       agency.id === selectedAgencyId && styles.agencyCardSelected
                     ]}
                     onPress={async () => {
-                      setIsAgencyModalVisible(false);
                       if (agency.id !== selectedAgencyId) {
+                        // Check if cart has items from different agency and clear it
+                        if (cartItems.length > 0 && cartSelectedAgency && cartSelectedAgency !== agency.id) {
+                          // Clear cart without confirmation
+                          dispatch(clearCart());
+                        }
+                        
+                        setIsAgencyModalVisible(false);
                         // Use the selectAgency function from hook
                         await selectAgency(agency);
                         await fetchProducts(agency.id);
+                      } else {
+                        setIsAgencyModalVisible(false);
                       }
                     }}>
                     <View style={styles.agencyCardContent}>
                       {/* Agency Image - Full Width */}
                       <View style={styles.agencyImageContainerFull}>
-                        <Image
-                          source={{uri: agency.profileImage || 'https://via.placeholder.com/150x100'}}
-                          style={styles.agencyImageFull}
-                        />
+                        {agency.profileImage ? (
+                          <Image
+                            source={{uri: agency.profileImage}}
+                            style={styles.agencyImageFull}
+                          />
+                        ) : (
+                          <View style={[styles.agencyImageFull, styles.agencyImagePlaceholder]}>
+                            <Text style={styles.agencyInitialText}>
+                              {agency.name ? agency.name.charAt(0).toUpperCase() : '?'}
+                            </Text>
+                          </View>
+                        )}
                       </View>
                       
                       {/* Agency Details - Below Image */}
@@ -979,6 +996,16 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+  },
+  agencyImagePlaceholder: {
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  agencyInitialText: {
+    fontSize: fontSize.xxl * 1.5,
+    fontWeight: 'bold',
+    color: COLORS.white,
   },
   agencyDetailsFull: {
     padding: spacing.md,
