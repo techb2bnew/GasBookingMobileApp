@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   complaintButton: {
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.primary,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.sm,

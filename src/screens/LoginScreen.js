@@ -10,6 +10,7 @@ import {
   ScrollView,
   Modal,
   Linking,
+  Image,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import FastOTPInput from '../components/FastOTPInput';
@@ -273,7 +274,10 @@ const LoginScreen = ({ navigation }) => {
           <Text style={styles.subtitle}>
             {otpSent ? STRINGS.verifyOTP : STRINGS.login}
           </Text>
-          <View style={{ justifyContent: 'center', height: '70%' }}>
+          <View style={{ alignItems: 'center'}}>
+            <Image source={require('../assets/leadIcon.png')} style={styles.logoImage} />
+          </View>
+          <View style={{ justifyContent: 'center', height: '40%' }}>
             {!otpSent ? (
               <View style={styles.card}>
                 <Text style={styles.label}>{STRINGS.phoneNumber}</Text>
@@ -425,6 +429,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 4,
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
   },
   label: {
     fontSize: fontSize.md,

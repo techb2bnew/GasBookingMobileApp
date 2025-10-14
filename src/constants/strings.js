@@ -27,7 +27,7 @@ export const STRINGS = {
 
   // Products
   products: 'Products',
-  gasBooking: 'LEADWAY GAS',
+  gasBooking: 'LEADWAY',
   lpgCylinder: 'LPG Cylinder',
   accessories: 'Accessories',
   addToCart: 'Add to Cart',
@@ -92,7 +92,7 @@ export const STRINGS = {
   phone: "+919876543210",
 
 
-  API_BASE_URL: "https://cb2e17a44a53.ngrok-free.app",
-  SOCKET_URL: "https://cb2e17a44a53.ngrok-free.app"
+  API_BASE_URL: "https://64a18f64d85e.ngrok-free.app",
+  SOCKET_URL: "https://64a18f64d85e.ngrok-free.app"
 };
 

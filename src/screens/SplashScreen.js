@@ -6,9 +6,9 @@ import {
   Animated,
   Dimensions,
   StatusBar,
+  Image,
 } from 'react-native';
 import { COLORS } from '../constants';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const { width, height } = Dimensions.get('window');
 
@@ -83,7 +83,11 @@ const SplashScreen = () => {
         {/* Logo Container */}
         <View style={styles.logoContainer}>
           <View style={styles.logoBackground}>
-            <Icon name="propane-tank" size={60} color={COLORS.white} />
+            <Image 
+              source={require('../assets/leadIcon.png')} 
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
         </View>
 
@@ -185,6 +189,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 8,
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
   },
   appName: {
     fontSize: 32,

@@ -61,14 +61,14 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
     }, [navigation])
   );
 
-  useEffect(() => {
-    // Auto navigate to orders after 5 seconds (keeping original behavior for social proof)
-    const timer = setTimeout(() => {
-      navigation.navigate('Main', { screen: 'Orders' });
-    }, 5000);
+  // useEffect(() => {
+  //   // Auto navigate to orders after 5 seconds (keeping original behavior for social proof)
+  //   const timer = setTimeout(() => {
+  //     navigation.navigate('Main', { screen: 'Orders' });
+  //   }, 5000);
 
-    return () => clearTimeout(timer);
-  }, [navigation]);
+  //   return () => clearTimeout(timer);
+  // }, [navigation]);
 
   if (!order) {
     return (
