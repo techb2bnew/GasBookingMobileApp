@@ -70,13 +70,13 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
   //   return () => clearTimeout(timer);
   // }, [navigation]);
 
-  if (!order) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Order not found</Text>
-      </View>
-    );
-  }
+  // if (!order) {
+  //   return (
+  //     <View style={styles.container}>
+  //       <Text style={styles.errorText}>Order not found</Text>
+  //     </View>
+  //   );
+  // }
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -88,6 +88,26 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
       minute: '2-digit',
     });
   };
+
+  // Handle case when order is not found
+  if (!order) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle" size={48} color={COLORS.error} />
+          <Text style={styles.errorTitle}>Order Not Found</Text>
+          <Text style={styles.errorMessage}>
+            The order you're looking for doesn't exist or has been removed.
+          </Text>
+          <TouchableOpacity
+            style={styles.homeButton}
+            onPress={() => navigation.navigate('Main')}>
+            <Text style={styles.homeButtonText}>Go to Home</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -657,6 +677,45 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     textAlign: 'center',
     marginTop: hp('6.25%'),
+  },
+  // Error handling styles
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.xl,
+  },
+  errorTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: 'bold',
+    color: COLORS.textPrimary,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: fontSize.md,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: fontSize.lg,
+    marginBottom: spacing.xl,
+  },
+  homeButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    shadowColor: COLORS.shadow,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  homeButtonText: {
+    color: COLORS.white,
+    fontSize: fontSize.md,
+    fontWeight: '600',
   },
 });
 

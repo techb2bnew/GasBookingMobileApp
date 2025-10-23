@@ -40,6 +40,11 @@ const OrdersScreen = ({ navigation }) => {
   // Local states for UI
   const [refreshing, setRefreshing] = useState(false);
   const [expandedOrders, setExpandedOrders] = useState(new Set());
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingPage, setLoadingPage] = useState(false);
 
   const cancelReasons = [
     'Customer requested cancellation',
@@ -60,20 +65,36 @@ const OrdersScreen = ({ navigation }) => {
     'Other',
   ];
 
-  // Fetch orders from API
-  const fetchOrders = async () => {
+  // Fetch orders from API with pagination
+  const fetchOrders = async (page = 1) => {
     try {
-      dispatch(setLoading(true));
+      if (page === 1) {
+        dispatch(setLoading(true));
+      } else {
+        setLoadingPage(true);
+      }
       dispatch(setError(null));
 
-      console.log('Fetching orders from API...');
-      const response = await apiClient.get('/api/orders');
+      console.log(`Fetching orders from API - Page: ${page}...`);
+      const response = await apiClient.get('/api/orders', {
+        params: {
+          page: page,
+          limit: 10
+        }
+      });
 
       console.log('Orders API Response:', response.data);
 
       if (response?.data && response?.data?.success) {
         const ordersData = response?.data?.data?.orders || [];
+        const paginationData = response?.data?.data?.pagination || {};
+        
+        console.log(`Page ${page}: ${ordersData.length} orders`);
+        console.log('Pagination data:', paginationData);
+        
         dispatch(setOrders(ordersData));
+        setCurrentPage(paginationData.currentPage || page);
+        setTotalPages(paginationData.totalPages || 1);
       } else {
         throw new Error(response.data?.message || 'Failed to fetch orders');
       }
@@ -86,6 +107,7 @@ const OrdersScreen = ({ navigation }) => {
       }
     } finally {
       dispatch(setLoading(false));
+      setLoadingPage(false);
     }
   };
 
@@ -208,10 +230,26 @@ const OrdersScreen = ({ navigation }) => {
     }
   };
 
+  // Pagination navigation functions
+  const goToNextPage = () => {
+    if (currentPage < totalPages && !loadingPage) {
+      console.log(`Going to next page: ${currentPage + 1}`);
+      fetchOrders(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1 && !loadingPage) {
+      console.log(`Going to previous page: ${currentPage - 1}`);
+      fetchOrders(currentPage - 1);
+    }
+  };
+
   // Refresh orders
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchOrders();
+    setCurrentPage(1);
+    await fetchOrders(1);
     setRefreshing(false);
   };
 
@@ -220,7 +258,8 @@ const OrdersScreen = ({ navigation }) => {
     React.useCallback(() => {
       // Always fetch products first to ensure images are available
       fetchProducts().then(() => {
-        fetchOrders();
+        setCurrentPage(1);
+        fetchOrders(1);
       });
     }, [])
   );
@@ -236,23 +275,27 @@ const OrdersScreen = ({ navigation }) => {
       
       const handleOrderCreated = (data) => {
         console.log('📦 OrdersScreen: New order created', data.data);
-        fetchOrders(); // Refresh orders list
+        setCurrentPage(1);
+        fetchOrders(1); // Refresh orders list from page 1
       };
       
       const handleOrderStatusUpdated = (data) => {
         console.log('🔄 OrdersScreen: Order status updated', data.data);
         console.log('🔄 Order ID:', data.data.orderId, 'New Status:', data.data.status);
-        fetchOrders(); // Refresh orders list
+        setCurrentPage(1);
+        fetchOrders(1); // Refresh orders list from page 1
       };
       
       const handleOrderAssigned = (data) => {
         console.log('👤 OrdersScreen: Order assigned', data.data);
-        fetchOrders(); // Refresh orders list
+        setCurrentPage(1);
+        fetchOrders(1); // Refresh orders list from page 1
       };
       
       const handleOrderDelivered = (data) => {
         console.log('✅ OrdersScreen: Order delivered', data.data);
-        fetchOrders(); // Refresh orders list
+        setCurrentPage(1);
+        fetchOrders(1); // Refresh orders list from page 1
       };
       
       // Register listeners
@@ -348,7 +391,7 @@ const OrdersScreen = ({ navigation }) => {
       case 'accepted':
         return styles.statusAccepted;
       case 'assigned':
-      case 'out for delivery':
+      case 'out_for_delivery':
         return styles.statusOutForDelivery;
       case 'delivered':
         return styles.statusDelivered;
@@ -366,6 +409,11 @@ const OrdersScreen = ({ navigation }) => {
     // navigation.navigate('OrderTracking', { orderId: order.id });
     navigation.navigate("Main", { screen: "Tracking", orderId: order.id })
 
+  };
+
+  // Handle order card click to view details
+  const handleOrderClick = (order) => {
+    navigation.navigate('OrderDetails', { order });
   };
 
   const handleReorder = (orderId) => {
@@ -451,7 +499,10 @@ const OrdersScreen = ({ navigation }) => {
     const displayItems = showAllProducts ? item.items : item.items.slice(0, 1);
 
     return (
-      <View style={styles.orderCard}>
+      <TouchableOpacity 
+        style={styles.orderCard}
+        onPress={() => handleOrderClick(item)}
+        activeOpacity={0.7}>
         {/* Order Header with Gradient Effect */}
         <View style={styles.orderHeader}>
           <View style={styles.orderInfo}>
@@ -464,7 +515,7 @@ const OrdersScreen = ({ navigation }) => {
           <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
             <View style={styles.statusDot} />
             <Text style={styles.statusText}>
-              {item.status === 'assigned' ? 'Out for Delivery' : 
+              {(item.status === 'assigned' || item.status === 'out_for_delivery') ? 'Out for Delivery' : 
                item.status ? `Order ${item.status.charAt(0).toUpperCase() + item.status.slice(1)}` : item.status}
             </Text>
           </View>
@@ -583,7 +634,7 @@ const OrdersScreen = ({ navigation }) => {
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -655,6 +706,60 @@ const OrdersScreen = ({ navigation }) => {
             />
           }
         />
+      )}
+
+      {/* Pagination Controls */}
+      {orders.length > 0 && totalPages > 1 && (
+        <View style={styles.paginationContainer}>
+          <TouchableOpacity
+            style={[
+              styles.paginationButton,
+              currentPage === 1 && styles.paginationButtonDisabled
+            ]}
+            onPress={goToPreviousPage}
+            disabled={currentPage === 1 || loadingPage}>
+            <Ionicons 
+              name="chevron-back" 
+              size={16} 
+              color={currentPage === 1 ? COLORS.textSecondary : COLORS.primary} 
+            />
+            <Text style={[
+              styles.paginationButtonText,
+              currentPage === 1 && styles.paginationButtonTextDisabled
+            ]}>
+              Previous
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.paginationInfo}>
+            <Text style={styles.paginationText}>
+              Page {currentPage} of {totalPages}
+            </Text>
+            {loadingPage && (
+              <Text style={styles.paginationLoadingText}>Loading...</Text>
+            )}
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.paginationButton,
+              currentPage === totalPages && styles.paginationButtonDisabled
+            ]}
+            onPress={goToNextPage}
+            disabled={currentPage === totalPages || loadingPage}>
+            <Text style={[
+              styles.paginationButtonText,
+              currentPage === totalPages && styles.paginationButtonTextDisabled
+            ]}>
+              Next
+            </Text>
+            <Ionicons 
+              name="chevron-forward" 
+              size={16} 
+              color={currentPage === totalPages ? COLORS.textSecondary : COLORS.primary} 
+            />
+          </TouchableOpacity>
+        </View>
       )}
 
       <ReasonModal
@@ -1278,6 +1383,63 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: '600',
     marginLeft: spacing.xs,
+  },
+  // Pagination styles
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: COLORS.white,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  paginationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    backgroundColor: COLORS.primary + '10',
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    minWidth: 100,
+    justifyContent: 'center',
+  },
+  paginationButtonDisabled: {
+    backgroundColor: COLORS.lightGray + '20',
+    borderColor: COLORS.border,
+  },
+  paginationButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: COLORS.primary,
+    marginHorizontal: spacing.xs,
+  },
+  paginationButtonTextDisabled: {
+    color: COLORS.textSecondary,
+  },
+  paginationInfo: {
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: spacing.md,
+  },
+  paginationText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 2,
+  },
+  paginationLoadingText: {
+    fontSize: fontSize.xs,
+    color: COLORS.textSecondary,
+    fontStyle: 'italic',
   },
 });
 

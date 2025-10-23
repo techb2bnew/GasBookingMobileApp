@@ -27,7 +27,6 @@ const ProductDetailsScreen = ({ route, navigation }) => {
   const { product: routeProduct = {} } = route.params || {};
 
   const [product, setProduct] = useState(routeProduct);
-  const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   const [productError, setProductError] = useState(null);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [selectedWeight, setSelectedWeight] = useState(routeProduct?.weight);
@@ -35,74 +34,22 @@ const ProductDetailsScreen = ({ route, navigation }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Fetch product details by ID from API
-  const fetchProductDetails = async (productId) => {
-    if (!productId) {
-      console.log('No product ID provided');
-      return;
-    }
-
-    try {
-      setIsLoadingProduct(true);
-      setProductError(null);
-
-      console.log('Fetching product details for ID:', productId);
-
-      const response = await apiClient.get(`/api/products/${productId}`);
-
-      console.log('Product Details API Response:', response.data);
-
-      if (response.data && response.data.success) {
-        const productData = response.data.data.product;
-        setProduct(productData);
-
-        // Update selected weight if product has variants
-        if (productData.variants && productData.variants.length > 0) {
-          setSelectedWeight(productData.variants[0].label);
-        }
-
-        console.log('Product details loaded:', productData);
-      } else {
-        throw new Error(response.data?.message || 'Failed to fetch product details');
-      }
-
-    } catch (error) {
-      console.error('Error fetching product details:', error);
-
-      // Set error message safely to prevent crashes
-      let errorMessage = 'Failed to load product details. Please try again.';
-
-      if (error.response?.status === 404) {
-        errorMessage = 'Product not found';
-        console.log('Product not found (404)');
-      } else if (error.response?.status === 401) {
-        errorMessage = 'Please login to view product details';
-        console.log('Unauthorized access (401)');
-      } else if (error.message) {
-        errorMessage = error.message;
-      } else if (error.code === 'NETWORK_ERROR') {
-        errorMessage = 'Network error. Please check your connection.';
-        console.log('Network error occurred');
-      }
-
-      setProductError(errorMessage);
-    } finally {
-      setIsLoadingProduct(false);
-    }
-  };
-
-  // Fetch product details when component mounts
+  // Initialize product data from route params
   useEffect(() => {
-    console.log('Route Product ID:', routeProduct?.id);
-    console.log('Route Product:', routeProduct);
-
-    if (routeProduct?.id) {
-      fetchProductDetails(routeProduct.id);
+    if (routeProduct && Object.keys(routeProduct).length > 0) {
+      setProduct(routeProduct);
+      
+      // Set selected weight from first variant if available
+      if (routeProduct.variants && routeProduct.variants.length > 0) {
+        setSelectedWeight(routeProduct.variants[0].label);
+      }
+      
+      console.log('Product initialized from route params:', routeProduct);
     } else {
-      console.log('No product ID found in route params');
       setProductError('No product information available');
     }
-  }, [routeProduct?.id]);
+  }, [routeProduct]);
+
 
   // Auto-play image slider for multiple images
   useEffect(() => {
@@ -284,7 +231,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>
-          {isLoadingProduct ? 'Loading...' : (STRINGS?.productDetails || 'Product Details')}
+          {STRINGS?.productDetails || 'Product Details'}
         </Text>
 
         <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('Cart')}>
@@ -300,27 +247,15 @@ const ProductDetailsScreen = ({ route, navigation }) => {
       {/* Content */}
       <ScrollView contentContainerStyle={styles.scrollPad} showsVerticalScrollIndicator={false}>
         {/* Loading State */}
-        {isLoadingProduct && (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Loading product details...</Text>
-          </View>
-        )}
-
         {/* Error State */}
-        {productError && !isLoadingProduct && (
+        {productError && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{productError}</Text>
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={() => routeProduct?.id && fetchProductDetails(routeProduct.id)}
-            >
-              <Text style={styles.retryButtonText}>Retry</Text>
-            </TouchableOpacity>
           </View>
         )}
 
-        {/* Product Content - Only show when not loading and no error */}
-        {!isLoadingProduct && !productError && product && (
+        {/* Product Content - Only show when no error */}
+        {!productError && product && (
           <>
             {/* Hero Image with Slider */}
             {renderHeroImage()}
@@ -430,20 +365,18 @@ const ProductDetailsScreen = ({ route, navigation }) => {
         <TouchableOpacity
           style={[
             styles.ctaBtn, 
-            (!inStock || isLoadingProduct || productError) && styles.ctaBtnDisabled,
+            (!inStock || productError) && styles.ctaBtnDisabled,
             isProductInCart && !hasChanges && styles.ctaBtnInCart
           ]}
           onPress={handleAddToCart}
-          disabled={!inStock || isLoadingProduct || productError}>
+          disabled={!inStock || productError}>
           <Icon name="add-shopping-cart" size={20} color={COLORS.white} />
           <Text style={styles.ctaTxt}>
-            {isLoadingProduct 
-              ? 'Loading...' 
-              : !inStock 
-                ? 'Out of Stock' 
-                : isProductInCart && !hasChanges
-                  ? 'Already in Cart'
-                  : 'Add to Cart'
+            {!inStock 
+              ? 'Out of Stock' 
+              : isProductInCart && !hasChanges
+                ? 'Already in Cart'
+                : 'Add to Cart'
             }
           </Text>
         </TouchableOpacity>

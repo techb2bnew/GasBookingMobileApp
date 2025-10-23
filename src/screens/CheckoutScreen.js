@@ -1891,7 +1891,13 @@ const CheckoutScreen = ({ navigation }) => {
       <View style={styles.footer}>
         <View style={styles.footerTotal}>
           <Text style={styles.footerTotalLabel}>
-            Total: ₹{Math.round(parseFloat(finalTotalAmount) || 0)}
+            Total: ₹{(() => {
+              const taxTotal = parseFloat(taxData?.totalAmount) || parseFloat(totalAmount) || 0;
+              const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
+              const safeCouponDiscount = parseFloat(couponDiscount) || 0;
+              const finalAmount = taxTotal + safeDeliveryCharge - (appliedCoupon && couponDiscount > 0 ? safeCouponDiscount : 0);
+              return Math.round(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+            })()}
           </Text>
           {/* {taxData && (
             <Text style={styles.footerTotalSubtext}>

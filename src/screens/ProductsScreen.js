@@ -4,12 +4,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  Alert,
   Dimensions,
   ScrollView,
   View,
   Text,
-  Modal,
+  AppState,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
@@ -39,7 +38,6 @@ const ProductsScreen = ({navigation}) => {
   const [productsError, setProductsError] = useState(null);
   const [apiProducts, setApiProducts] = useState([]);
   const [productImageIndices, setProductImageIndices] = useState({});
-  const [isAgencyModalVisible, setIsAgencyModalVisible] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
   const [processedEvents, setProcessedEvents] = useState(new Set());
   const carouselRef = useRef(null);
@@ -112,18 +110,41 @@ const ProductsScreen = ({navigation}) => {
 
   // Fetch agencies is now handled by the useAgencies hook
 
-  // Fetch agencies when screen comes into focus
+  // Fetch agencies and products when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
+      console.log('🔄 ProductsScreen: Screen focused, checking state...');
+      console.log('🔄 Selected Agency ID:', selectedAgencyId);
+      console.log('🔄 Has Agencies:', agencies.length);
+      console.log('🔄 Current Products Count:', allProducts.length);
+      
+      // Always fetch agencies first
       fetchAgencies();
-    }, [fetchAgencies]),
+      
+      // If we have a selected agency, always fetch products to ensure fresh data
+      if (selectedAgencyId) {
+        console.log('🔄 Fetching products for selected agency:', selectedAgencyId);
+        fetchProducts(selectedAgencyId);
+      } else {
+        console.log('⚠️ No agency selected, clearing products');
+        setApiProducts([]);
+        dispatch(setProducts([]));
+      }
+    }, [fetchAgencies, selectedAgencyId, dispatch]),
   );
 
   // Fetch products when selected agency changes
   useEffect(() => {
     if (selectedAgencyId) {
       console.log('🔄 Selected agency changed, fetching products for:', selectedAgencyId);
+      
+      // Clear existing products first to show loading state
+      setApiProducts([]);
+      dispatch(setProducts([]));
+      
+      // Fetch new products
       fetchProducts(selectedAgencyId);
+      
       // Clear processed events when agency changes
       setProcessedEvents(new Set());
       
@@ -135,6 +156,7 @@ const ProductsScreen = ({navigation}) => {
     } else {
       console.log('⚠️ No agency selected yet');
       setApiProducts([]);
+      dispatch(setProducts([]));
     }
     
     // Cleanup function to leave agency room when component unmounts or agency changes
@@ -144,7 +166,7 @@ const ProductsScreen = ({navigation}) => {
         socketService.leaveAgencyRoom(selectedAgencyId);
       }
     };
-  }, [selectedAgencyId, socket, isConnected]);
+  }, [selectedAgencyId, socket, isConnected, dispatch]);
 
   // Auto-play image slider for products with multiple images
   useEffect(() => {
@@ -258,6 +280,23 @@ const ProductsScreen = ({navigation}) => {
     }
   }, [needsRefresh, selectedAgencyId, dispatch]);
 
+  // Force refresh products when returning to screen
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState) => {
+      if (nextAppState === 'active' && selectedAgencyId) {
+        console.log('🔄 App became active, refreshing products...');
+        fetchProducts(selectedAgencyId);
+      }
+    };
+
+    // Listen for app state changes
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      subscription?.remove();
+    };
+  }, [selectedAgencyId]);
+
   // Test socket connection when socket is available
   useEffect(() => {
     if (socket && isConnected) {
@@ -266,10 +305,19 @@ const ProductsScreen = ({navigation}) => {
     }
   }, [socket, isConnected]);
 
+
+
   // Use Redux products if available, otherwise fallback to API products
   // Ensure we always have an array to prevent undefined errors
   // If Redux products is empty array, use it (don't fallback to API products)
   const allProducts = reduxProducts !== undefined ? reduxProducts : (apiProducts || []);
+  
+  // Debug logging for products state
+  console.log('🔄 ProductsScreen: Current state check');
+  console.log('🔄 Redux Products:', reduxProducts?.length || 0);
+  console.log('🔄 API Products:', apiProducts?.length || 0);
+  console.log('🔄 All Products:', allProducts?.length || 0);
+  console.log('🔄 Selected Agency ID:', selectedAgencyId);
   
   // Debug logging
 
@@ -408,6 +456,26 @@ const ProductsScreen = ({navigation}) => {
     );
   };
 
+
+  // Handle agency selection from map or list
+  const handleAgencySelection = async (agency) => {
+    if (agency.id !== selectedAgencyId) {
+      // Check if cart has items from different agency and clear it
+      if (cartItems.length > 0 && cartSelectedAgency && cartSelectedAgency !== agency.id) {
+        // Clear cart without confirmation
+        dispatch(clearCart());
+      }
+      
+      // Clear existing products first
+      setApiProducts([]);
+      dispatch(setProducts([]));
+      
+      // Use the selectAgency function from hook
+      await selectAgency(agency);
+      await fetchProducts(agency.id);
+    }
+  };
+
   const renderProductImage = item => {
     if (!item || !item.images || !Array.isArray(item.images) || item.images.length === 0) {
       return (
@@ -542,8 +610,8 @@ const ProductsScreen = ({navigation}) => {
               <TouchableOpacity
                 style={styles.agencySelector}
                 onPress={() => {
-                  console.log('*** AGENCY MODAL TRIGGERED ***', agencies.length, isAgencyModalVisible);
-                  setIsAgencyModalVisible(true);
+                  console.log('*** NAVIGATING TO AGENCY SELECTION ***', agencies.length);
+                  navigation.navigate('AgencySelection');
                 }}
                 disabled={isLoadingAgencies}>
                 <Icon name="store" size={20} color={COLORS.primary} />
@@ -662,130 +730,6 @@ const ProductsScreen = ({navigation}) => {
         </View>
       </ScrollView>
 
-      {/* Agency Picker Modal */}
-      <Modal
-        visible={isAgencyModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsAgencyModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.agencyModalContent}>
-            <View style={styles.agencyModalHeader}>
-              <Text style={styles.agencyModalTitle}>Select Agency</Text>
-              <TouchableOpacity 
-                onPress={() => setIsAgencyModalVisible(false)}
-                style={{padding: 5}}>
-                <Icon name="close" size={24} color={COLORS.textPrimary} />
-              </TouchableOpacity>
-            </View>
-            
-            {agencies.length > 0 ? (
-              <ScrollView 
-                style={styles.agencyList}
-                showsVerticalScrollIndicator={true}
-                bounces={true}
-                scrollEnabled={true}>
-                {agencies.map(agency => (
-                  <TouchableOpacity
-                    key={agency.id}
-                    style={[
-                      styles.agencyCard,
-                      agency.id === selectedAgencyId && styles.agencyCardSelected
-                    ]}
-                    onPress={async () => {
-                      if (agency.id !== selectedAgencyId) {
-                        // Check if cart has items from different agency and clear it
-                        if (cartItems.length > 0 && cartSelectedAgency && cartSelectedAgency !== agency.id) {
-                          // Clear cart without confirmation
-                          dispatch(clearCart());
-                        }
-                        
-                        setIsAgencyModalVisible(false);
-                        // Use the selectAgency function from hook
-                        await selectAgency(agency);
-                        await fetchProducts(agency.id);
-                      } else {
-                        setIsAgencyModalVisible(false);
-                      }
-                    }}>
-                    <View style={styles.agencyCardContent}>
-                      {/* Agency Image - Full Width */}
-                      <View style={styles.agencyImageContainerFull}>
-                        {agency.profileImage ? (
-                          <Image
-                            source={{uri: agency.profileImage}}
-                            style={styles.agencyImageFull}
-                          />
-                        ) : (
-                          <View style={[styles.agencyImageFull, styles.agencyImagePlaceholder]}>
-                            <Text style={styles.agencyInitialText}>
-                              {agency.name ? agency.name.charAt(0).toUpperCase() : '?'}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                      
-                      {/* Agency Details - Below Image */}
-                      <View style={styles.agencyDetailsFull}>
-                        <View style={styles.agencyNameContainerFull}>
-                          <Text style={[
-                            styles.agencyNameFull,
-                            agency.id === selectedAgencyId && styles.agencyNameSelected
-                          ]} numberOfLines={1}>
-                            {agency.name}
-                          </Text>
-                        </View>
-                        
-                        {/* Contact Info */}
-                        {agency.phone && (
-                          <View style={styles.agencyInfoRowCompact}>
-                            <Icon name="phone" size={14} color={COLORS.primary} />
-                            <Text style={styles.agencyInfoTextCompact} numberOfLines={1}>
-                              {agency.phone}
-                            </Text>
-                          </View>
-                        )}
-                        
-                        {agency.email && (
-                          <View style={styles.agencyInfoRowCompact}>
-                            <Icon name="email" size={14} color={COLORS.primary} />
-                            <Text style={styles.agencyInfoTextCompact} numberOfLines={1}>
-                              {agency.email}
-                            </Text>
-                          </View>
-                        )}
-                        
-                        {/* Address Info */}
-                        <View style={styles.agencyInfoRowCompact}>
-                          <Icon name="place" size={14} color={COLORS.textSecondary} />
-                          <Text style={styles.agencyInfoTextCompact} numberOfLines={2}>
-                            {agency.address}, {agency.city} - {agency.pincode}
-                          </Text>
-                        </View>
-                        
-                        {agency.landmark && (
-                          <View style={styles.agencyInfoRowCompact}>
-                            <Icon name="pin-drop" size={14} color={COLORS.textSecondary} />
-                            <Text style={styles.agencyInfoTextCompact} numberOfLines={1}>
-                              Near: {agency.landmark}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            ) : (
-              <View style={styles.emptyAgencyState}>
-                <Text style={styles.emptyAgencyText}>
-                  {isLoadingAgencies ? 'Loading agencies...' : 'No agencies available'}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </Modal>
 
       {/* Floating Cart Summary */}
       {/* {totalItems > 0 && (
@@ -901,155 +845,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: fontSize.sm,
     flex: 1,
-  },
-  agencyDropdown: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    backgroundColor: COLORS.white,
-    borderRadius: wp('2.5%'),
-    marginTop: wp('1%'),
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: COLORS.shadow,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-    zIndex: 1000,
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-    elevation: 10,
-  },
-  agencyModalContent: {
-    backgroundColor: COLORS.white,
-    width: wp('90%'),
-    height: hp('70%'),
-    borderRadius: borderRadius.md,
-    overflow: 'hidden',
-    elevation: 20,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-  },
-  agencyModalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  agencyModalTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-  },
-  agencyList: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  agencyCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.md,
-    shadowColor: COLORS.shadow,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    overflow: 'hidden',
-  },
-  agencyCardSelected: {
-    borderColor: COLORS.primary,
-    borderWidth: 2,
-    shadowColor: COLORS.primary,
-    shadowOpacity: 0.2,
-    backgroundColor: COLORS.subtle,
-  },
-  agencyCardContent: {
-    padding: 0,
-  },
-  agencyImageContainerFull: {
-    height: hp('15%'),
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: borderRadius.md,
-    borderTopRightRadius: borderRadius.md,
-    overflow: 'hidden',
-  },
-  agencyImageFull: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  agencyImagePlaceholder: {
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  agencyInitialText: {
-    fontSize: fontSize.xxl * 1.5,
-    fontWeight: 'bold',
-    color: COLORS.white,
-  },
-  agencyDetailsFull: {
-    padding: spacing.md,
-  },
-  agencyNameContainerFull: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  agencyNameFull: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  agencyInfoRowCompact: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-    paddingVertical: 1,
-  },
-  agencyInfoTextCompact: {
-    fontSize: fontSize.sm,
-    color: COLORS.textSecondary,
-    marginLeft: spacing.xs,
-    flex: 1,
-    lineHeight: fontSize.sm,
-  },
-  agencyNameSelected: {
-    color: COLORS.primary,
-    fontWeight: '800',
-  },
-  emptyAgencyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  emptyAgencyText: {
-    fontSize: fontSize.md,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
   },
   cartButton: {
     backgroundColor: COLORS.secondary,
