@@ -270,62 +270,62 @@ const MenuDrawer = ({ visible, onClose, navigation }) => {
 
               <View style={styles.priceItem}>
                 <Text style={styles.stateName}>Punjab</Text>
-                <Text style={styles.priceText}>₹950 - Domestic</Text>
-                <Text style={styles.priceText}>₹1,250 - Commercial</Text>
+                <Text style={styles.priceText}>$950 - Domestic</Text>
+                <Text style={styles.priceText}>$1,250 - Commercial</Text>
               </View>
 
               <View style={styles.priceItem}>
                 <Text style={styles.stateName}>Haryana</Text>
-                <Text style={styles.priceText}>₹980 - Domestic</Text>
-                <Text style={styles.priceText}>₹1,280 - Commercial</Text>
+                <Text style={styles.priceText}>$980 - Domestic</Text>
+                <Text style={styles.priceText}>$1,280 - Commercial</Text>
               </View>
 
               <View style={styles.priceItem}>
                 <Text style={styles.stateName}>Delhi</Text>
-                <Text style={styles.priceText}>₹1,050 - Domestic</Text>
-                <Text style={styles.priceText}>₹1,350 - Commercial</Text>
+                <Text style={styles.priceText}>$1,050 - Domestic</Text>
+                <Text style={styles.priceText}>$1,350 - Commercial</Text>
               </View>
 
               <View style={styles.priceItem}>
                 <Text style={styles.stateName}>Uttar Pradesh</Text>
-                <Text style={styles.priceText}>₹920 - Domestic</Text>
-                <Text style={styles.priceText}>₹1,220 - Commercial</Text>
+                <Text style={styles.priceText}>$920 - Domestic</Text>
+                <Text style={styles.priceText}>$1,220 - Commercial</Text>
               </View>
 
               <View style={styles.priceItem}>
                 <Text style={styles.stateName}>Maharashtra</Text>
-                <Text style={styles.priceText}>₹1,100 - Domestic</Text>
-                <Text style={styles.priceText}>₹1,400 - Commercial</Text>
+                <Text style={styles.priceText}>$1,100 - Domestic</Text>
+                <Text style={styles.priceText}>$1,400 - Commercial</Text>
               </View>
 
               <View style={styles.priceItem}>
                 <Text style={styles.stateName}>Karnataka</Text>
-                <Text style={styles.priceText}>₹1,080 - Domestic</Text>
-                <Text style={styles.priceText}>₹1,380 - Commercial</Text>
+                <Text style={styles.priceText}>$1,080 - Domestic</Text>
+                <Text style={styles.priceText}>$1,380 - Commercial</Text>
               </View>
 
               <View style={styles.priceItem}>
                 <Text style={styles.stateName}>Tamil Nadu</Text>
-                <Text style={styles.priceText}>₹1,020 - Domestic</Text>
-                <Text style={styles.priceText}>₹1,320 - Commercial</Text>
+                <Text style={styles.priceText}>$1,020 - Domestic</Text>
+                <Text style={styles.priceText}>$1,320 - Commercial</Text>
               </View>
 
               <View style={styles.priceItem}>
                 <Text style={styles.stateName}>Gujarat</Text>
-                <Text style={styles.priceText}>₹1,000 - Domestic</Text>
-                <Text style={styles.priceText}>₹1,300 - Commercial</Text>
+                <Text style={styles.priceText}>$1,000 - Domestic</Text>
+                <Text style={styles.priceText}>$1,300 - Commercial</Text>
               </View>
 
               <View style={styles.priceItem}>
                 <Text style={styles.stateName}>Rajasthan</Text>
-                <Text style={styles.priceText}>₹940 - Domestic</Text>
-                <Text style={styles.priceText}>₹1,240 - Commercial</Text>
+                <Text style={styles.priceText}>$940 - Domestic</Text>
+                <Text style={styles.priceText}>$1,240 - Commercial</Text>
               </View>
 
               <View style={styles.priceItem}>
                 <Text style={styles.stateName}>Madhya Pradesh</Text>
-                <Text style={styles.priceText}>₹930 - Domestic</Text>
-                <Text style={styles.priceText}>₹1,230 - Commercial</Text>
+                <Text style={styles.priceText}>$930 - Domestic</Text>
+                <Text style={styles.priceText}>$1,230 - Commercial</Text>
               </View>
 
               <Text style={styles.priceNote}>

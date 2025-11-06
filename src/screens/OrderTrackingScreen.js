@@ -129,13 +129,13 @@ const OrderTrackingScreen = ({ route, navigation }) => {
             <View key={item.id} style={styles.summaryItem}>
               <Text style={styles.summaryItemName}>{item.name}</Text>
               <Text style={styles.summaryItemDetails}>
-                Qty: {item.quantity} × ₹{item.price}
+                Qty: {item.quantity} × ${item.price}
               </Text>
             </View>
           ))}
           <View style={styles.summaryTotalRow}>
             <Text style={styles.summaryTotalLabel}>Total Amount:</Text>
-            <Text style={styles.summaryTotalAmount}>₹{order.totalAmount}</Text>
+            <Text style={styles.summaryTotalAmount}>${order.totalAmount}</Text>
           </View>
         </View>
 

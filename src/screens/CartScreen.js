@@ -103,7 +103,7 @@ const CartScreen = ({ navigation }) => {
           {/* Price and Quantity Controls */}
           <View style={styles.controlsContainer}>
             <View style={styles.priceContainer}>
-              <Text style={styles.unitPrice}>₹{item.price}</Text>
+              <Text style={styles.unitPrice}>${item.price}</Text>
               <Text style={styles.perUnit}>per unit</Text>
             </View>
             
@@ -129,7 +129,7 @@ const CartScreen = ({ navigation }) => {
           <View style={styles.totalRow}>
             <View style={styles.totalContainer}>
               <Text style={styles.totalLabel}>Item Total</Text>
-              <Text style={styles.itemTotal}>₹{item.price * item.quantity}</Text>
+              <Text style={styles.itemTotal}>${item.price * item.quantity}</Text>
             </View>
             <View style={styles.savingsContainer}>
               <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
@@ -190,7 +190,7 @@ const CartScreen = ({ navigation }) => {
           <View style={styles.footer}>
             <View style={styles.totalContainer}>
               <Text style={styles.totalLabel}>Total Amount</Text>
-              <Text style={styles.totalAmount}>₹{totalAmount}</Text>
+              <Text style={styles.totalAmount}>${totalAmount}</Text>
               <Text style={styles.itemsCount}>{totalItems} items</Text>
             </View>
 

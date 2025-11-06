@@ -109,7 +109,7 @@ const SocketUsageExample = () => {
     >
       <Text style={styles.orderNumber}>Order: {item.orderNumber}</Text>
       <Text style={styles.orderStatus}>Status: {item.status}</Text>
-      <Text style={styles.orderAmount}>Amount: ₹{item.totalAmount}</Text>
+      <Text style={styles.orderAmount}>Amount: ${item.totalAmount}</Text>
       {item.agentName && (
         <Text style={styles.agentName}>Agent: {item.agentName}</Text>
       )}

@@ -407,7 +407,7 @@ export const useCouponEvents = (callbacks = {}) => {
       const coupon = data.data;
       const discount = coupon.discountType === 'percentage' 
         ? `${coupon.discountValue}%` 
-        : `₹${coupon.discountValue}`;
+        : `$${coupon.discountValue}`;
       
       Alert.alert(
         '🎉 New Coupon Available!',

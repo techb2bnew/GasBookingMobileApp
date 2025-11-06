@@ -356,9 +356,9 @@ const ProductDetailsScreen = ({ route, navigation }) => {
       <View style={styles.footer}>
         <View style={styles.priceBlock}>
           <Text style={styles.priceLabel}>Total</Text>
-          <Text style={styles.priceValue}>₹{totalPrice}</Text>
+          <Text style={styles.priceValue}>${totalPrice}</Text>
           {!!unitPrice && (
-            <Text style={styles.priceUnit}>₹{unitPrice} / unit</Text>
+            <Text style={styles.priceUnit}>${unitPrice} / unit</Text>
           )}
         </View>
 

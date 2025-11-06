@@ -441,7 +441,7 @@ const CheckoutScreen = ({ navigation }) => {
         }
         
         setIsCouponModalVisible(false);
-        Alert.alert('Success', `Coupon applied! You saved ₹${Math.round(safeDiscountAmount)}`);
+        Alert.alert('Success', `Coupon applied! You saved $${Math.round(safeDiscountAmount)}`);
       } else {
         // Handle API error response
         const errorMsg = response.data?.error || response.data?.message || 'Failed to apply coupon';
@@ -611,7 +611,7 @@ const CheckoutScreen = ({ navigation }) => {
           
           Alert.alert(
             'Tax Updated',
-            `Tax: ₹${Math.round(parseFloat(taxInfo.taxAmount) || 0)} | Total: ₹${Math.round(finalAmount)}`,
+            `Tax: $${Math.round(parseFloat(taxInfo.taxAmount) || 0)} | Total: $${Math.round(finalAmount)}`,
             [{ text: 'OK' }]
           );
         } else {
@@ -650,7 +650,7 @@ const CheckoutScreen = ({ navigation }) => {
       
       Alert.alert(
         'Tax Removed',
-        `Tax removed. New total: ₹${Math.round(finalAmount)}`,
+        `Tax removed. New total: $${Math.round(finalAmount)}`,
         [{ text: 'OK' }]
       );
     },
@@ -682,7 +682,7 @@ const CheckoutScreen = ({ navigation }) => {
           
           Alert.alert(
             'Platform Charge Updated',
-            `Platform charge is now ₹${chargeData.amount}. New total: ₹${Math.round(finalAmount)}`,
+            `Platform charge is now $${chargeData.amount}. New total: $${Math.round(finalAmount)}`,
             [{ text: 'OK' }]
           );
         }
@@ -722,7 +722,7 @@ const CheckoutScreen = ({ navigation }) => {
           
           Alert.alert(
             'Platform Charge Removed',
-            `Platform charge removed. New total: ₹${Math.round(finalAmount)}`,
+            `Platform charge removed. New total: $${Math.round(finalAmount)}`,
             [{ text: 'OK' }]
           );
         }
@@ -775,7 +775,7 @@ const CheckoutScreen = ({ navigation }) => {
               
               Alert.alert(
                 'Delivery Charges Now Available',
-                `Delivery charge: ₹${roundedCharge}`,
+                `Delivery charge: $${roundedCharge}`,
                 [{ text: 'OK' }]
               );
             }
@@ -844,7 +844,7 @@ const CheckoutScreen = ({ navigation }) => {
               
               Alert.alert(
                 'Delivery Charge Updated',
-                `New delivery charge: ₹${roundedCharge}`,
+                `New delivery charge: $${roundedCharge}`,
                 [{ text: 'OK' }]
               );
             }
@@ -899,7 +899,7 @@ const CheckoutScreen = ({ navigation }) => {
         
         const discount = couponData.discountType === 'percentage' 
           ? `${couponData.discountValue}%` 
-          : `₹${couponData.discountValue}`;
+          : `$${couponData.discountValue}`;
         
         Alert.alert(
           '🎉 New Coupon Available!',
@@ -983,7 +983,7 @@ const CheckoutScreen = ({ navigation }) => {
             
             Alert.alert(
               'Coupon Updated',
-              `Coupon ${couponData.code} updated. New discount: ₹${Math.round(safeDiscountAmount)}`,
+              `Coupon ${couponData.code} updated. New discount: $${Math.round(safeDiscountAmount)}`,
               [{ text: 'OK' }]
             );
           } else {
@@ -1130,7 +1130,7 @@ const CheckoutScreen = ({ navigation }) => {
         
         Alert.alert(
           'Coupon Removed',
-          `The coupon ${couponData.code} has been removed and ₹${Math.round(oldDiscount)} discount has been reversed.`,
+          `The coupon ${couponData.code} has been removed and $${Math.round(oldDiscount)} discount has been reversed.`,
           [{ text: 'OK' }]
         );
       }
@@ -1388,7 +1388,7 @@ const CheckoutScreen = ({ navigation }) => {
           {option.label}
         </Text>
         {option.price > 0 && (
-          <Text style={styles.optionPrice}>₹{option.price}</Text>
+          <Text style={styles.optionPrice}>${option.price}</Text>
         )}
       </View>
       <View style={[
@@ -1584,7 +1584,7 @@ const CheckoutScreen = ({ navigation }) => {
                 <View style={styles.orderItemDetailsContainer}>
                   <Text style={styles.orderItemName}>{item.productName}</Text>
                   <Text style={styles.orderItemDetails}>
-                    Qty: {item.quantity} × ₹{item.price} = ₹{item.quantity * item.price}
+                    Qty: {item.quantity} × ${item.price} = ${item.quantity * item.price}
                   </Text>
                   {item.weight && (
                     <Text style={styles.orderItemWeight}>{item.weight}</Text>
@@ -1644,7 +1644,7 @@ const CheckoutScreen = ({ navigation }) => {
                   <View style={styles.appliedCouponText}>
                     <Text style={styles.appliedCouponCode}>{appliedCoupon.couponCode}</Text>
                     <Text style={styles.appliedCouponSavings}>
-                      You saved ₹{appliedCoupon.discountAmount}!
+                      You saved ${appliedCoupon.discountAmount}!
                     </Text>
                   </View>
                 </View>
@@ -1683,7 +1683,7 @@ const CheckoutScreen = ({ navigation }) => {
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Subtotal ({totalItems} items)</Text>
                 <Text style={styles.summaryValue}>
-                  ₹{Math.round(parseFloat(taxData?.baseAmount || totalAmount) || 0)}
+                  ${Math.round(parseFloat(taxData?.baseAmount || totalAmount) || 0)}
                 </Text>
               </View>
               
@@ -1700,7 +1700,7 @@ const CheckoutScreen = ({ navigation }) => {
                 {deliveryMode === 'home_delivery' ? (
                   deliveryCharge > 0 ? (
                     <Text style={styles.summaryValue}>
-                      ₹{Math.round(parseFloat(deliveryCharge) || 0)}
+                      ${Math.round(parseFloat(deliveryCharge) || 0)}
                     </Text>
                   ) : (
                     <Text style={styles.freeDelivery}>Free</Text>
@@ -1723,7 +1723,7 @@ const CheckoutScreen = ({ navigation }) => {
                   Tax Charge
                 </Text>
                 <Text style={styles.summaryValue}>
-                  ₹{Math.round(parseFloat(taxData?.taxAmount) || 0)}
+                  ${Math.round(parseFloat(taxData?.taxAmount) || 0)}
                 </Text>
               </View>
               
@@ -1732,7 +1732,7 @@ const CheckoutScreen = ({ navigation }) => {
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Platform Charge</Text>
                   <Text style={styles.summaryValue}>
-                    ₹{Math.round(parseFloat(taxData.platformCharge) || 0)}
+                    ${Math.round(parseFloat(taxData.platformCharge) || 0)}
                   </Text>
                 </View>
               )}
@@ -1743,7 +1743,7 @@ const CheckoutScreen = ({ navigation }) => {
                     Coupon Discount ({appliedCoupon.couponCode})
                   </Text>
                   <Text style={styles.discountValue}>
-                    -₹{Math.round(parseFloat(couponDiscount) || 0)}
+                    -${Math.round(parseFloat(couponDiscount) || 0)}
                   </Text>
                 </View>
               )}
@@ -1755,12 +1755,12 @@ const CheckoutScreen = ({ navigation }) => {
                   <Text style={styles.summaryTotalLabel}>Total Amount</Text>
                   <Text style={styles.summaryTotalSubtext}>
                     {appliedCoupon && couponDiscount > 0 
-                      ? `After discount of ₹${Math.round(parseFloat(couponDiscount) || 0)}` 
+                      ? `After discount of $${Math.round(parseFloat(couponDiscount) || 0)}` 
                       : `Including ${deliveryMode === 'home_delivery' && deliveryCharge > 0 ? 'delivery, ' : ''}tax${(taxData?.platformCharge && parseFloat(taxData.platformCharge) > 0) ? ' & charges' : ''}`}
                   </Text>
                 </View>
                 <Text style={styles.summaryTotalAmount}>
-                  ₹{(() => {
+                  ${(() => {
                     const taxTotal = parseFloat(taxData?.totalAmount) || parseFloat(totalAmount) || 0;
                     const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
                     const safeCouponDiscount = parseFloat(couponDiscount) || 0;
@@ -1774,7 +1774,7 @@ const CheckoutScreen = ({ navigation }) => {
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total Amount:</Text>
               <Text style={styles.totalAmount}>
-                ₹{(() => {
+                ${(() => {
                   const safeTotal = parseFloat(totalAmount) || 0;
                   const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
                   const total = safeTotal + safeDeliveryCharge;
@@ -1891,7 +1891,7 @@ const CheckoutScreen = ({ navigation }) => {
       <View style={styles.footer}>
         <View style={styles.footerTotal}>
           <Text style={styles.footerTotalLabel}>
-            Total: ₹{(() => {
+            Total: ${(() => {
               const taxTotal = parseFloat(taxData?.totalAmount) || parseFloat(totalAmount) || 0;
               const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
               const safeCouponDiscount = parseFloat(couponDiscount) || 0;
@@ -1901,8 +1901,8 @@ const CheckoutScreen = ({ navigation }) => {
           </Text>
           {/* {taxData && (
             <Text style={styles.footerTotalSubtext}>
-              Including ₹{taxData.taxAmount} tax
-              {taxData.platformCharge > 0 ? ` + ₹${taxData.platformCharge} platform charge` : ''}
+              Including ${taxData.taxAmount} tax
+              {taxData.platformCharge > 0 ? ` + $${taxData.platformCharge} platform charge` : ''}
             </Text>
           )} */}
         </View>
@@ -2127,7 +2127,7 @@ const CheckoutScreen = ({ navigation }) => {
                         <View style={styles.couponDiscountBadge}>
                           <Text style={styles.couponDiscountText}>
                             {coupon.discountType === 'fixed' 
-                              ? `₹${coupon.discountValue}` 
+                              ? `$${coupon.discountValue}` 
                               : `${coupon.discountValue}%`}
                           </Text>
                           <Text style={styles.couponDiscountSubtext}>OFF</Text>
@@ -2137,8 +2137,8 @@ const CheckoutScreen = ({ navigation }) => {
                       <View style={styles.couponRight}>
                         <Text style={styles.couponCode}>{coupon.code}</Text>
                         <Text style={styles.couponMinAmount}>
-                          Min order: ₹{coupon.minAmount}
-                          {coupon.maxAmount && ` | Max: ₹${coupon.maxAmount}`}
+                          Min order: ${coupon.minAmount}
+                          {coupon.maxAmount && ` | Max: $${coupon.maxAmount}`}
                         </Text>
                         <Text style={[styles.couponExpiry, isExpired && styles.couponExpired]}>
                           {isExpired ? 'Expired' : `Valid till ${coupon.expiryDate}`}

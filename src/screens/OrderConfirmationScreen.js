@@ -245,8 +245,8 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
                   </Text>
                 </View>
                 <View style={styles.itemPrice}>
-                  <Text style={styles.itemPriceText}>₹{item.quantity * item.price}</Text>
-                  <Text style={styles.itemUnitPrice}>₹{item.price} each</Text>
+                  <Text style={styles.itemPriceText}>${item.quantity * item.price}</Text>
+                  <Text style={styles.itemUnitPrice}>${item.price} each</Text>
                 </View>
               </View>
             ))}
@@ -257,7 +257,7 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
               <Ionicons name="wallet" size={20} color={COLORS.primary} />
               <Text style={styles.totalLabel}>Total Amount</Text>
             </View>
-            <Text style={styles.totalAmount}>₹{order.totalAmount}</Text>
+            <Text style={styles.totalAmount}>${order.totalAmount}</Text>
           </View>
         </View>
 

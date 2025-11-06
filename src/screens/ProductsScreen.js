@@ -525,7 +525,7 @@ const ProductsScreen = ({navigation}) => {
           <Text style={styles.weightText}>
             Starting at{' '}
             <Text style={styles.priceText}>
-              ₹{item?.variants?.[0]?.price || 'N/A'}
+              ${item?.variants?.[0]?.price || 'N/A'}
             </Text>
           </Text>
 
@@ -737,7 +737,7 @@ const ProductsScreen = ({navigation}) => {
           <View style={styles.cartSummary}>
             <View style={styles.cartInfo}>
               <Text style={styles.cartItemsText}>{totalItems} items</Text>
-              <Text style={styles.cartTotalText}>₹{totalAmount}</Text>
+              <Text style={styles.cartTotalText}>${totalAmount}</Text>
             </View>
             <TouchableOpacity
               style={styles.checkoutButton}

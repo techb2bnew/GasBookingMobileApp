@@ -276,7 +276,7 @@ const OrderDetailsScreen = ({ navigation, route }) => {
               <Text style={styles.productVariant}>{item.variantLabel}</Text>
               <View style={styles.productMeta}>
                 <Text style={styles.productQuantity}>Qty: {item.quantity}</Text>
-                <Text style={styles.productPrice}>₹{item.variantPrice}</Text>
+                <Text style={styles.productPrice}>${item.variantPrice}</Text>
               </View>
             </View>
           </View>
@@ -290,29 +290,29 @@ const OrderDetailsScreen = ({ navigation, route }) => {
       <Text style={styles.sectionTitle}>Pricing Details</Text>
       <View style={styles.pricingRow}>
         <Text style={styles.pricingLabel}>Subtotal</Text>
-        <Text style={styles.pricingValue}>₹{order.subtotal}</Text>
+        <Text style={styles.pricingValue}>${order.subtotal}</Text>
       </View>
       <View style={styles.pricingRow}>
         <Text style={styles.pricingLabel}>Tax ({order.taxValue}%)</Text>
-        <Text style={styles.pricingValue}>₹{order.taxAmount}</Text>
+        <Text style={styles.pricingValue}>${order.taxAmount}</Text>
       </View>
       <View style={styles.pricingRow}>
         <Text style={styles.pricingLabel}>Platform Charge</Text>
-        <Text style={styles.pricingValue}>₹{order.platformCharge}</Text>
+        <Text style={styles.pricingValue}>${order.platformCharge}</Text>
       </View>
       <View style={styles.pricingRow}>
         <Text style={styles.pricingLabel}>Delivery Charge</Text>
-        <Text style={styles.pricingValue}>₹{order.deliveryCharge}</Text>
+        <Text style={styles.pricingValue}>${order.deliveryCharge}</Text>
       </View>
       {order.couponCode && (
         <View style={styles.pricingRow}>
           <Text style={styles.pricingLabel}>Coupon Discount ({order.couponCode})</Text>
-          <Text style={[styles.pricingValue, { color: COLORS.success }]}>-₹{order.couponDiscount}</Text>
+          <Text style={[styles.pricingValue, { color: COLORS.success }]}>-${order.couponDiscount}</Text>
         </View>
       )}
       <View style={[styles.pricingRow, styles.totalRow]}>
         <Text style={styles.totalLabel}>Total Amount</Text>
-        <Text style={styles.totalValue}>₹{order.totalAmount}</Text>
+        <Text style={styles.totalValue}>${order.totalAmount}</Text>
       </View>
     </View>
   );
