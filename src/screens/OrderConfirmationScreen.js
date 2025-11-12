@@ -11,11 +11,13 @@ import {
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
 import { useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CommonActions } from '@react-navigation/native';
 import { COLORS, STRINGS } from '../constants';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 
 const OrderConfirmationScreen = ({ route, navigation }) => {
+  const insets = useSafeAreaInsets();
   const { orderId } = route.params;
   const order = useSelector(state =>
     state.orders.orders.find(order => order.id === orderId)
@@ -110,7 +112,7 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         {/* Header Section */}
         <View style={styles.headerSection}>
@@ -320,13 +322,14 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
 
         {/* Action Buttons */}
         <View style={styles.buttonContainer}>
+          {order.deliveryMode !== 'pickup' &&
           <TouchableOpacity
             style={styles.trackButton}
             onPress={() => navigation.navigate("Main", { screen: "Tracking", orderId: orderId })}>
             <Ionicons name="eye" size={20} color={COLORS.white} />
             <Text style={styles.trackButtonText}>{STRINGS.trackOrder}</Text>
           </TouchableOpacity>
-
+          }
           <TouchableOpacity
             style={styles.continueButton}
             onPress={() => navigation.navigate('Main')}>

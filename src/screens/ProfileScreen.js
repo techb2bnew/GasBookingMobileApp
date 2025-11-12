@@ -13,6 +13,7 @@ import {
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, STRINGS } from '../constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../utils/apiConfig';
@@ -36,6 +37,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const ProfileScreen = ({ navigation }) => {
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const { profile, addresses, addressLoading, addressError } = useSelector(state => state.profile);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
@@ -543,7 +545,7 @@ const ProfileScreen = ({ navigation }) => {
 
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       <View style={styles.header}>
         <Text style={styles.title}>{STRINGS.profile}</Text>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>

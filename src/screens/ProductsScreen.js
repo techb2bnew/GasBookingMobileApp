@@ -9,9 +9,11 @@ import {
   View,
   Text,
   AppState,
+  RefreshControl,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {COLORS, STRINGS} from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {setProducts, updateProductAvailability, updateGlobalProductStatus, clearRefreshFlag} from '../redux/slices/productSlice';
@@ -29,6 +31,7 @@ const {width: screenWidth} = Dimensions.get('window');
 
 const ProductsScreen = ({navigation}) => {
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const {totalItems, totalAmount, items: cartItems, selectedAgency: cartSelectedAgency} = useSelector(state => state.cart);
   const {products: reduxProducts, needsRefresh} = useSelector(state => state.products);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -40,6 +43,7 @@ const ProductsScreen = ({navigation}) => {
   const [productImageIndices, setProductImageIndices] = useState({});
   const [forceUpdate, setForceUpdate] = useState(0);
   const [processedEvents, setProcessedEvents] = useState(new Set());
+  const [refreshing, setRefreshing] = useState(false);
   const carouselRef = useRef(null);
   const carouselIntervalRef = useRef(null);
 
@@ -109,6 +113,24 @@ const ProductsScreen = ({navigation}) => {
   };
 
   // Fetch agencies is now handled by the useAgencies hook
+
+  // Pull to refresh handler
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    try {
+      // Refresh agencies first
+      await fetchAgencies();
+      
+      // If we have a selected agency, refresh products
+      if (selectedAgencyId) {
+        await fetchProducts(selectedAgencyId);
+      }
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchAgencies, selectedAgencyId]);
 
   // Fetch agencies and products when screen comes into focus
   useFocusEffect(
@@ -370,25 +392,24 @@ const ProductsScreen = ({navigation}) => {
       }
     };
   }, [carouselData.length]);
-  // Filter products based on selected category
-  const filteredProducts =
-    selectedCategory === 'All'
-      ? allProducts
-      : allProducts.filter(item => {
-          if (!item || !item.category) return false;
-          console.log(
-            'Filtering item:',
-            item.productName,
-            'Category:',
-            item.category,
-            'Selected:',
-            selectedCategory,
-          );
-          // Convert both to lowercase for comparison
-          const itemCategory = item.category?.toLowerCase();
-          const selectedCategoryLower = selectedCategory.toLowerCase();
-          return itemCategory === selectedCategoryLower;
-        });
+  // Filter products based on selected category and price availability
+  const filteredProducts = (selectedCategory === 'All' ? allProducts : allProducts.filter(item => {
+    if (!item || !item.category) return false;
+    // Convert both to lowercase for comparison
+    const itemCategory = item.category?.toLowerCase();
+    const selectedCategoryLower = selectedCategory.toLowerCase();
+    return itemCategory === selectedCategoryLower;
+  })).filter(item => {
+    // Filter out products with N/A price (matching the display logic)
+    // Check if price exists in variants (same as display: item?.variants?.[0]?.price)
+    const variantPrice = item?.variants?.[0]?.price;
+    // Also check agency variants price
+    const agencyVariantPrice = item?.AgencyInventory?.[0]?.agencyVariants?.[0]?.price;
+    
+    // Show product only if it has a valid price (not undefined, null, or 0)
+    return (variantPrice !== undefined && variantPrice !== null) || 
+           (agencyVariantPrice !== undefined && agencyVariantPrice !== null);
+  });
 
   const renderCarouselItem = ({item, index}) => (
     <View style={styles.carouselItem}>
@@ -577,7 +598,7 @@ const ProductsScreen = ({navigation}) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {paddingTop: insets.top}]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerGradient}>
@@ -632,7 +653,18 @@ const ProductsScreen = ({navigation}) => {
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{paddingBottom: 100}}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.primary]}
+            tintColor={COLORS.primary}
+          />
+        }>
         {/* Carousel Banner */}
         <View style={styles.carouselContainer}>
           <FlatList

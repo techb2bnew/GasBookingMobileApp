@@ -8,8 +8,10 @@ import {
   Image,
   Dimensions,
   SafeAreaView,
+  Modal,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { addToCart, updateQuantity } from '../redux/slices/cartSlice';
 import { COLORS, STRINGS } from '../constants';
@@ -23,6 +25,7 @@ const WEIGHTS = ['2kg', '5kg', '14.2kg', '19kg'];
 
 const ProductDetailsScreen = ({ route, navigation }) => {
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const { totalItems, items } = useSelector(state => state.cart);
   const { product: routeProduct = {} } = route.params || {};
 
@@ -33,6 +36,8 @@ const ProductDetailsScreen = ({ route, navigation }) => {
   const [selectedCategory] = useState(routeProduct?.category || 'LPG');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isStockModalVisible, setIsStockModalVisible] = useState(false);
+  const [stockModalMessage, setStockModalMessage] = useState('');
 
   // Initialize product data from route params
   useEffect(() => {
@@ -44,7 +49,6 @@ const ProductDetailsScreen = ({ route, navigation }) => {
         setSelectedWeight(routeProduct.variants[0].label);
       }
       
-      console.log('Product initialized from route params:', routeProduct);
     } else {
       setProductError('No product information available');
     }
@@ -125,6 +129,45 @@ const ProductDetailsScreen = ({ route, navigation }) => {
     }
   }, [isProductInCart, selectedQuantity, selectedWeight, items, product?.id]);
 
+  // Get available stock for selected variant
+  const getAvailableStock = () => {
+    if (!product || !selectedWeight) return 0;
+
+    // First check agency variants stock
+    if (product.AgencyInventory && product.AgencyInventory.length > 0) {
+      const agencyInventory = product.AgencyInventory[0];
+      if (agencyInventory.agencyVariants && agencyInventory.agencyVariants.length > 0) {
+        const agencyVariant = agencyInventory.agencyVariants.find(av => av.label === selectedWeight);
+        if (agencyVariant && agencyVariant.stock !== undefined) {
+          return agencyVariant.stock;
+        }
+      }
+    }
+
+    // Fallback to general variants stock
+    if (product.variants && product.variants.length > 0) {
+      const variant = product.variants.find(v => v.label === selectedWeight);
+      if (variant && variant.stock !== undefined) {
+        return variant.stock;
+      }
+    }
+
+    return 0;
+  };
+
+  // Get quantity already in cart for this product and variant
+  const getCartQuantity = () => {
+    if (!product?.id || !items || !Array.isArray(items)) return 0;
+    
+    const cartItem = items.find(item => {
+      const itemProduct = item?.product || item;
+      return itemProduct?.id === product.id && 
+             itemProduct?.weight === selectedWeight;
+    });
+    
+    return cartItem ? cartItem.quantity : 0;
+  };
+
   // --- Cart helpers ---
   const pushToCart = async (extra = {}) => {
     // Get selected agency ID from AsyncStorage
@@ -166,6 +209,24 @@ const ProductDetailsScreen = ({ route, navigation }) => {
       selectedQuantity,
       selectedWeight
     });
+
+    // Check stock availability
+    const availableStock = getAvailableStock();
+    const cartQuantity = getCartQuantity();
+    const totalRequestedQuantity = isProductInCart ? selectedQuantity : selectedQuantity + cartQuantity;
+
+    console.log('Stock Check:', {
+      availableStock,
+      cartQuantity,
+      selectedQuantity,
+      totalRequestedQuantity
+    });
+
+    if (totalRequestedQuantity > availableStock) {
+      setStockModalMessage(`You cannot add this quantity. Only ${availableStock} units are currently available.`);
+      setIsStockModalVisible(true);
+      return;
+    }
     
     // Always call pushToCart - it will handle whether to add or update
     await pushToCart();
@@ -223,7 +284,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
@@ -307,10 +368,44 @@ const ProductDetailsScreen = ({ route, navigation }) => {
                   <Icon name="remove" size={18} color={COLORS.white} />
                 </TouchableOpacity>
                 <Text style={styles.qtyValue}>{selectedQuantity}</Text>
-                <TouchableOpacity style={styles.qtyBtn} onPress={() => setSelectedQuantity(q => q + 1)}>
+                <TouchableOpacity 
+                  style={styles.qtyBtn}
+                  onPress={() => {
+                    const availableStock = getAvailableStock();
+                    const cartQuantity = getCartQuantity();
+                    const maxQuantity = isProductInCart 
+                      ? availableStock 
+                      : availableStock - cartQuantity;
+                    const newQuantity = selectedQuantity + 1;
+                    
+                    if (newQuantity > maxQuantity) {
+                      setStockModalMessage(`You can add maximum ${maxQuantity} units. Only ${availableStock} units are currently available.`);
+                      setIsStockModalVisible(true);
+                    } else {
+                      setSelectedQuantity(newQuantity);
+                    }
+                  }}
+                >
                   <Icon name="add" size={18} color={COLORS.white} />
                 </TouchableOpacity>
               </View>
+              {(() => {
+                const availableStock = getAvailableStock();
+                const cartQuantity = getCartQuantity();
+                const maxQuantity = isProductInCart 
+                  ? availableStock 
+                  : availableStock - cartQuantity;
+                
+                if (availableStock > 0) {
+                  return (
+                    <Text style={styles.stockInfo}>
+                      Available Stock: {availableStock} units
+                      {cartQuantity > 0 && ` (${cartQuantity} already in cart)`}
+                    </Text>
+                  );
+                }
+                return null;
+              })()}
             </View>
 
             {/* Card: Features */}
@@ -381,6 +476,28 @@ const ProductDetailsScreen = ({ route, navigation }) => {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Stock Limit Modal */}
+      <Modal
+        visible={isStockModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsStockModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.stockModalContainer}>
+            <View style={styles.stockModalHeader}>
+              <Icon name="info" size={28} color={COLORS.primary} />
+              <Text style={styles.stockModalTitle}>Stock Limit</Text>
+            </View>
+            <Text style={styles.stockModalMessage}>{stockModalMessage}</Text>
+            <TouchableOpacity
+              style={styles.stockModalButton}
+              onPress={() => setIsStockModalVisible(false)}>
+              <Text style={styles.stockModalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -589,6 +706,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: COLORS.text,
   },
+  stockInfo: {
+    marginTop: spacing.sm,
+    fontSize: fontSize.xs,
+    color: COLORS.textSecondary,
+    fontStyle: 'italic',
+  },
 
   featureRow: {
     flexDirection: 'row',
@@ -719,6 +842,56 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: COLORS.white,
     fontSize: fontSize.sm,
+    fontWeight: '700',
+  },
+  // Stock Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stockModalContainer: {
+    width: '85%',
+    backgroundColor: COLORS.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    alignItems: 'center',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  stockModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  stockModalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  stockModalMessage: {
+    fontSize: fontSize.md,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+    lineHeight: fontSize.md * 1.5,
+  },
+  stockModalButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.md,
+    minWidth: wp('25%'),
+    alignItems: 'center',
+  },
+  stockModalButtonText: {
+    color: COLORS.white,
+    fontSize: fontSize.md,
     fontWeight: '700',
   },
 });

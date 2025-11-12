@@ -357,7 +357,7 @@ const AddAddressScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       {/* Header */}
       <View style={[styles.header]}>
         <TouchableOpacity

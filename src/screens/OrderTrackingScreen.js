@@ -7,12 +7,14 @@ import {
   ScrollView,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, STRINGS } from '../constants';
 import { updateOrderStatus } from '../redux/slices/orderSlice';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
 
 const OrderTrackingScreen = ({ route, navigation }) => {
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const { orderId } = route.params;
   const order = useSelector(state => 
     state.orders.orders.find(o => o.id === orderId)
@@ -69,7 +71,7 @@ const OrderTrackingScreen = ({ route, navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}

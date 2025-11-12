@@ -13,6 +13,7 @@ import {
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import { useSelector, useDispatch } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, STRINGS } from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Geocoder from 'react-native-geocoding';
@@ -41,6 +42,7 @@ const getCoordinatesFromAddress = async (address) => {
 
 const TrackingScreen = ({ navigation, route }) => {
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const { orders } = useSelector(state => state.orders);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -503,7 +505,7 @@ const TrackingScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       <View style={styles.header}>
         <Text style={styles.title}>Order Tracking</Text>
         <TouchableOpacity style={styles.refreshButton}>

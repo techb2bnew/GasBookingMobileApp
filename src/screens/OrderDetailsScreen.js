@@ -11,11 +11,13 @@ import {
   Clipboard,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { COLORS, STRINGS } from '../constants';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 
 const OrderDetailsScreen = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
   const { order } = route.params;
   const { products } = useSelector(state => state.products);
   const [currentAgent, setCurrentAgent] = useState(null);
@@ -463,7 +465,7 @@ const OrderDetailsScreen = ({ navigation, route }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}

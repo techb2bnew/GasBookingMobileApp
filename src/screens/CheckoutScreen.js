@@ -11,6 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../utils/apiConfig';
 import { COLORS, STRINGS } from '../constants';
@@ -32,6 +33,7 @@ const CheckoutScreen = ({ navigation }) => {
   console.log('CheckoutScreen rendering...');
   
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   
   // Defensive selectors with fallbacks
   const cartState = useSelector(state => state.cart) || {};
@@ -1481,7 +1483,7 @@ const CheckoutScreen = ({ navigation }) => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}

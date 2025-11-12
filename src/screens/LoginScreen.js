@@ -13,6 +13,7 @@ import {
   Image,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FastOTPInput from '../components/FastOTPInput';
 import { COLORS, STRINGS } from '../constants';
 import {
@@ -34,6 +35,7 @@ import { hp, wp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 
 const LoginScreen = ({ navigation }) => {
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const { phoneNumber, otpSent, loading } = useSelector(state => state.auth);
   const [otpValue, setOtpValue] = useState('');
   const [error, setError] = useState('');
@@ -251,7 +253,7 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContainer}

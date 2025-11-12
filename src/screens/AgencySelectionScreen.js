@@ -20,11 +20,13 @@ import {wp, hp, fontSize, spacing, borderRadius} from '../utils/dimensions';
 import {useAgencies} from '../hooks/useAgencies';
 import {useDispatch, useSelector} from 'react-redux';
 import {clearCart} from '../redux/slices/cartSlice';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const {width: screenWidth} = Dimensions.get('window');
 
 const AgencySelectionScreen = ({navigation, route}) => {
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('list'); // 'list' or 'map'
   const [customerLocation, setCustomerLocation] = useState(null);
   const [agencyCoordinates, setAgencyCoordinates] = useState([]);
@@ -458,7 +460,7 @@ const AgencySelectionScreen = ({navigation, route}) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>

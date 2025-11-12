@@ -92,7 +92,7 @@ export const STRINGS = {
   phone: "+919876543210",
 
 
-  API_BASE_URL: "https://3535e646162b.ngrok-free.app",
-  SOCKET_URL: "https://3535e646162b.ngrok-free.app"
+  API_BASE_URL: "https://d77b1d0f7901.ngrok-free.app",
+  SOCKET_URL: "https://d77b1d0f7901.ngrok-free.app"
 };
 

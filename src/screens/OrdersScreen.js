@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { COLORS, STRINGS } from '../constants';
 import { clearCart } from '../redux/slices/cartSlice';
@@ -27,6 +28,7 @@ import apiClient from '../utils/apiConfig';
 
 const OrdersScreen = ({ navigation }) => {
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const { orders, isLoading, error } = useSelector(state => state.orders);
   const { products } = useSelector(state => state.products);
   const [modalVisible, setModalVisible] = useState(false);
@@ -682,7 +684,7 @@ const OrdersScreen = ({ navigation }) => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       <View style={styles.header}>
         <Text style={styles.title}>{STRINGS.orders}</Text>
       </View>

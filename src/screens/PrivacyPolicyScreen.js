@@ -9,12 +9,13 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../constants/colors';
 import apiClient from '../utils/apiConfig';
 
 const PrivacyPolicyScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [privacyData, setPrivacyData] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -157,7 +158,7 @@ const PrivacyPolicyScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       {renderHeader()}
       {loading ? renderLoading() : renderContent()}
     </SafeAreaView>

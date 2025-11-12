@@ -9,6 +9,7 @@ import {
   Alert,
   Linking,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, STRINGS } from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
@@ -41,6 +42,7 @@ const FAQ_DATA = [
 ];
 
 const SupportScreen = () => {
+  const insets = useSafeAreaInsets();
   const [expandedFAQ, setExpandedFAQ] = useState(null);
   const [refundText, setRefundText] = useState('');
 
@@ -71,7 +73,7 @@ const SupportScreen = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       <View style={styles.header}>
         <Text style={styles.title}>{STRINGS.support}</Text>
       </View>

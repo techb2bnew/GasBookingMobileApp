@@ -7,31 +7,94 @@ import {
   StyleSheet,
   Image,
   Alert,
+  Modal,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, STRINGS } from '../constants';
 import { removeFromCart, updateQuantity } from '../redux/slices/cartSlice';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 
 
 const CartScreen = ({ navigation }) => {
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
   const { items, totalAmount, totalItems } = useSelector(state => state.cart);
+  const [isStockModalVisible, setIsStockModalVisible] = useState(false);
+  const [stockModalMessage, setStockModalMessage] = useState('');
+
+  // Get available stock for a cart item
+  const getAvailableStock = (item) => {
+    if (!item || !item.weight) return 0;
+
+    // First check agency variants stock
+    if (item.AgencyInventory && item.AgencyInventory.length > 0) {
+      const agencyInventory = item.AgencyInventory[0];
+      if (agencyInventory.agencyVariants && agencyInventory.agencyVariants.length > 0) {
+        const agencyVariant = agencyInventory.agencyVariants.find(av => av.label === item.weight);
+        if (agencyVariant && agencyVariant.stock !== undefined) {
+          return agencyVariant.stock;
+        }
+      }
+    }
+
+    // Fallback to general variants stock
+    if (item.variants && item.variants.length > 0) {
+      const variant = item.variants.find(v => v.label === item.weight);
+      if (variant && variant.stock !== undefined) {
+        return variant.stock;
+      }
+    }
+
+    return 0;
+  };
+
+  // Get total quantity of this item in cart (excluding current item)
+  const getOtherItemsQuantity = (currentItem) => {
+    if (!currentItem?.id || !items || !Array.isArray(items)) return 0;
+    
+    return items
+      .filter(cartItem => {
+        // Exclude current item by comparing references or unique identifiers
+        const itemProduct = cartItem?.product || cartItem;
+        const isSameProduct = itemProduct?.id === currentItem.id && 
+                              itemProduct?.weight === currentItem.weight;
+        const isCurrentItem = cartItem === currentItem;
+        return isSameProduct && !isCurrentItem;
+      })
+      .reduce((total, cartItem) => total + (cartItem.quantity || 0), 0);
+  };
 
   const handleUpdateQuantity = (item, newQuantity) => {
     if (newQuantity <= 0) {
       handleRemoveItem(item);
-    } else {
-      dispatch(updateQuantity({
-        productId: item.id,
-        quantity: newQuantity,
-        weight: item.weight,
-        category: item.category,
-        type: item.type
-      }));
+      return;
     }
+
+    // Check stock if increasing quantity
+    if (newQuantity > item.quantity) {
+      const availableStock = getAvailableStock(item);
+      const otherItemsQuantity = getOtherItemsQuantity(item);
+      const totalAfterUpdate = otherItemsQuantity + newQuantity;
+
+      if (totalAfterUpdate > availableStock) {
+        setStockModalMessage(`You can add maximum ${availableStock} units. Only ${availableStock} units are currently available.`);
+        setIsStockModalVisible(true);
+        return;
+      }
+    }
+
+    // Update quantity if stock is available
+    dispatch(updateQuantity({
+      productId: item.id,
+      quantity: newQuantity,
+      weight: item.weight,
+      category: item.category,
+      type: item.type
+    }));
   };
 
   const handleRemoveItem = (item) => {
@@ -164,7 +227,7 @@ const CartScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -202,6 +265,28 @@ const CartScreen = ({ navigation }) => {
           </View>
         </>
       )}
+
+      {/* Stock Limit Modal */}
+      <Modal
+        visible={isStockModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsStockModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.stockModalContainer}>
+            <View style={styles.stockModalHeader}>
+              <Icon name="info" size={28} color={COLORS.primary} />
+              <Text style={styles.stockModalTitle}>Stock Limit</Text>
+            </View>
+            <Text style={styles.stockModalMessage}>{stockModalMessage}</Text>
+            <TouchableOpacity
+              style={styles.stockModalButton}
+              onPress={() => setIsStockModalVisible(false)}>
+              <Text style={styles.stockModalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -524,6 +609,56 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  // Stock Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stockModalContainer: {
+    width: '85%',
+    backgroundColor: COLORS.white,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    alignItems: 'center',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  stockModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  stockModalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  stockModalMessage: {
+    fontSize: fontSize.md,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+    lineHeight: fontSize.md * 1.5,
+  },
+  stockModalButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.md,
+    minWidth: wp('25%'),
+    alignItems: 'center',
+  },
+  stockModalButtonText: {
+    color: COLORS.white,
+    fontSize: fontSize.md,
+    fontWeight: '700',
   },
 });
 
