@@ -16,8 +16,6 @@ import {useFocusEffect} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {COLORS, STRINGS} from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-
 import {
   setProducts,
   updateProductAvailability,
@@ -39,7 +37,7 @@ import socketService from '../utils/socketService';
 
 const {width: screenWidth} = Dimensions.get('window');
 
-const ProductsScreen = ({navigation}) => {
+const HomeScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
   const {
@@ -463,8 +461,8 @@ const ProductsScreen = ({navigation}) => {
   });
 
   const renderCarouselItem = ({item, index}) => (
-    <View style={styles.carouselItem}>
-      <Image source={{uri: item.image}} style={styles.carouselImage} />
+    <View style={[styles.carouselItem, {}]}>
+      <Image source={{uri: item.image}} style={[styles.carouselImage]} />
       <View style={styles.carouselOverlay}>
         <Text style={styles.carouselTitle}>{item.title}</Text>
         <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>
@@ -663,23 +661,52 @@ const ProductsScreen = ({navigation}) => {
         <View style={styles.headerGradient}>
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
-              <TouchableOpacity onPress={() => navigation.goBack()}>
-                 <Ionicons name="arrow-back" size={28} color={COLORS.white} />
+              <TouchableOpacity
+                style={styles.menuButton}
+                onPress={() => setMenuVisible(true)}>
+                <Icon name="menu" size={26} color={COLORS.black} />
               </TouchableOpacity>
               <View style={styles.titleContainer}>
-                <Text style={styles.title}>{'Choose Products'}</Text>
-                {/* <Text style={styles.subtitle}>Fast & Safe Delivery</Text> */}
+                <Text style={styles.title}>{STRINGS.gasBooking}</Text>
+                <Text style={styles.subtitle}>Fast & Safe Delivery</Text>
               </View>
             </View>
 
+            {/* <View style={styles.headerButtons}>
+              <TouchableOpacity
+                style={styles.cartButton}
+                onPress={() => navigation.navigate('Cart')}>
+                <Icon name="shopping-cart" size={22} color={COLORS.white} />
+                {totalItems > 0 && (
+                  <View style={styles.cartBadge}>
+                    <Text style={styles.cartBadgeText}>{totalItems}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View> */}
             <View style={styles.agencySelectorContainer}>
               <TouchableOpacity
                 style={styles.agencySelector}
                 onPress={() => {
-                  navigation.navigate('Cart');
+                  console.log(
+                    '*** NAVIGATING TO AGENCY SELECTION ***',
+                    agencies.length,
+                  );
+                  navigation.navigate('AgencySelection');
                 }}
                 disabled={isLoadingAgencies}>
-                <Icon name="shopping-cart" size={26} color={COLORS.white} />
+                <Icon name="store" size={20} color={COLORS.primary} />
+                <Text style={styles.agencySelectorText} numberOfLines={1}>
+                  {isLoadingAgencies
+                    ? 'Loading agencies...'
+                    : agencies.find(a => a.id === selectedAgencyId)?.name ||
+                      'Select agency'}
+                </Text>
+                <Icon
+                  name={'expand-more'}
+                  size={20}
+                  color={COLORS.textSecondary}
+                />
               </TouchableOpacity>
             </View>
           </View>
@@ -699,7 +726,7 @@ const ProductsScreen = ({navigation}) => {
           />
         }>
         {/* Carousel Banner */}
-        {/* <View style={styles.carouselContainer}>
+        <View style={styles.carouselContainer}>
           <FlatList
             ref={carouselRef}
             data={carouselData}
@@ -741,13 +768,49 @@ const ProductsScreen = ({navigation}) => {
             style={styles.carousel}
           />
           {renderCarouselDots()}
-        </View> */}
+        </View>
 
         {/* Category Filter Tabs */}
-        {renderCategoryTabs()}
+        {/* {renderCategoryTabs()} */}
 
         {/* Products Section with Loading and Error States */}
-        <View style={styles.productsSection}>
+        <View style={styles.container1}>
+          <Text style={styles.hello}>Hello,</Text>
+          <Text style={styles.welcome}>
+            Welcome to <Text style={styles.brand}>LeadGas</Text>,
+          </Text>
+          <Text style={styles.subtitle}>Would you like to place an order?</Text>
+
+          {/* Place New Order */}
+          <TouchableOpacity
+            style={styles.primaryCard}
+            onPress={() => navigation.navigate('Products')}>
+            <View>
+              <Text style={styles.primaryTitle}>Place new order</Text>
+              <Text style={styles.primarySubtitle}>
+                Few clicks away from delivery
+              </Text>
+            </View>
+            <Icon name="chevron-right" size={26} color="#fff" />
+          </TouchableOpacity>
+
+          {/* Repeat Previous Order */}
+          <TouchableOpacity
+            style={styles.secondaryCard}
+            onPress={() => navigation.navigate('Orders')}>
+            <Text style={styles.secondaryText}>Repeat my Previous Order</Text>
+            <Icon name="chevron-right" size={26} color="#999" />
+          </TouchableOpacity>
+
+          {/* Follow Ongoing Order */}
+          <TouchableOpacity
+            style={styles.secondaryCard}
+            onPress={() => navigation.navigate('OngoingOrder')}>
+            <Text style={styles.secondaryText}>Follow my Ongoing Order</Text>
+            <Icon name="chevron-right" size={26} color="#999" />
+          </TouchableOpacity>
+        </View>
+        {/* <View style={styles.productsSection}>
           {isLoadingProducts ? (
             <View style={styles.loadingContainer}>
               <Text style={styles.loadingText}>Loading products...</Text>
@@ -761,7 +824,7 @@ const ProductsScreen = ({navigation}) => {
                 <Text style={styles.retryButtonText}>Retry</Text>
               </TouchableOpacity>
             </View>
-          ) : filteredProducts?.length === 0 ? (
+          ) : filteredProducts.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No products found</Text>
               <TouchableOpacity
@@ -772,27 +835,25 @@ const ProductsScreen = ({navigation}) => {
             </View>
           ) : (
             <>
-              {/* Products Header with Refresh */}
+             
               <View style={styles.productsHeader}>
                 <Text style={styles.productsTitle}>Available Products</Text>
-                {/* <TouchableOpacity style={styles.refreshProductsButton} onPress={fetchProducts}>
-                  <Text style={styles.refreshProductsButtonText}>🔄</Text>
-                </TouchableOpacity> */}
+                
               </View>
 
-              {/* Products Grid */}
+             
               <FlatList
                 data={filteredProducts || []}
                 renderItem={renderProductItem}
                 keyExtractor={item => item?.id || Math.random().toString()}
-                numColumns={2}
+                numColumns={3}
                 columnWrapperStyle={styles.productRow}
                 scrollEnabled={false}
                 contentContainerStyle={styles.productsContent}
               />
             </>
           )}
-        </View>
+        </View> */}
       </ScrollView>
 
       {/* Floating Cart Summary */}
@@ -836,31 +897,41 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   headerGradient: {
-    backgroundColor:COLORS.primary,
-    paddingVertical: spacing.lg,
-    // borderBottomLeftRadius: wp('5%'),
+    // backgroundColor: COLORS.primary,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    borderBottomLeftRadius: wp('5%'),
     borderBottomRightRadius: wp('5%'),
   },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-
+  menuButton: {
+    padding: wp('2%'),
+    marginRight: spacing.md,
+    borderRadius: borderRadius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: COLORS.shadow,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   titleContainer: {
     flex: 1,
   },
   title: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: COLORS.white,
-    marginLeft: 10,
+    fontSize: fontSize.xl,
+    fontWeight: '800',
+    color: COLORS.primary,
     letterSpacing: -0.5,
     marginBottom: wp('0.5%'),
   },
@@ -879,20 +950,20 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   agencySelector: {
-    // backgroundColor: COLORS.white,
-    // paddingHorizontal: spacing.md,
-    // paddingVertical: wp('2%'),
-    // borderRadius: wp('5%'),
-    // flexDirection: 'row',
-    // alignItems: 'center',
-    // gap: wp('1%'),
-    // minWidth: wp('40%'),
-    // maxWidth: wp('50%'),
-    // shadowColor: COLORS.shadow,
-    // shadowOffset: {width: 0, height: 2},
-    // shadowOpacity: 0.15,
-    // shadowRadius: 4,
-    // elevation: 3,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: spacing.md,
+    paddingVertical: wp('2%'),
+    borderRadius: wp('5%'),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: wp('1%'),
+    minWidth: wp('40%'),
+    maxWidth: wp('50%'),
+    shadowColor: COLORS.shadow,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   agencySelectorText: {
     color: COLORS.primary,
@@ -1141,13 +1212,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: borderRadius.md,
     padding: wp('1.5%'),
-    width: (screenWidth-50) / 2, // Adjusted for gap spacing
+    width: (screenWidth - 60) / 3, // Adjusted for gap spacing
     shadowColor: COLORS.shadow,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    marginBottom:8
   },
   imageContainer: {
     position: 'relative',
@@ -1285,7 +1355,6 @@ const styles = StyleSheet.create({
     elevation: 3,
     borderWidth: 1,
     borderColor: COLORS.border,
-    paddingVertical:8
   },
   categoryScrollView: {
     flexGrow: 0,
@@ -1334,6 +1403,64 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 0.5,
   },
+
+  container1: {
+    padding: 16,
+    backgroundColor: '#fff',
+    height: '100%',
+  },
+  hello: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  welcome: {
+    fontSize: 16,
+    color: '#555',
+    marginTop: 4,
+  },
+  brand: {
+    color: COLORS.primary,
+    fontWeight: '700',
+  },
+  subtitle: {
+    fontSize: 12,
+    color: '#555',
+    marginBottom: 16,
+  },
+  primaryCard: {
+    backgroundColor: COLORS.primary,
+    padding: 16,
+    borderRadius: 10,
+    marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  primaryTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  primarySubtitle: {
+    color: '#fff',
+    opacity: 0.8,
+    fontSize: 14,
+  },
+  secondaryCard: {
+    backgroundColor: '#f1f1f1',
+    padding: 16,
+    borderRadius: 10,
+    marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  secondaryText: {
+    color: '#555',
+    fontSize: 16,
+    fontWeight: '500',
+  },
 });
 
-export default ProductsScreen;
+export default HomeScreen;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -12,25 +12,33 @@ import {
   RefreshControl,
   Linking,
 } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {useDispatch, useSelector} from 'react-redux';
+import {useFocusEffect} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { COLORS, STRINGS } from '../constants';
-import { clearCart } from '../redux/slices/cartSlice';
-import { addOrder } from '../redux/slices/orderSlice';
-import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
-import { reorder, setCurrentOrder, cancelOrder, returnOrder, setOrders, setLoading, setError } from '../redux/slices/orderSlice';
-import { setProducts } from '../redux/slices/productSlice';
+import {COLORS, STRINGS} from '../constants';
+import {clearCart} from '../redux/slices/cartSlice';
+import {addOrder} from '../redux/slices/orderSlice';
+import {wp, hp, fontSize, spacing, borderRadius} from '../utils/dimensions';
+import {
+  reorder,
+  setCurrentOrder,
+  cancelOrder,
+  returnOrder,
+  setOrders,
+  setLoading,
+  setError,
+} from '../redux/slices/orderSlice';
+import {setProducts} from '../redux/slices/productSlice';
 import ReasonModal from '../components/ReasonModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../utils/apiConfig';
 
-const OrdersScreen = ({ navigation }) => {
+const OrdersScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
-  const { orders, isLoading, error } = useSelector(state => state.orders);
-  const { products } = useSelector(state => state.products);
+  const {orders, isLoading, error} = useSelector(state => state.orders);
+  const {products} = useSelector(state => state.products);
   const [modalVisible, setModalVisible] = useState(false);
   const [reorderModalVisible, setReorderModalVisible] = useState(false);
   const [agentModalVisible, setAgentModalVisible] = useState(false);
@@ -38,11 +46,11 @@ const OrdersScreen = ({ navigation }) => {
   const [reasonsList, setReasonsList] = useState([]);
   const [currentReorderId, setCurrentReorderId] = useState(null);
   const [currentAgent, setCurrentAgent] = useState(null);
-  
+
   // Local states for UI
   const [refreshing, setRefreshing] = useState(false);
   const [expandedOrders, setExpandedOrders] = useState(new Set());
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -81,8 +89,8 @@ const OrdersScreen = ({ navigation }) => {
       const response = await apiClient.get('/api/orders', {
         params: {
           page: page,
-          limit: 10
-        }
+          limit: 10,
+        },
       });
 
       console.log('Orders API Response:', response.data);
@@ -90,10 +98,10 @@ const OrdersScreen = ({ navigation }) => {
       if (response?.data && response?.data?.success) {
         const ordersData = response?.data?.data?.orders || [];
         const paginationData = response?.data?.data?.pagination || {};
-        
+
         console.log(`Page ${page}: ${ordersData.length} orders`);
         console.log('Pagination data:', paginationData);
-        
+
         dispatch(setOrders(ordersData));
         setCurrentPage(paginationData.currentPage || page);
         setTotalPages(paginationData.totalPages || 1);
@@ -105,7 +113,12 @@ const OrdersScreen = ({ navigation }) => {
       if (error.response?.status === 401) {
         dispatch(setError('Session expired. Please login again.'));
       } else {
-        dispatch(setError(error.response?.data?.message || 'Failed to fetch orders. Please try again.'));
+        dispatch(
+          setError(
+            error.response?.data?.message ||
+              'Failed to fetch orders. Please try again.',
+          ),
+        );
       }
     } finally {
       dispatch(setLoading(false));
@@ -114,27 +127,33 @@ const OrdersScreen = ({ navigation }) => {
   };
 
   // Get product image from Redux products state
-  const getProductImage = (productId) => {
+  const getProductImage = productId => {
     const product = products.find(p => p.id === productId);
-    console.log(`Looking for product ${productId}:`, product ? 'Found' : 'Not found');
+    console.log(
+      `Looking for product ${productId}:`,
+      product ? 'Found' : 'Not found',
+    );
     if (product) {
       console.log('Product found:', {
         id: product.id,
         name: product.name,
         image: product.image,
-        imageUrl: product.imageUrl
+        imageUrl: product.imageUrl,
       });
       // Try different image field names
       const imageUrl = product.image || product.imageUrl || product.images?.[0];
       console.log('Image URL:', imageUrl);
       return imageUrl;
     }
-    console.log('Available products:', products.map(p => ({ id: p.id, name: p.name, image: p.image })));
+    console.log(
+      'Available products:',
+      products.map(p => ({id: p.id, name: p.name, image: p.image})),
+    );
     return null;
   };
 
   // Get product name from Redux products state
-  const getProductName = (productId) => {
+  const getProductName = productId => {
     const product = products.find(p => p.id === productId);
     if (product) {
       // Try different name field names
@@ -147,16 +166,19 @@ const OrdersScreen = ({ navigation }) => {
   const cancelOrderAPI = async (orderId, reason) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      
+
       const payload = {
-        status: "cancelled",
-        adminNotes: reason
+        status: 'cancelled',
+        adminNotes: reason,
       };
 
       console.log('Cancelling order:', orderId, 'with reason:', reason);
       console.log('API Payload:', payload);
 
-      const response = await apiClient.put(`/api/orders/${orderId}/status`, payload);
+      const response = await apiClient.put(
+        `/api/orders/${orderId}/status`,
+        payload,
+      );
 
       console.log('Cancel order API response:', response.data);
 
@@ -174,18 +196,21 @@ const OrdersScreen = ({ navigation }) => {
   };
 
   // Reorder API call
-  const reorderAPI = async (orderId) => {
+  const reorderAPI = async orderId => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      
+
       const payload = {
-        status: "pending"
+        status: 'pending',
       };
 
       console.log('Reordering order:', orderId);
       console.log('API Payload:', payload);
 
-      const response = await apiClient.put(`/api/orders/${orderId}/status`, payload);
+      const response = await apiClient.put(
+        `/api/orders/${orderId}/status`,
+        payload,
+      );
 
       console.log('Reorder API response:', response.data);
 
@@ -206,16 +231,19 @@ const OrdersScreen = ({ navigation }) => {
   const returnOrderAPI = async (orderId, reason) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      
+
       const payload = {
         reason: reason,
-        adminNotes: `Customer returned order: ${reason}`
+        adminNotes: `Customer returned order: ${reason}`,
       };
 
       console.log('Returning order:', orderId, 'with reason:', reason);
       console.log('API Payload:', payload);
 
-      const response = await apiClient.put(`/api/orders/${orderId}/return`, payload);
+      const response = await apiClient.put(
+        `/api/orders/${orderId}/return`,
+        payload,
+      );
 
       console.log('Return order API response:', response.data);
 
@@ -263,7 +291,7 @@ const OrdersScreen = ({ navigation }) => {
         setCurrentPage(1);
         fetchOrders(1);
       });
-    }, [])
+    }, []),
   );
 
   // 🔥 SOCKET EVENT LISTENERS - Real-time updates
@@ -271,43 +299,48 @@ const OrdersScreen = ({ navigation }) => {
     // Import socketService
     const socketService = require('../utils/socketService').default;
     const socket = socketService.socket;
-    
+
     if (socket && socketService.isConnected) {
       console.log('🎧 OrdersScreen: Setting up socket event listeners...');
-      
-      const handleOrderCreated = (data) => {
+
+      const handleOrderCreated = data => {
         console.log('📦 OrdersScreen: New order created', data.data);
         setCurrentPage(1);
         fetchOrders(1); // Refresh orders list from page 1
       };
-      
-      const handleOrderStatusUpdated = (data) => {
+
+      const handleOrderStatusUpdated = data => {
         console.log('🔄 OrdersScreen: Order status updated', data.data);
-        console.log('🔄 Order ID:', data.data.orderId, 'New Status:', data.data.status);
+        console.log(
+          '🔄 Order ID:',
+          data.data.orderId,
+          'New Status:',
+          data.data.status,
+        );
         setCurrentPage(1);
         fetchOrders(1); // Refresh orders list from page 1
       };
-      
-      const handleOrderAssigned = (data) => {
+
+      const handleOrderAssigned = data => {
         console.log('👤 OrdersScreen: Order assigned', data.data);
         setCurrentPage(1);
         fetchOrders(1); // Refresh orders list from page 1
       };
-      
-      const handleOrderDelivered = (data) => {
+
+      const handleOrderDelivered = data => {
         console.log('✅ OrdersScreen: Order delivered', data.data);
         setCurrentPage(1);
         fetchOrders(1); // Refresh orders list from page 1
       };
-      
+
       // Register listeners
       socket.on('order:created', handleOrderCreated);
       socket.on('order:status-updated', handleOrderStatusUpdated);
       socket.on('order:assigned', handleOrderAssigned);
       socket.on('order:delivered', handleOrderDelivered);
-      
+
       console.log('✅ OrdersScreen: Socket listeners registered');
-      
+
       // Cleanup on unmount
       return () => {
         console.log('🧹 OrdersScreen: Cleaning up socket listeners');
@@ -317,7 +350,9 @@ const OrdersScreen = ({ navigation }) => {
         socket.off('order:delivered', handleOrderDelivered);
       };
     } else {
-      console.log('⚠️ OrdersScreen: Socket not connected, listeners not set up');
+      console.log(
+        '⚠️ OrdersScreen: Socket not connected, listeners not set up',
+      );
     }
   }, []);
 
@@ -348,7 +383,7 @@ const OrdersScreen = ({ navigation }) => {
     }
   };
 
-  const handleReasonSubmit = async (reason) => {
+  const handleReasonSubmit = async reason => {
     setModalVisible(false);
 
     if (!currentAction) return;
@@ -364,9 +399,9 @@ const OrdersScreen = ({ navigation }) => {
       }
     } else if (currentAction.type === 'cancel') {
       try {
-        console.log('Submitting cancel order with reason:', reason);
         await cancelOrderAPI(currentAction.orderId, reason);
-        Alert.alert('Order Cancelled', 'Order cancelled successfully.');
+        console.log('Submitting cancel order with reason:', reason);
+        // Alert.alert('Order Cancelled', 'Order cancelled successfully.');
       } catch (error) {
         console.error('Cancel order error:', error);
         Alert.alert('Error', 'Failed to cancel order. Please try again.');
@@ -376,7 +411,7 @@ const OrdersScreen = ({ navigation }) => {
     setCurrentAction(null);
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = dateString => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-IN', {
       day: '2-digit',
@@ -385,7 +420,7 @@ const OrdersScreen = ({ navigation }) => {
     });
   };
 
-  const getStatusStyle = (status) => {
+  const getStatusStyle = status => {
     switch (status) {
       case 'pending':
         return styles.statusPending;
@@ -406,19 +441,18 @@ const OrdersScreen = ({ navigation }) => {
     }
   };
 
-  const handleTrackOrder = (order) => {
+  const handleTrackOrder = order => {
     dispatch(setCurrentOrder(order));
     // navigation.navigate('OrderTracking', { orderId: order.id });
-    navigation.navigate("Main", { screen: "Tracking", orderId: order.id })
-
+    navigation.navigate('Main', {screen: 'Tracking', orderId: order.id});
   };
 
   // Handle order card click to view details
-  const handleOrderClick = (order) => {
-    navigation.navigate('OrderDetails', { order });
+  const handleOrderClick = order => {
+    navigation.navigate('OrderDetails', {order});
   };
 
-  const handleReorder = (orderId) => {
+  const handleReorder = orderId => {
     setCurrentReorderId(orderId);
     setReorderModalVisible(true);
   };
@@ -428,8 +462,8 @@ const OrdersScreen = ({ navigation }) => {
       try {
         console.log('Confirming reorder for order:', currentReorderId);
         await reorderAPI(currentReorderId);
-        Alert.alert('Success', 'Your order has been reordered successfully.');
         setReorderModalVisible(false);
+        Alert.alert('Success', 'Your order has been reordered successfully.');
         setCurrentReorderId(null);
       } catch (error) {
         console.error('Reorder error:', error);
@@ -444,13 +478,13 @@ const OrdersScreen = ({ navigation }) => {
   };
 
   // Handle view agent
-  const handleViewAgent = (agent) => {
+  const handleViewAgent = agent => {
     setCurrentAgent(agent);
     setAgentModalVisible(true);
   };
 
   // Handle call agent
-  const handleCallAgent = (phoneNumber) => {
+  const handleCallAgent = phoneNumber => {
     const phoneUrl = `tel:${phoneNumber}`;
     Linking.canOpenURL(phoneUrl)
       .then(supported => {
@@ -473,12 +507,12 @@ const OrdersScreen = ({ navigation }) => {
   };
 
   const handleAction = (type, orderId) => {
-    setCurrentAction({ type, orderId });
+    setCurrentAction({type, orderId});
     setReasonsList(type === 'cancel' ? cancelReasons : returnReasons);
     setModalVisible(true);
   };
 
-  const toggleProductExpansion = (orderId) => {
+  const toggleProductExpansion = orderId => {
     const newExpandedOrders = new Set(expandedOrders);
     if (newExpandedOrders.has(orderId)) {
       newExpandedOrders.delete(orderId);
@@ -488,20 +522,19 @@ const OrdersScreen = ({ navigation }) => {
     setExpandedOrders(newExpandedOrders);
   };
 
-
-  const renderOrderItem = ({ item }) => {
+  const renderOrderItem = ({item}) => {
     // Safety check for items array
     if (!item || !item.items || !Array.isArray(item.items)) {
       console.warn('⚠️ Order item missing items array:', item?.id);
       return null;
     }
-    
+
     const isExpanded = expandedOrders.has(item.id);
     const showAllProducts = isExpanded || item.items.length <= 1;
     const displayItems = showAllProducts ? item.items : item.items.slice(0, 1);
 
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.orderCard}
         onPress={() => handleOrderClick(item)}
         activeOpacity={0.7}>
@@ -509,7 +542,11 @@ const OrdersScreen = ({ navigation }) => {
         <View style={styles.orderHeader}>
           <View style={styles.orderInfo}>
             <View style={styles.orderIdContainer}>
-              <Ionicons name="receipt-outline" size={16} color={COLORS.primary} />
+              <Ionicons
+                name="receipt-outline"
+                size={16}
+                color={COLORS.primary}
+              />
               <Text style={styles.orderId}>#{item.orderNumber}</Text>
             </View>
             <Text style={styles.orderDate}>{formatDate(item.createdAt)}</Text>
@@ -517,8 +554,13 @@ const OrdersScreen = ({ navigation }) => {
           <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
             <View style={styles.statusDot} />
             <Text style={styles.statusText}>
-              {(item.status === 'assigned' || item.status === 'out_for_delivery') ? 'Out for Delivery' : 
-               item.status ? `Order ${item.status.charAt(0).toUpperCase() + item.status.slice(1)}` : item.status}
+              {item.status === 'assigned' || item.status === 'out_for_delivery'
+                ? 'Out for Delivery'
+                : item.status
+                ? `Order ${
+                    item.status.charAt(0).toUpperCase() + item.status.slice(1)
+                  }`
+                : item.status}
             </Text>
           </View>
         </View>
@@ -526,7 +568,11 @@ const OrdersScreen = ({ navigation }) => {
         {/* Order Summary with Icons */}
         <View style={styles.orderSummary}>
           <View style={styles.summaryItem}>
-            <Ionicons name="cube-outline" size={14} color={COLORS.textSecondary} />
+            <Ionicons
+              name="cube-outline"
+              size={14}
+              color={COLORS.textSecondary}
+            />
             <Text style={styles.summaryLabel}>{item.items.length} Items</Text>
           </View>
           <View style={styles.summaryItem}>
@@ -545,39 +591,50 @@ const OrdersScreen = ({ navigation }) => {
                 <Text style={styles.expandButtonText}>
                   {isExpanded ? 'Show Less' : `+${item.items.length - 1} More`}
                 </Text>
-                <Ionicons 
-                  name={isExpanded ? "chevron-up" : "chevron-down"} 
-                  size={12} 
-                  color={COLORS.primary} 
+                <Ionicons
+                  name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={12}
+                  color={COLORS.primary}
                 />
               </TouchableOpacity>
             )}
           </View>
-          
+
           <View style={styles.productList}>
             {displayItems.map((orderItem, index) => {
               const productImage = getProductImage(orderItem.productId);
-              const productName = getProductName(orderItem.productId) || orderItem.productName;
+              const productName =
+                getProductName(orderItem.productId) || orderItem.productName;
               return (
                 <View key={index} style={styles.productItem}>
                   <View style={styles.productImageContainer}>
                     {productImage ? (
-                      <Image 
-                        source={{ uri: productImage }} 
+                      <Image
+                        source={{uri: productImage}}
                         style={styles.productImage}
                         resizeMode="cover"
                       />
                     ) : (
                       <View style={styles.placeholderImage}>
-                        <Ionicons name="cube-outline" size={18} color={COLORS.textSecondary} />
+                        <Ionicons
+                          name="cube-outline"
+                          size={18}
+                          color={COLORS.textSecondary}
+                        />
                       </View>
                     )}
                   </View>
                   <View style={styles.productInfo}>
-                    <Text style={styles.productName} numberOfLines={1}>{productName}</Text>
+                    <Text style={styles.productName} numberOfLines={1}>
+                      {productName}
+                    </Text>
                     <View style={styles.productMeta}>
-                      <Text style={styles.productVariant}>{orderItem.variantLabel}</Text>
-                      <Text style={styles.productQuantity}>Qty: {orderItem.quantity}</Text>
+                      <Text style={styles.productVariant}>
+                        {orderItem.variantLabel}
+                      </Text>
+                      <Text style={styles.productQuantity}>
+                        Qty: {orderItem.quantity}
+                      </Text>
                     </View>
                     <Text style={styles.productPrice}>${orderItem.total}</Text>
                   </View>
@@ -589,49 +646,69 @@ const OrdersScreen = ({ navigation }) => {
 
         {/* Action Buttons with Better Design */}
         <View style={styles.actionButtons}>
-          {(item.status === 'assigned') && (
+          {item.status === 'assigned' && (
             <>
               <TouchableOpacity
                 style={styles.primaryButton}
                 onPress={() => handleTrackOrder(item)}>
-                <Ionicons name="location-outline" size={14} color={COLORS.white} />
+                <Ionicons
+                  name="location-outline"
+                  size={14}
+                  color={COLORS.white}
+                />
                 <Text style={styles.primaryButtonText}>Track Order</Text>
               </TouchableOpacity>
-              
+
               {item.assignedAgent && (
                 <TouchableOpacity
                   style={styles.secondaryButton}
                   onPress={() => handleViewAgent(item.assignedAgent)}>
-                  <Ionicons name="person-outline" size={14} color={COLORS.primary} />
+                  <Ionicons
+                    name="person-outline"
+                    size={14}
+                    color={COLORS.primary}
+                  />
                   <Text style={styles.secondaryButtonText}>View Agent</Text>
                 </TouchableOpacity>
               )}
             </>
           )}
-          
+
           {item.status === 'cancelled' && (
             <TouchableOpacity
               style={styles.secondaryButton}
               onPress={() => handleReorder(item.id)}>
-              <Ionicons name="refresh-outline" size={14} color={COLORS.primary} />
+              <Ionicons
+                name="refresh-outline"
+                size={14}
+                color={COLORS.primary}
+              />
               <Text style={styles.secondaryButtonText}>Reorder</Text>
             </TouchableOpacity>
           )}
-          
+
           {item.status === 'delivered' && (
             <TouchableOpacity
               style={styles.outlineButton}
               onPress={() => handleAction('return', item.id)}>
-              <Ionicons name="return-up-back-outline" size={14} color={COLORS.error} />
+              <Ionicons
+                name="return-up-back-outline"
+                size={14}
+                color={COLORS.error}
+              />
               <Text style={styles.outlineButtonText}>Return</Text>
             </TouchableOpacity>
           )}
-          
+
           {(item.status === 'pending' || item.status === 'confirmed') && (
             <TouchableOpacity
               style={styles.outlineButton}
               onPress={() => handleAction('cancel', item.id)}>
-              <Ionicons name="close-circle-outline" size={14} color={COLORS.error} />
+              <Ionicons
+                name="close-circle-outline"
+                size={14}
+                color={COLORS.error}
+              />
               <Text style={styles.outlineButtonText}>Cancel</Text>
             </TouchableOpacity>
           )}
@@ -643,10 +720,12 @@ const OrdersScreen = ({ navigation }) => {
   const renderEmptyOrders = () => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyTitle}>No orders yet!</Text>
-      <Text style={styles.emptySubtitle}>Place your first order to see it here.</Text>
+      <Text style={styles.emptySubtitle}>
+        Place your first order to see it here.
+      </Text>
       <TouchableOpacity
         style={styles.shopButton}
-        onPress={() => navigation.navigate('Main', { screen: "Products" })}>
+        onPress={() => navigation.navigate('Main', {screen: 'Products'})}>
         <Text style={styles.shopButtonText}>Start Shopping</Text>
       </TouchableOpacity>
     </View>
@@ -684,31 +763,41 @@ const OrdersScreen = ({ navigation }) => {
   }
 
   return (
-    <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
+    <View
+      style={[
+        styles.container,
+        {paddingTop: insets.top, paddingBottom: insets.bottom},
+      ]}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={28} color={COLORS.white} />
+        </TouchableOpacity>
         <Text style={styles.title}>{STRINGS.orders}</Text>
       </View>
-
-      {orders.length === 0 ? (
-        renderEmptyOrders()
-      ) : (
-        <FlatList
-          data={orders}
-          renderItem={renderOrderItem}
-          keyExtractor={(item) => `${item.id}-${item.status}-${item.lastUpdated || ''}`}
-          extraData={orders}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.ordersList}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={[COLORS.primary]}
-              tintColor={COLORS.primary}
-            />
-          }
-        />
-      )}
+      <View style={{paddingHorizontal: 6}}>
+        {orders.length === 0 ? (
+          renderEmptyOrders()
+        ) : (
+          <FlatList
+            data={orders}
+            renderItem={renderOrderItem}
+            keyExtractor={item =>
+              `${item.id}-${item.status}-${item.lastUpdated || ''}`
+            }
+            extraData={orders}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.ordersList}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[COLORS.primary]}
+                tintColor={COLORS.primary}
+              />
+            }
+          />
+        )}
+      </View>
 
       {/* Pagination Controls */}
       {orders.length > 0 && totalPages > 1 && (
@@ -716,19 +805,20 @@ const OrdersScreen = ({ navigation }) => {
           <TouchableOpacity
             style={[
               styles.paginationButton,
-              currentPage === 1 && styles.paginationButtonDisabled
+              currentPage === 1 && styles.paginationButtonDisabled,
             ]}
             onPress={goToPreviousPage}
             disabled={currentPage === 1 || loadingPage}>
-            <Ionicons 
-              name="chevron-back" 
-              size={16} 
-              color={currentPage === 1 ? COLORS.textSecondary : COLORS.primary} 
+            <Ionicons
+              name="chevron-back"
+              size={16}
+              color={currentPage === 1 ? COLORS.textSecondary : COLORS.primary}
             />
-            <Text style={[
-              styles.paginationButtonText,
-              currentPage === 1 && styles.paginationButtonTextDisabled
-            ]}>
+            <Text
+              style={[
+                styles.paginationButtonText,
+                currentPage === 1 && styles.paginationButtonTextDisabled,
+              ]}>
               Previous
             </Text>
           </TouchableOpacity>
@@ -745,20 +835,26 @@ const OrdersScreen = ({ navigation }) => {
           <TouchableOpacity
             style={[
               styles.paginationButton,
-              currentPage === totalPages && styles.paginationButtonDisabled
+              currentPage === totalPages && styles.paginationButtonDisabled,
             ]}
             onPress={goToNextPage}
             disabled={currentPage === totalPages || loadingPage}>
-            <Text style={[
-              styles.paginationButtonText,
-              currentPage === totalPages && styles.paginationButtonTextDisabled
-            ]}>
+            <Text
+              style={[
+                styles.paginationButtonText,
+                currentPage === totalPages &&
+                  styles.paginationButtonTextDisabled,
+              ]}>
               Next
             </Text>
-            <Ionicons 
-              name="chevron-forward" 
-              size={16} 
-              color={currentPage === totalPages ? COLORS.textSecondary : COLORS.primary} 
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color={
+                currentPage === totalPages
+                  ? COLORS.textSecondary
+                  : COLORS.primary
+              }
             />
           </TouchableOpacity>
         </View>
@@ -766,7 +862,11 @@ const OrdersScreen = ({ navigation }) => {
 
       <ReasonModal
         visible={modalVisible}
-        title={currentAction?.type === 'return' ? 'Select a reason for returning the order' : 'Select a reason for cancelling the order'}
+        title={
+          currentAction?.type === 'return'
+            ? 'Select a reason for returning the order'
+            : 'Select a reason for cancelling the order'
+        }
         reasonsList={reasonsList}
         onClose={() => {
           setModalVisible(false);
@@ -779,8 +879,7 @@ const OrdersScreen = ({ navigation }) => {
         visible={reorderModalVisible}
         transparent={true}
         animationType="fade"
-        onRequestClose={handleReorderCancel}
-      >
+        onRequestClose={handleReorderCancel}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>Confirm Reorder</Text>
@@ -789,7 +888,10 @@ const OrdersScreen = ({ navigation }) => {
             </Text>
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={[styles.submitButton, { backgroundColor: COLORS.gray, marginRight: 10 }]}
+                style={[
+                  styles.submitButton,
+                  {backgroundColor: COLORS.gray, marginRight: 10},
+                ]}
                 onPress={handleReorderCancel}>
                 <Text style={styles.submitButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -808,8 +910,7 @@ const OrdersScreen = ({ navigation }) => {
         visible={agentModalVisible}
         transparent={true}
         animationType="fade"
-        onRequestClose={handleCloseAgentModal}
-      >
+        onRequestClose={handleCloseAgentModal}>
         <View style={styles.modalOverlay}>
           <View style={styles.agentModalContainer}>
             <View style={styles.agentModalHeader}>
@@ -820,7 +921,7 @@ const OrdersScreen = ({ navigation }) => {
                 <Ionicons name="close" size={20} color={COLORS.textSecondary} />
               </TouchableOpacity>
             </View>
-            
+
             {currentAgent && (
               <View style={styles.agentDetailsContainer}>
                 <View style={styles.agentDetailItem}>
@@ -829,7 +930,9 @@ const OrdersScreen = ({ navigation }) => {
                   </View>
                   <View style={styles.agentDetailInfo}>
                     <Text style={styles.agentDetailLabel}>Agent Name</Text>
-                    <Text style={styles.agentDetailValue}>{currentAgent.name}</Text>
+                    <Text style={styles.agentDetailValue}>
+                      {currentAgent.name}
+                    </Text>
                   </View>
                 </View>
 
@@ -839,8 +942,11 @@ const OrdersScreen = ({ navigation }) => {
                   </View>
                   <View style={styles.agentDetailInfo}>
                     <Text style={styles.agentDetailLabel}>Phone Number</Text>
-                    <TouchableOpacity onPress={() => handleCallAgent(currentAgent.phone)}>
-                      <Text style={styles.agentPhoneNumber}>{currentAgent.phone}</Text>
+                    <TouchableOpacity
+                      onPress={() => handleCallAgent(currentAgent.phone)}>
+                      <Text style={styles.agentPhoneNumber}>
+                        {currentAgent.phone}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -851,7 +957,9 @@ const OrdersScreen = ({ navigation }) => {
                   </View>
                   <View style={styles.agentDetailInfo}>
                     <Text style={styles.agentDetailLabel}>Vehicle Number</Text>
-                    <Text style={styles.agentDetailValue}>{currentAgent.vehicleNumber}</Text>
+                    <Text style={styles.agentDetailValue}>
+                      {currentAgent.vehicleNumber}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -860,7 +968,9 @@ const OrdersScreen = ({ navigation }) => {
             <View style={styles.agentModalActions}>
               <TouchableOpacity
                 style={styles.callAgentButton}
-                onPress={() => currentAgent && handleCallAgent(currentAgent.phone)}>
+                onPress={() =>
+                  currentAgent && handleCallAgent(currentAgent.phone)
+                }>
                 <Ionicons name="call" size={16} color={COLORS.white} />
                 <Text style={styles.callAgentButtonText}>Call Agent</Text>
               </TouchableOpacity>
@@ -879,15 +989,16 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 10,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
     backgroundColor: COLORS.primary,
+    marginBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
@@ -905,7 +1016,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: borderRadius.md,
     padding: spacing.xs,
-    marginBottom: spacing.xs / 2,
+    marginBottom: spacing.md / 2,
     shadowColor: COLORS.shadow,
     shadowOffset: {
       width: 0,
@@ -1114,7 +1225,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.15,
     shadowRadius: 2,
     elevation: 1,
@@ -1185,7 +1296,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
@@ -1301,7 +1412,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     elevation: 8,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.2,
     shadowRadius: 12,
   },
@@ -1375,7 +1486,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: COLORS.success,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
@@ -1397,7 +1508,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: -2 },
+    shadowOffset: {width: 0, height: -2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -1446,4 +1557,3 @@ const styles = StyleSheet.create({
 });
 
 export default OrdersScreen;
-

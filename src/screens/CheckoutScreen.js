@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,11 @@ import {
   TextInput,
   Image,
 } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {useDispatch, useSelector} from 'react-redux';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../utils/apiConfig';
-import { COLORS, STRINGS } from '../constants';
+import {COLORS, STRINGS} from '../constants';
 import {
   setDeliveryType,
   setDeliveryMode,
@@ -24,61 +24,66 @@ import {
   clearCart,
   removeFromCart,
 } from '../redux/slices/cartSlice';
-import { addOrder } from '../redux/slices/orderSlice';
+import {addOrder} from '../redux/slices/orderSlice';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
-import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
-import { usePricingEvents } from '../hooks/useSocketEvents';
+import {wp, hp, fontSize, spacing, borderRadius} from '../utils/dimensions';
+import {usePricingEvents} from '../hooks/useSocketEvents';
 
-const CheckoutScreen = ({ navigation }) => {
+const CheckoutScreen = ({navigation}) => {
   console.log('CheckoutScreen rendering...');
-  
+
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
-  
+
   // Defensive selectors with fallbacks
   const cartState = useSelector(state => state.cart) || {};
   const profileState = useSelector(state => state.profile) || {};
   const authState = useSelector(state => state.auth) || {};
-  
-  const { 
-    items = [], 
+
+  const {
+    items = [],
     totalAmount = 0,
     totalItems = 0,
-    deliveryType = 'Home Delivery', 
-    deliveryMode = 'home_delivery', 
-    paymentMethod = 'Cash on Delivery', 
-    selectedAddress = null, 
-    selectedAgency = null 
+    deliveryType = 'Home Delivery',
+    deliveryMode = 'home_delivery',
+    paymentMethod = 'Cash on Delivery',
+    selectedAddress = null,
+    selectedAgency = null,
   } = cartState;
-  
+
   // Debug Redux state
   console.log('Cart State:', cartState);
   console.log('Selected Agency from Redux:', selectedAgency);
-  
-  const { addresses = [], defaultAddressId = null } = profileState;
-  const { user = null } = authState;
+
+  const {addresses = [], defaultAddressId = null} = profileState;
+  const {user = null} = authState;
   const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [profileError, setProfileError] = useState(null);
-  const [isProfileUpdateModalVisible, setIsProfileUpdateModalVisible] = useState(false);
+  const [isProfileUpdateModalVisible, setIsProfileUpdateModalVisible] =
+    useState(false);
   const [showAllItems, setShowAllItems] = useState(false);
   const [agencies, setAgencies] = useState([]);
   const [isLoadingAgencies, setIsLoadingAgencies] = useState(false);
-  const [isAgencyDetailsModalVisible, setIsAgencyDetailsModalVisible] = useState(false);
-  const [selectedAgencyForDetails, setSelectedAgencyForDetails] = useState(null);
-  
+  const [isAgencyDetailsModalVisible, setIsAgencyDetailsModalVisible] =
+    useState(false);
+  const [selectedAgencyForDetails, setSelectedAgencyForDetails] =
+    useState(null);
+
   // Tax calculation states
   const [taxData, setTaxData] = useState(null);
   const [isLoadingTax, setIsLoadingTax] = useState(false);
-  const [finalTotalAmount, setFinalTotalAmount] = useState(() => parseFloat(totalAmount) || 0);
-  
+  const [finalTotalAmount, setFinalTotalAmount] = useState(
+    () => parseFloat(totalAmount) || 0,
+  );
+
   // Delivery charges states
   const [deliveryChargeData, setDeliveryChargeData] = useState(null);
   const [isLoadingDeliveryCharge, setIsLoadingDeliveryCharge] = useState(false);
   const [deliveryChargeError, setDeliveryChargeError] = useState(null);
   const [deliveryCharge, setDeliveryCharge] = useState(0);
-  
+
   // Coupon states
   const [coupons, setCoupons] = useState([]);
   const [isLoadingCoupons, setIsLoadingCoupons] = useState(false);
@@ -86,7 +91,7 @@ const CheckoutScreen = ({ navigation }) => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
-  
+
   // Profile update form states
   const [profileFormData, setProfileFormData] = useState({
     name: '',
@@ -100,7 +105,7 @@ const CheckoutScreen = ({ navigation }) => {
   const fetchUserProfile = async () => {
     try {
       setIsLoadingProfile(true);
-      
+
       const response = await apiClient.get('/api/auth/profile');
 
       console.log('Profile API Response:', response.data);
@@ -113,7 +118,6 @@ const CheckoutScreen = ({ navigation }) => {
         setUserProfile(null);
         setProfileError(response.data?.message || 'Failed to fetch profile');
       }
-
     } catch (error) {
       console.error('Error fetching user profile:', error);
       setUserProfile(null);
@@ -126,10 +130,10 @@ const CheckoutScreen = ({ navigation }) => {
   const fetchSelectedAgency = async () => {
     try {
       setIsLoadingAgencies(true);
-      
+
       // Get selected agency ID from AsyncStorage
       const selectedAgencyId = await AsyncStorage.getItem('selectedAgencyId');
-      
+
       if (!selectedAgencyId) {
         console.log('No selected agency ID found');
         setAgencies([]);
@@ -143,8 +147,10 @@ const CheckoutScreen = ({ navigation }) => {
 
       if (response.data && response.data.success) {
         const allAgencies = response.data.data.agencies;
-        const selectedAgency = allAgencies.find(agency => agency.id === selectedAgencyId);
-        
+        const selectedAgency = allAgencies.find(
+          agency => agency.id === selectedAgencyId,
+        );
+
         if (selectedAgency) {
           setAgencies([selectedAgency]); // Only set the selected agency
           // Auto-select the agency since there's only one
@@ -160,7 +166,6 @@ const CheckoutScreen = ({ navigation }) => {
         console.log('Failed to fetch agencies:', response.data?.message);
         setAgencies([]);
       }
-
     } catch (error) {
       console.error('Error fetching selected agency:', error);
       setAgencies([]);
@@ -172,11 +177,11 @@ const CheckoutScreen = ({ navigation }) => {
   const fetchTaxCalculation = async () => {
     try {
       setIsLoadingTax(true);
-      
+
       console.log('Calculating tax for amount:', totalAmount);
-      
+
       const response = await apiClient.post('/api/tax/calculate', {
-        amount: totalAmount
+        amount: totalAmount,
       });
 
       console.log('Tax Calculation API Response:', response.data);
@@ -184,46 +189,46 @@ const CheckoutScreen = ({ navigation }) => {
       if (response.data && response.data.success) {
         const taxInfo = response.data.data;
         setTaxData(taxInfo);
-        
+
         // Safe calculation with proper number conversion
         const amountAfterTax = parseFloat(taxInfo.totalAmount) || 0;
         const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
         const safeCouponDiscount = parseFloat(couponDiscount) || 0;
-        const finalAmount = amountAfterTax + safeDeliveryCharge - safeCouponDiscount;
-        
+        const finalAmount =
+          amountAfterTax + safeDeliveryCharge - safeCouponDiscount;
+
         // Ensure finalAmount is not NaN
         setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
-        
+
         console.log('Tax calculated:', taxInfo);
         console.log('Final amount breakdown:', {
           amountAfterTax,
           safeDeliveryCharge,
           safeCouponDiscount,
-          finalAmount
+          finalAmount,
         });
       } else {
         console.log('Failed to calculate tax:', response.data?.message);
         setTaxData(null);
-        
+
         // Safe fallback calculation
         const safeTotal = parseFloat(totalAmount) || 0;
         const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
         const safeCouponDiscount = parseFloat(couponDiscount) || 0;
         const finalAmount = safeTotal + safeDeliveryCharge - safeCouponDiscount;
-        
+
         setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
       }
-
     } catch (error) {
       console.error('Error calculating tax:', error);
       setTaxData(null);
-      
+
       // Safe error fallback calculation
       const safeTotal = parseFloat(totalAmount) || 0;
       const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
       const safeCouponDiscount = parseFloat(couponDiscount) || 0;
       const finalAmount = safeTotal + safeDeliveryCharge - safeCouponDiscount;
-      
+
       setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
     } finally {
       setIsLoadingTax(false);
@@ -255,20 +260,23 @@ const CheckoutScreen = ({ navigation }) => {
 
       setIsLoadingDeliveryCharge(true);
       setDeliveryChargeError(null);
-      
+
       const payload = {
         customerId,
         agencyId,
-        addressId
+        addressId,
       };
 
       console.log('Fetching delivery charges for:', addressId);
 
-      const response = await apiClient.post('/api/delivery-charges/calculate', payload);
+      const response = await apiClient.post(
+        '/api/delivery-charges/calculate',
+        payload,
+      );
 
       if (response.data && response.data.success) {
         const chargeData = response.data.data;
-        
+
         // Check if delivery charge is not configured
         if (chargeData.chargeType === 'not_configured') {
           console.log('Delivery charge not configured:', chargeData.message);
@@ -277,35 +285,44 @@ const CheckoutScreen = ({ navigation }) => {
           setDeliveryCharge(0);
           return;
         }
-        
+
         setDeliveryChargeData(chargeData);
         setDeliveryChargeError(null);
-        
+
         // Safe number conversion and rounding
         const chargeValue = parseFloat(chargeData.deliveryCharge) || 0;
         const roundedCharge = Math.floor(chargeValue); // Round down
-        
+
         // Ensure it's a valid number
-        setDeliveryCharge(isNaN(roundedCharge) ? 0 : Math.max(0, roundedCharge));
-        
-        console.log('Delivery charge:', roundedCharge, chargeData.chargeType, chargeData.distance?.distanceText);
+        setDeliveryCharge(
+          isNaN(roundedCharge) ? 0 : Math.max(0, roundedCharge),
+        );
+
+        console.log(
+          'Delivery charge:',
+          roundedCharge,
+          chargeData.chargeType,
+          chargeData.distance?.distanceText,
+        );
       } else {
         setDeliveryChargeData(null);
         setDeliveryChargeError(null);
         setDeliveryCharge(0);
       }
-
     } catch (error) {
       console.error('Error calculating delivery charges:', error);
-      
+
       // Check if it's an error response (out of radius or not configured)
       if (error.response?.data) {
         const errorData = error.response.data;
         if (errorData.success === false && errorData.error) {
           const errorMessage = errorData.error;
-          
+
           // Check if delivery charges are not configured (404 or specific message)
-          if (errorMessage.includes('not found') || errorMessage.includes('not configured')) {
+          if (
+            errorMessage.includes('not found') ||
+            errorMessage.includes('not configured')
+          ) {
             console.log('Delivery charges not configured for this agency');
             setDeliveryChargeError(null); // Don't show as error, just no charge
             setDeliveryChargeData(null);
@@ -335,18 +352,20 @@ const CheckoutScreen = ({ navigation }) => {
   const fetchCoupons = async () => {
     try {
       setIsLoadingCoupons(true);
-      
+
       const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
-      
+
       if (!agencyId) {
         console.log('No agency ID available for fetching coupons');
         setCoupons([]);
         return;
       }
-      
+
       console.log('Fetching coupons for agency:', agencyId);
-      
-      const response = await apiClient.get(`/api/coupons/customer?agencyId=${agencyId}`);
+
+      const response = await apiClient.get(
+        `/api/coupons/customer?agencyId=${agencyId}`,
+      );
 
       console.log('Coupons API Response:', response.data);
 
@@ -356,7 +375,6 @@ const CheckoutScreen = ({ navigation }) => {
         console.log('Failed to fetch coupons:', response.data?.message);
         setCoupons([]);
       }
-
     } catch (error) {
       console.error('Error fetching coupons:', error);
       setCoupons([]);
@@ -365,33 +383,33 @@ const CheckoutScreen = ({ navigation }) => {
     }
   };
 
-  const applyCoupon = async (couponCode) => {
+  const applyCoupon = async couponCode => {
     try {
       setIsApplyingCoupon(true);
-      
+
       const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
-      
+
       if (!agencyId) {
         Alert.alert('Error', 'Agency information not available');
         setIsApplyingCoupon(false);
         return;
       }
-      
+
       // IMPORTANT: Use base amount (before tax) for coupon calculation
       const baseAmount = parseFloat(taxData?.baseAmount || totalAmount) || 0;
-      
+
       const payload = {
         code: couponCode,
         amount: baseAmount, // Use base amount, not total with tax
-        agencyId: agencyId
+        agencyId: agencyId,
       };
-      
+
       console.log('=== APPLY COUPON REQUEST ===');
       console.log('Coupon Code:', couponCode);
       console.log('Base Amount (for coupon):', baseAmount);
       console.log('Agency ID:', agencyId);
       console.log('Payload:', JSON.stringify(payload, null, 2));
-      
+
       const response = await apiClient.post('/api/coupons/apply', payload);
 
       console.log('=== APPLY COUPON RESPONSE ===');
@@ -399,13 +417,13 @@ const CheckoutScreen = ({ navigation }) => {
 
       if (response.data && response.data.success) {
         const couponData = response.data.data;
-        
+
         // Safe number conversion
         const safeDiscountAmount = parseFloat(couponData.discountAmount) || 0;
-        
+
         console.log('Discount Amount from Backend:', safeDiscountAmount);
         console.log('Coupon Data from Backend:', couponData);
-        
+
         // Store proper coupon info for future comparisons
         const appliedCouponInfo = {
           id: couponCode, // Use code as ID for matching (since backend doesn't return coupon ID)
@@ -414,51 +432,68 @@ const CheckoutScreen = ({ navigation }) => {
           discountType: couponData.discountType,
           discountValue: couponData.discountValue,
           discountAmount: safeDiscountAmount,
-          originalAmount: couponData.originalAmount
+          originalAmount: couponData.originalAmount,
         };
-        
+
         console.log('Storing applied coupon:', appliedCouponInfo);
-        
+
         setAppliedCoupon(appliedCouponInfo);
         setCouponDiscount(safeDiscountAmount);
-        
+
         // Recalculate final amount with discount and delivery charge - safely
         const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
-        
+
         if (taxData) {
           const taxTotal = parseFloat(taxData.totalAmount) || 0;
-          const finalAmount = taxTotal + safeDeliveryCharge - safeDiscountAmount;
-          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
-          
+          const finalAmount =
+            taxTotal + safeDeliveryCharge - safeDiscountAmount;
+          setFinalTotalAmount(
+            isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+          );
+
           console.log('Final calculation:', {
             taxTotal,
             deliveryCharge: safeDeliveryCharge,
             discount: safeDiscountAmount,
-            finalAmount
+            finalAmount,
           });
         } else {
           const safeTotal = parseFloat(totalAmount) || 0;
-          const finalAmount = safeTotal + safeDeliveryCharge - safeDiscountAmount;
-          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+          const finalAmount =
+            safeTotal + safeDeliveryCharge - safeDiscountAmount;
+          setFinalTotalAmount(
+            isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+          );
         }
-        
+
         setIsCouponModalVisible(false);
-        Alert.alert('Success', `Coupon applied! You saved $${Math.round(safeDiscountAmount)}`);
+        Alert.alert(
+          'Success',
+          `Coupon applied! You saved $${Math.round(safeDiscountAmount)}`,
+        );
       } else {
         // Handle API error response
-        const errorMsg = response.data?.error || response.data?.message || 'Failed to apply coupon';
+        const errorMsg =
+          response.data?.error ||
+          response.data?.message ||
+          'Failed to apply coupon';
         Alert.alert('Coupon Error', errorMsg);
       }
-
     } catch (error) {
       console.error('Error applying coupon:', error);
-      
+
       // Handle different error cases
       if (error.response?.data) {
-        const errorMsg = error.response.data.error || error.response.data.message || 'Failed to apply coupon';
+        const errorMsg =
+          error.response.data.error ||
+          error.response.data.message ||
+          'Failed to apply coupon';
         Alert.alert('Coupon Error', errorMsg);
       } else if (error.request) {
-        Alert.alert('Network Error', 'Please check your internet connection and try again.');
+        Alert.alert(
+          'Network Error',
+          'Please check your internet connection and try again.',
+        );
       } else {
         Alert.alert('Error', 'Failed to apply coupon. Please try again.');
       }
@@ -470,10 +505,10 @@ const CheckoutScreen = ({ navigation }) => {
   const removeCoupon = () => {
     setAppliedCoupon(null);
     setCouponDiscount(0);
-    
+
     // Recalculate final amount without discount but with delivery charge - safely
     const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
-    
+
     if (taxData) {
       const taxTotal = parseFloat(taxData.totalAmount) || 0;
       const finalAmount = taxTotal + safeDeliveryCharge;
@@ -493,7 +528,7 @@ const CheckoutScreen = ({ navigation }) => {
   const updateProfile = async () => {
     try {
       setIsUpdatingProfile(true);
-      
+
       // Validate required fields
       if (!profileFormData.name.trim()) {
         Alert.alert('Error', 'Name is required');
@@ -517,7 +552,7 @@ const CheckoutScreen = ({ navigation }) => {
         setUserProfile(response.data.data.user);
         setIsProfileUpdateModalVisible(false);
         Alert.alert('Success', 'Profile updated successfully!');
-        
+
         // Clear form data
         setProfileFormData({
           name: '',
@@ -525,12 +560,18 @@ const CheckoutScreen = ({ navigation }) => {
           phone: '',
         });
       } else {
-        Alert.alert('Error', response.data?.message || 'Failed to update profile');
+        Alert.alert(
+          'Error',
+          response.data?.message || 'Failed to update profile',
+        );
       }
-
     } catch (error) {
       console.error('Profile update error:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to update profile. Please try again.');
+      Alert.alert(
+        'Error',
+        error.response?.data?.message ||
+          'Failed to update profile. Please try again.',
+      );
     } finally {
       setIsUpdatingProfile(false);
     }
@@ -538,33 +579,33 @@ const CheckoutScreen = ({ navigation }) => {
 
   // Socket events for real-time pricing updates
   usePricingEvents({
-    onTaxUpdated: async (taxConfigData) => {
+    onTaxUpdated: async taxConfigData => {
       console.log('💰 Tax config updated in real-time:', taxConfigData);
-      
+
       // If coupon is applied, suggest removing it since base amount changed
       if (appliedCoupon && couponDiscount > 0) {
         Alert.alert(
           'Tax Updated',
           'Tax configuration has changed. Your applied coupon will be recalculated automatically.',
-          [{ text: 'OK' }]
+          [{text: 'OK'}],
         );
       }
-      
+
       // Tax config update hone pe fresh calculation fetch karo
       try {
         setIsLoadingTax(true);
-        
+
         const safeTotal = parseFloat(totalAmount) || 0;
         console.log('Re-calculating tax for amount:', safeTotal);
-        
+
         const response = await apiClient.post('/api/tax/calculate', {
-          amount: safeTotal
+          amount: safeTotal,
         });
 
         if (response.data && response.data.success) {
           const taxInfo = response.data.data;
           setTaxData(taxInfo);
-          
+
           console.log('Tax API Response:', taxInfo);
           console.log('Base Amount:', taxInfo.baseAmount);
           console.log('Tax Amount:', taxInfo.taxAmount);
@@ -572,35 +613,43 @@ const CheckoutScreen = ({ navigation }) => {
           console.log('Tax Value:', taxInfo.taxValue);
           console.log('Platform Charge:', taxInfo.platformCharge);
           console.log('Total Amount (with tax):', taxInfo.totalAmount);
-          
+
           // If coupon was applied, re-calculate with NEW base amount
           let newCouponDiscount = 0;
           if (appliedCoupon && couponDiscount > 0) {
             const baseAmount = parseFloat(taxInfo.baseAmount) || 0;
-            
+
             if (appliedCoupon.discountType === 'percentage') {
-              newCouponDiscount = (baseAmount * parseFloat(appliedCoupon.discountValue || 0)) / 100;
+              newCouponDiscount =
+                (baseAmount * parseFloat(appliedCoupon.discountValue || 0)) /
+                100;
             } else {
               newCouponDiscount = parseFloat(appliedCoupon.discountValue || 0);
             }
-            
-            newCouponDiscount = isNaN(newCouponDiscount) ? 0 : Math.max(0, newCouponDiscount);
+
+            newCouponDiscount = isNaN(newCouponDiscount)
+              ? 0
+              : Math.max(0, newCouponDiscount);
             setCouponDiscount(newCouponDiscount);
-            
+
             console.log('Coupon recalculated with new tax:', {
               oldDiscount: couponDiscount,
-              newDiscount: newCouponDiscount
+              newDiscount: newCouponDiscount,
             });
           }
-          
+
           // Safe calculation with updated tax
           const amountAfterTax = parseFloat(taxInfo.totalAmount) || 0;
           const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
-          const safeCouponDiscount = newCouponDiscount || parseFloat(couponDiscount) || 0;
-          const finalAmount = amountAfterTax + safeDeliveryCharge - safeCouponDiscount;
-          
-          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
-          
+          const safeCouponDiscount =
+            newCouponDiscount || parseFloat(couponDiscount) || 0;
+          const finalAmount =
+            amountAfterTax + safeDeliveryCharge - safeCouponDiscount;
+
+          setFinalTotalAmount(
+            isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+          );
+
           console.log('Final calculation after tax update:', {
             baseAmount: taxInfo.baseAmount,
             taxAmount: taxInfo.taxAmount,
@@ -608,24 +657,34 @@ const CheckoutScreen = ({ navigation }) => {
             totalWithTax: amountAfterTax,
             deliveryCharge: safeDeliveryCharge,
             couponDiscount: safeCouponDiscount,
-            finalAmount
+            finalAmount,
           });
-          
+
           Alert.alert(
             'Tax Updated',
-            `Tax: $${Math.round(parseFloat(taxInfo.taxAmount) || 0)} | Total: $${Math.round(finalAmount)}`,
-            [{ text: 'OK' }]
+            `Tax: $${Math.round(
+              parseFloat(taxInfo.taxAmount) || 0,
+            )} | Total: $${Math.round(finalAmount)}`,
+            [{text: 'OK'}],
           );
         } else {
           // Fallback if tax API fails
-          const finalAmount = safeTotal + parseFloat(deliveryCharge || 0) - parseFloat(couponDiscount || 0);
-          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+          const finalAmount =
+            safeTotal +
+            parseFloat(deliveryCharge || 0) -
+            parseFloat(couponDiscount || 0);
+          setFinalTotalAmount(
+            isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+          );
         }
       } catch (error) {
         console.error('Error recalculating tax after socket update:', error);
         // Fallback calculation
         const safeTotal = parseFloat(totalAmount) || 0;
-        const finalAmount = safeTotal + parseFloat(deliveryCharge || 0) - parseFloat(couponDiscount || 0);
+        const finalAmount =
+          safeTotal +
+          parseFloat(deliveryCharge || 0) -
+          parseFloat(couponDiscount || 0);
         setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
       } finally {
         setIsLoadingTax(false);
@@ -633,67 +692,78 @@ const CheckoutScreen = ({ navigation }) => {
     },
     onTaxDeleted: () => {
       console.log('💰 Tax deleted');
-      
+
       // Recalculate without tax - safely
       const safeTotal = parseFloat(totalAmount) || 0;
       const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
       const safeCouponDiscount = parseFloat(couponDiscount) || 0;
       const finalAmount = safeTotal + safeDeliveryCharge - safeCouponDiscount;
-      
+
       setTaxData(null);
       setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
-      
+
       console.log('Tax removed calculation:', {
         baseAmount: safeTotal,
         deliveryCharge: safeDeliveryCharge,
         couponDiscount: safeCouponDiscount,
-        finalAmount
+        finalAmount,
       });
-      
+
       Alert.alert(
         'Tax Removed',
         `Tax removed. New total: $${Math.round(finalAmount)}`,
-        [{ text: 'OK' }]
+        [{text: 'OK'}],
       );
     },
-    onPlatformChargeUpdated: async (chargeData) => {
+    onPlatformChargeUpdated: async chargeData => {
       console.log('🏦 Platform charge updated:', chargeData);
-      
+
       // Platform charge update hone pe fresh calculation fetch karo
       try {
         setIsLoadingTax(true);
-        
+
         const safeTotal = parseFloat(totalAmount) || 0;
-        console.log('Re-calculating with platform charge for amount:', safeTotal);
-        
+        console.log(
+          'Re-calculating with platform charge for amount:',
+          safeTotal,
+        );
+
         const response = await apiClient.post('/api/tax/calculate', {
-          amount: safeTotal
+          amount: safeTotal,
         });
 
         if (response.data && response.data.success) {
           const taxInfo = response.data.data;
           setTaxData(taxInfo);
-          
+
           // Safe calculation
           const amountAfterTax = parseFloat(taxInfo.totalAmount) || 0;
           const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
           const safeCouponDiscount = parseFloat(couponDiscount) || 0;
-          const finalAmount = amountAfterTax + safeDeliveryCharge - safeCouponDiscount;
-          
-          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
-          
+          const finalAmount =
+            amountAfterTax + safeDeliveryCharge - safeCouponDiscount;
+
+          setFinalTotalAmount(
+            isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+          );
+
           Alert.alert(
             'Platform Charge Updated',
-            `Platform charge is now $${chargeData.amount}. New total: $${Math.round(finalAmount)}`,
-            [{ text: 'OK' }]
+            `Platform charge is now $${
+              chargeData.amount
+            }. New total: $${Math.round(finalAmount)}`,
+            [{text: 'OK'}],
           );
         }
       } catch (error) {
-        console.error('Error recalculating after platform charge update:', error);
+        console.error(
+          'Error recalculating after platform charge update:',
+          error,
+        );
         Alert.alert(
           'Platform Charge Updated',
           'Platform charge updated. Please refresh to see new total.',
-          [{ text: 'OK' }]
+          [{text: 'OK'}],
         );
       } finally {
         setIsLoadingTax(false);
@@ -701,46 +771,55 @@ const CheckoutScreen = ({ navigation }) => {
     },
     onPlatformChargeDeleted: async () => {
       console.log('🏦 Platform charge deleted');
-      
+
       // Platform charge delete hone pe fresh calculation fetch karo
       try {
         setIsLoadingTax(true);
-        
+
         const safeTotal = parseFloat(totalAmount) || 0;
         const response = await apiClient.post('/api/tax/calculate', {
-          amount: safeTotal
+          amount: safeTotal,
         });
 
         if (response.data && response.data.success) {
           const taxInfo = response.data.data;
           setTaxData(taxInfo);
-          
+
           const amountAfterTax = parseFloat(taxInfo.totalAmount) || 0;
           const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
           const safeCouponDiscount = parseFloat(couponDiscount) || 0;
-          const finalAmount = amountAfterTax + safeDeliveryCharge - safeCouponDiscount;
-          
-          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
-          
+          const finalAmount =
+            amountAfterTax + safeDeliveryCharge - safeCouponDiscount;
+
+          setFinalTotalAmount(
+            isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+          );
+
           Alert.alert(
             'Platform Charge Removed',
             `Platform charge removed. New total: $${Math.round(finalAmount)}`,
-            [{ text: 'OK' }]
+            [{text: 'OK'}],
           );
         }
       } catch (error) {
-        console.error('Error recalculating after platform charge deletion:', error);
+        console.error(
+          'Error recalculating after platform charge deletion:',
+          error,
+        );
       } finally {
         setIsLoadingTax(false);
       }
     },
-    onDeliveryChargeCreated: async (deliveryData) => {
+    onDeliveryChargeCreated: async deliveryData => {
       console.log('🚚 Delivery charge created:', deliveryData);
       // If this is for current agency, fetch delivery charges
       const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
-      if (deliveryData.agencyId === agencyId && deliveryMode === 'home_delivery') {
+      if (
+        deliveryData.agencyId === agencyId &&
+        deliveryMode === 'home_delivery'
+      ) {
         console.log('🔄 Fetching delivery charges after creation...');
-        
+
         try {
           const customerId = userProfile?.id;
           const addressId = selectedAddress?.id;
@@ -748,18 +827,21 @@ const CheckoutScreen = ({ navigation }) => {
           if (customerId && agencyId && addressId) {
             setIsLoadingDeliveryCharge(true);
             setDeliveryChargeError(null);
-            
+
             const payload = {
               customerId,
               agencyId,
-              addressId
+              addressId,
             };
 
-            const response = await apiClient.post('/api/delivery-charges/calculate', payload);
+            const response = await apiClient.post(
+              '/api/delivery-charges/calculate',
+              payload,
+            );
 
             if (response.data && response.data.success) {
               const chargeData = response.data.data;
-              
+
               // Check if delivery charge is not configured
               if (chargeData.chargeType === 'not_configured') {
                 setDeliveryChargeData(null);
@@ -767,18 +849,20 @@ const CheckoutScreen = ({ navigation }) => {
                 setDeliveryCharge(0);
                 return;
               }
-              
+
               setDeliveryChargeData(chargeData);
               setDeliveryChargeError(null);
-              
+
               const chargeValue = parseFloat(chargeData.deliveryCharge) || 0;
               const roundedCharge = Math.floor(chargeValue);
-              setDeliveryCharge(isNaN(roundedCharge) ? 0 : Math.max(0, roundedCharge));
-              
+              setDeliveryCharge(
+                isNaN(roundedCharge) ? 0 : Math.max(0, roundedCharge),
+              );
+
               Alert.alert(
                 'Delivery Charges Now Available',
                 `Delivery charge: $${roundedCharge}`,
-                [{ text: 'OK' }]
+                [{text: 'OK'}],
               );
             }
           }
@@ -793,14 +877,17 @@ const CheckoutScreen = ({ navigation }) => {
         }
       }
     },
-    onDeliveryChargeUpdated: async (deliveryData) => {
+    onDeliveryChargeUpdated: async deliveryData => {
       console.log('🚚 Delivery charge updated:', deliveryData);
       // If this is for current agency, trigger recalculation
       const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
-      if (deliveryData.agencyId === agencyId && deliveryMode === 'home_delivery') {
+      if (
+        deliveryData.agencyId === agencyId &&
+        deliveryMode === 'home_delivery'
+      ) {
         // Force re-fetch delivery charges immediately
         console.log('🔄 Re-fetching delivery charges after socket update...');
-        
+
         try {
           const customerId = userProfile?.id;
           const addressId = selectedAddress?.id;
@@ -808,46 +895,54 @@ const CheckoutScreen = ({ navigation }) => {
           if (customerId && agencyId && addressId) {
             setIsLoadingDeliveryCharge(true);
             setDeliveryChargeError(null);
-            
+
             const payload = {
               customerId,
               agencyId,
-              addressId
+              addressId,
             };
 
-            const response = await apiClient.post('/api/delivery-charges/calculate', payload);
+            const response = await apiClient.post(
+              '/api/delivery-charges/calculate',
+              payload,
+            );
 
             if (response.data && response.data.success) {
               const chargeData = response.data.data;
-              
+
               // Check if delivery charge is not configured
               if (chargeData.chargeType === 'not_configured') {
                 setDeliveryChargeData(null);
                 setDeliveryChargeError(null);
                 setDeliveryCharge(0);
-                
+
                 Alert.alert(
                   'No Delivery Charge',
                   'Delivery charges not configured. Free delivery!',
-                  [{ text: 'OK' }]
+                  [{text: 'OK'}],
                 );
                 return;
               }
-              
+
               setDeliveryChargeData(chargeData);
               setDeliveryChargeError(null);
-              
+
               // Safe number conversion
               const chargeValue = parseFloat(chargeData.deliveryCharge) || 0;
               const roundedCharge = Math.floor(chargeValue);
-              setDeliveryCharge(isNaN(roundedCharge) ? 0 : Math.max(0, roundedCharge));
-              
-              console.log('✅ Delivery charge updated via socket:', roundedCharge);
-              
+              setDeliveryCharge(
+                isNaN(roundedCharge) ? 0 : Math.max(0, roundedCharge),
+              );
+
+              console.log(
+                '✅ Delivery charge updated via socket:',
+                roundedCharge,
+              );
+
               Alert.alert(
                 'Delivery Charge Updated',
                 `New delivery charge: $${roundedCharge}`,
-                [{ text: 'OK' }]
+                [{text: 'OK'}],
               );
             }
           }
@@ -862,97 +957,112 @@ const CheckoutScreen = ({ navigation }) => {
         }
       }
     },
-    onDeliveryChargeDeleted: (deliveryData) => {
+    onDeliveryChargeDeleted: deliveryData => {
       console.log('🚚 Delivery charge deleted:', deliveryData);
       // If this is for current agency, reset delivery charge
       const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
-      if (deliveryData.agencyId === agencyId && deliveryMode === 'home_delivery') {
+      if (
+        deliveryData.agencyId === agencyId &&
+        deliveryMode === 'home_delivery'
+      ) {
         setDeliveryChargeData(null);
         setDeliveryChargeError(null); // No error, just no charges configured
         setDeliveryCharge(0);
-        
+
         // Recalculate total without delivery charge
         if (taxData) {
           const taxTotal = parseFloat(taxData.totalAmount) || 0;
           const safeCouponDiscount = parseFloat(couponDiscount) || 0;
           const finalAmount = taxTotal - safeCouponDiscount;
-          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+          setFinalTotalAmount(
+            isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+          );
         } else {
           const safeTotal = parseFloat(totalAmount) || 0;
           const safeCouponDiscount = parseFloat(couponDiscount) || 0;
           const finalAmount = safeTotal - safeCouponDiscount;
-          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+          setFinalTotalAmount(
+            isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+          );
         }
-        
+
         Alert.alert(
           'Delivery Charge Removed',
           'Delivery charges have been removed. No delivery fee will be charged.',
-          [{ text: 'OK' }]
+          [{text: 'OK'}],
         );
       }
     },
-    onCouponCreated: (couponData) => {
+    onCouponCreated: couponData => {
       console.log('🎟️ New coupon available:', couponData);
       const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
       // Only process if it's for current agency
       if (couponData.agencyId === agencyId) {
         // Add to coupons list immediately (real-time update)
         setCoupons(prev => [couponData, ...prev]);
-        
-        const discount = couponData.discountType === 'percentage' 
-          ? `${couponData.discountValue}%` 
-          : `$${couponData.discountValue}`;
-        
+
+        const discount =
+          couponData.discountType === 'percentage'
+            ? `${couponData.discountValue}%`
+            : `$${couponData.discountValue}`;
+
         Alert.alert(
           '🎉 New Coupon Available!',
           `Use code ${couponData.code} to save ${discount}`,
-          [{ text: 'Great!' }]
+          [{text: 'Great!'}],
         );
       }
     },
-    onCouponUpdated: async (couponData) => {
+    onCouponUpdated: async couponData => {
       console.log('🎟️ Coupon updated:', couponData);
-      
+
       const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
-      
+
       // Update in coupons list (real-time update)
       if (couponData.agencyId === agencyId) {
-        setCoupons(prev => prev.map(c => c.id === couponData.id ? couponData : c));
+        setCoupons(prev =>
+          prev.map(c => (c.id === couponData.id ? couponData : c)),
+        );
       }
-      
+
       // If this coupon is applied, re-apply it to get correct discount
       // Match by code since backend doesn't return coupon ID
-      const isApplied = appliedCoupon && (
-        appliedCoupon.code === couponData.code || 
-        appliedCoupon.couponCode === couponData.code ||
-        appliedCoupon.id === couponData.code
-      );
-      
+      const isApplied =
+        appliedCoupon &&
+        (appliedCoupon.code === couponData.code ||
+          appliedCoupon.couponCode === couponData.code ||
+          appliedCoupon.id === couponData.code);
+
       if (isApplied) {
         console.log('🔄 Re-applying updated coupon via backend API...');
         console.log('Applied coupon:', appliedCoupon);
         console.log('Updated coupon:', couponData);
-        
+
         try {
           // Use BASE amount (before tax) for coupon calculation
-          const baseAmount = parseFloat(taxData?.baseAmount || totalAmount) || 0;
-          
+          const baseAmount =
+            parseFloat(taxData?.baseAmount || totalAmount) || 0;
+
           console.log('Re-applying with base amount:', baseAmount);
-          
+
           const payload = {
             code: couponData.code,
             amount: baseAmount,
-            agencyId: agencyId
+            agencyId: agencyId,
           };
-          
+
           const response = await apiClient.post('/api/coupons/apply', payload);
 
           if (response.data && response.data.success) {
             const recalculatedCoupon = response.data.data;
-            const safeDiscountAmount = parseFloat(recalculatedCoupon.discountAmount) || 0;
-            
-            console.log('Recalculated discount from backend:', safeDiscountAmount);
-            
+            const safeDiscountAmount =
+              parseFloat(recalculatedCoupon.discountAmount) || 0;
+
+            console.log(
+              'Recalculated discount from backend:',
+              safeDiscountAmount,
+            );
+
             setAppliedCoupon({
               id: couponData.code,
               code: couponData.code,
@@ -960,51 +1070,61 @@ const CheckoutScreen = ({ navigation }) => {
               discountType: recalculatedCoupon.discountType,
               discountValue: recalculatedCoupon.discountValue,
               discountAmount: safeDiscountAmount,
-              originalAmount: recalculatedCoupon.originalAmount
+              originalAmount: recalculatedCoupon.originalAmount,
             });
             setCouponDiscount(safeDiscountAmount);
-            
+
             // Recalculate final total with new discount
             const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
-            
+
             if (taxData) {
               const taxTotal = parseFloat(taxData.totalAmount) || 0;
-              const finalAmount = taxTotal + safeDeliveryCharge - safeDiscountAmount;
-              setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+              const finalAmount =
+                taxTotal + safeDeliveryCharge - safeDiscountAmount;
+              setFinalTotalAmount(
+                isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+              );
             } else {
               const safeTotal = parseFloat(totalAmount) || 0;
-              const finalAmount = safeTotal + safeDeliveryCharge - safeDiscountAmount;
-              setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+              const finalAmount =
+                safeTotal + safeDeliveryCharge - safeDiscountAmount;
+              setFinalTotalAmount(
+                isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+              );
             }
-            
+
             console.log('Coupon re-applied after update:', {
               oldDiscount: parseFloat(appliedCoupon?.discountAmount || 0),
               newDiscount: safeDiscountAmount,
-              finalAmount: finalTotalAmount
+              finalAmount: finalTotalAmount,
             });
-            
+
             Alert.alert(
               'Coupon Updated',
-              `Coupon ${couponData.code} updated. New discount: $${Math.round(safeDiscountAmount)}`,
-              [{ text: 'OK' }]
+              `Coupon ${couponData.code} updated. New discount: $${Math.round(
+                safeDiscountAmount,
+              )}`,
+              [{text: 'OK'}],
             );
           } else {
             // Coupon no longer valid, remove it
             setAppliedCoupon(null);
             setCouponDiscount(0);
-            
+
             // Recalculate without discount
             if (taxData) {
               const taxTotal = parseFloat(taxData.totalAmount) || 0;
               const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
               const finalAmount = taxTotal + safeDeliveryCharge;
-              setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+              setFinalTotalAmount(
+                isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+              );
             }
-            
+
             Alert.alert(
               'Coupon No Longer Valid',
               `Coupon ${couponData.code} cannot be applied anymore.`,
-              [{ text: 'OK' }]
+              [{text: 'OK'}],
             );
           }
         } catch (error) {
@@ -1012,22 +1132,24 @@ const CheckoutScreen = ({ navigation }) => {
           // Remove coupon if re-application fails
           setAppliedCoupon(null);
           setCouponDiscount(0);
-          
+
           // Recalculate without discount
           if (taxData) {
             const taxTotal = parseFloat(taxData.totalAmount) || 0;
             const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
             const finalAmount = taxTotal + safeDeliveryCharge;
-            setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+            setFinalTotalAmount(
+              isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+            );
           }
         }
       }
     },
-    onCouponStatusChanged: (couponData) => {
+    onCouponStatusChanged: couponData => {
       console.log('🎟️ Coupon status changed:', couponData);
-      
+
       const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
-      
+
       // Update in coupons list (real-time update - show/hide based on isActive)
       if (couponData.agencyId === agencyId) {
         if (couponData.isActive) {
@@ -1035,7 +1157,7 @@ const CheckoutScreen = ({ navigation }) => {
           setCoupons(prev => {
             const exists = prev.find(c => c.id === couponData.id);
             if (exists) {
-              return prev.map(c => c.id === couponData.id ? couponData : c);
+              return prev.map(c => (c.id === couponData.id ? couponData : c));
             } else {
               return [couponData, ...prev];
             }
@@ -1045,95 +1167,114 @@ const CheckoutScreen = ({ navigation }) => {
           setCoupons(prev => prev.filter(c => c.id !== couponData.id));
         }
       }
-      
+
       // Check if this coupon is applied (match by code)
-      const isApplied = appliedCoupon && (
-        appliedCoupon.code === couponData.code || 
-        appliedCoupon.couponCode === couponData.code ||
-        appliedCoupon.id === couponData.code
-      );
-      
+      const isApplied =
+        appliedCoupon &&
+        (appliedCoupon.code === couponData.code ||
+          appliedCoupon.couponCode === couponData.code ||
+          appliedCoupon.id === couponData.code);
+
       // If applied coupon is deactivated, remove it and recalculate total
       if (isApplied && !couponData.isActive) {
         console.log('⚠️ Applied coupon deactivated, removing...');
-        
+
         setAppliedCoupon(null);
         setCouponDiscount(0);
-        
+
         // Recalculate total without coupon discount
         if (taxData) {
           const taxTotal = parseFloat(taxData.totalAmount) || 0;
           const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
           const finalAmount = taxTotal + safeDeliveryCharge;
-          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+          setFinalTotalAmount(
+            isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+          );
         } else {
           const safeTotal = parseFloat(totalAmount) || 0;
           const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
           const finalAmount = safeTotal + safeDeliveryCharge;
-          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+          setFinalTotalAmount(
+            isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+          );
         }
-        
+
         console.log('Discount removed, new total:', finalTotalAmount);
-        
+
         Alert.alert(
           'Coupon Deactivated',
           `The coupon ${couponData.code} has been removed from your order and discount has been reversed.`,
-          [{ text: 'OK' }]
+          [{text: 'OK'}],
         );
-      } else if (couponData.isActive && couponData.agencyId === agencyId && !isApplied) {
+      } else if (
+        couponData.isActive &&
+        couponData.agencyId === agencyId &&
+        !isApplied
+      ) {
         // Show success message for activation (only for current agency, if not already applied)
         Alert.alert(
           'Coupon Activated',
           `Coupon ${couponData.code} is now available!`,
-          [{ text: 'OK' }]
+          [{text: 'OK'}],
         );
       }
     },
-    onCouponDeleted: (couponData) => {
+    onCouponDeleted: couponData => {
       console.log('🎟️ Coupon deleted:', couponData);
-      
+
       const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
-      
+
       // Remove from coupons list (real-time update)
       if (couponData.agencyId === agencyId) {
         setCoupons(prev => prev.filter(c => c.id !== couponData.id));
       }
-      
+
       // Check if this coupon is applied (match by code)
-      const isApplied = appliedCoupon && (
-        appliedCoupon.code === couponData.code || 
-        appliedCoupon.couponCode === couponData.code ||
-        appliedCoupon.id === couponData.code
-      );
-      
+      const isApplied =
+        appliedCoupon &&
+        (appliedCoupon.code === couponData.code ||
+          appliedCoupon.couponCode === couponData.code ||
+          appliedCoupon.id === couponData.code);
+
       // If applied coupon is deleted, remove it and recalculate total
       if (isApplied) {
         console.log('⚠️ Applied coupon deleted, removing...');
-        
+
         const oldDiscount = parseFloat(couponDiscount) || 0;
-        
+
         setAppliedCoupon(null);
         setCouponDiscount(0);
-        
+
         // Recalculate total without coupon discount
         if (taxData) {
           const taxTotal = parseFloat(taxData.totalAmount) || 0;
           const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
           const finalAmount = taxTotal + safeDeliveryCharge;
-          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+          setFinalTotalAmount(
+            isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+          );
         } else {
           const safeTotal = parseFloat(totalAmount) || 0;
           const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
           const finalAmount = safeTotal + safeDeliveryCharge;
-          setFinalTotalAmount(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+          setFinalTotalAmount(
+            isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+          );
         }
-        
-        console.log('Discount removed, old:', oldDiscount, 'new total:', finalTotalAmount);
-        
+
+        console.log(
+          'Discount removed, old:',
+          oldDiscount,
+          'new total:',
+          finalTotalAmount,
+        );
+
         Alert.alert(
           'Coupon Removed',
-          `The coupon ${couponData.code} has been removed and $${Math.round(oldDiscount)} discount has been reversed.`,
-          [{ text: 'OK' }]
+          `The coupon ${couponData.code} has been removed and $${Math.round(
+            oldDiscount,
+          )} discount has been reversed.`,
+          [{text: 'OK'}],
         );
       }
     },
@@ -1149,17 +1290,20 @@ const CheckoutScreen = ({ navigation }) => {
 
   useEffect(() => {
     // Agar selectedAddress deleted ho chuka hai
-    const validSelectedAddress = addresses.find(addr => addr.id === selectedAddress?.id);
+    const validSelectedAddress = addresses.find(
+      addr => addr.id === selectedAddress?.id,
+    );
 
     if (!validSelectedAddress) {
       // Naya default address set karo ya null
-      const defaultAddress = addresses.find(addr => addr.id === defaultAddressId) || null;
+      const defaultAddress =
+        addresses.find(addr => addr.id === defaultAddressId) || null;
       dispatch(setSelectedAddress(defaultAddress));
     }
 
     // Fetch user profile data
     fetchUserProfile();
-    
+
     // Fetch selected agency for both delivery modes (needed for agencyId in API)
     fetchSelectedAgency();
   }, [addresses, defaultAddressId, selectedAddress, dispatch, deliveryMode]);
@@ -1175,7 +1319,7 @@ const CheckoutScreen = ({ navigation }) => {
       }
 
       const agencyId = selectedAgency?.agencyId || selectedAgency?.id;
-      
+
       if (!userProfile?.id || !agencyId || !selectedAddress?.id) {
         return;
       }
@@ -1184,7 +1328,13 @@ const CheckoutScreen = ({ navigation }) => {
     };
 
     fetchCharges();
-  }, [deliveryMode, userProfile?.id, selectedAgency?.agencyId, selectedAgency?.id, selectedAddress?.id]);
+  }, [
+    deliveryMode,
+    userProfile?.id,
+    selectedAgency?.agencyId,
+    selectedAgency?.id,
+    selectedAddress?.id,
+  ]);
 
   // Populate form data when user profile is loaded
   useEffect(() => {
@@ -1198,16 +1348,16 @@ const CheckoutScreen = ({ navigation }) => {
   }, [userProfile]);
 
   const deliveryModeOptions = [
-    { id: 'home_delivery', label: 'Home Delivery' },
-    { id: 'pickup', label: 'Pickup from Agency' },
+    {id: 'home_delivery', label: 'Home Delivery'},
+    {id: 'pickup', label: 'Pickup from Agency'},
   ];
 
   const deliveryOptions = [
-    { id: 'Home Delivery', label: STRINGS.homeDelivery, price: 0 },
+    {id: 'Home Delivery', label: STRINGS.homeDelivery, price: 0},
   ];
 
   const paymentOptions = [
-    { id: 'Cash on Delivery', label: STRINGS.cashOnDelivery },
+    {id: 'Cash on Delivery', label: STRINGS.cashOnDelivery},
   ];
 
   const handlePlaceOrder = async () => {
@@ -1219,7 +1369,11 @@ const CheckoutScreen = ({ navigation }) => {
       }
 
       // Check if address has all required fields
-      if (!selectedAddress.address || !selectedAddress.city || !selectedAddress.pincode) {
+      if (
+        !selectedAddress.address ||
+        !selectedAddress.city ||
+        !selectedAddress.pincode
+      ) {
         Alert.alert('Error', 'Please complete your address details');
         return;
       }
@@ -1238,7 +1392,10 @@ const CheckoutScreen = ({ navigation }) => {
 
     // Check if cart has items
     if (!items || items.length === 0) {
-      Alert.alert('Error', 'Your cart is empty. Please add items before placing an order.');
+      Alert.alert(
+        'Error',
+        'Your cart is empty. Please add items before placing an order.',
+      );
       return;
     }
 
@@ -1258,7 +1415,7 @@ const CheckoutScreen = ({ navigation }) => {
         productName: item.productName || item.name,
         variantLabel: item.weight || 'default',
         variantPrice: item.price,
-        quantity: item.quantity
+        quantity: item.quantity,
       }));
 
       // Prepare API payload with actual user data
@@ -1268,8 +1425,13 @@ const CheckoutScreen = ({ navigation }) => {
         customerPhone: userProfile?.phone,
         deliveryMode: deliveryMode,
         items: formattedItems,
-        paymentMethod: deliveryMode === 'pickup' ? 'Cash on Pickup' : (paymentMethod === 'Cash on Delivery' ? 'cash_on_delivery' : 'cash_on_delivery'),
-        ...(appliedCoupon && { couponCode: appliedCoupon.couponCode })
+        paymentMethod:
+          deliveryMode === 'pickup'
+            ? 'Cash on Pickup'
+            : paymentMethod === 'Cash on Delivery'
+            ? 'cash_on_delivery'
+            : 'cash_on_delivery',
+        ...(appliedCoupon && {couponCode: appliedCoupon.couponCode}),
       };
 
       // Add address or agency based on delivery mode
@@ -1280,7 +1442,7 @@ const CheckoutScreen = ({ navigation }) => {
       // Add agencyId for both delivery modes (from selected agency on home page)
       if (selectedAgency && selectedAgency.agencyId) {
         orderData.agencyId = selectedAgency.agencyId;
-      } 
+      }
 
       console.log('Order API Payload:', orderData);
 
@@ -1296,15 +1458,20 @@ const CheckoutScreen = ({ navigation }) => {
           items: items,
           totalAmount: totalAmount,
           deliveryMode: deliveryMode,
-          deliveryType: deliveryMode === 'pickup' ? 'Pickup from Agency' : 'Home Delivery',
-          paymentMethod: deliveryMode === 'pickup' ? 'Cash on Pickup' : 'Cash on Delivery',
+          deliveryType:
+            deliveryMode === 'pickup' ? 'Pickup from Agency' : 'Home Delivery',
+          paymentMethod:
+            deliveryMode === 'pickup' ? 'Cash on Pickup' : 'Cash on Delivery',
           address: deliveryMode === 'home_delivery' ? selectedAddress : null,
-          agency: selectedAgency || (deliveryMode === 'home_delivery' ? selectedAgency : null),
+          agency:
+            selectedAgency ||
+            (deliveryMode === 'home_delivery' ? selectedAgency : null),
           status: 'Pending',
           orderDate: new Date().toISOString(),
-          estimatedDelivery: deliveryMode === 'pickup' 
-            ? new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString() // 4 hours for pickup
-            : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours for delivery
+          estimatedDelivery:
+            deliveryMode === 'pickup'
+              ? new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString() // 4 hours for pickup
+              : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours for delivery
         };
 
         dispatch(addOrder(order));
@@ -1314,42 +1481,51 @@ const CheckoutScreen = ({ navigation }) => {
         // Alert.alert('Success', 'Order placed successfully!', [
         //   {
         //     text: 'OK',
-        //     onPress: () => 
-        navigation.navigate('OrderConfirmation', { orderId: order.id })
+        //     onPress: () =>
+        navigation.navigate('OrderConfirmation', {orderId: order.id});
         //   }
         // ]);
       } else {
         throw new Error(response.data?.message || 'Failed to create order');
       }
-
     } catch (error) {
       console.error('Order creation error:', error);
       setLoading(false);
-      
+
       if (error.response) {
         // Check if it's a customerName validation error
-        const apiErrorMessage = error.response.data?.error || error.response.data?.message || '';
-        if (apiErrorMessage.includes('customerName') && apiErrorMessage.includes('must be a string')) {
+        const apiErrorMessage =
+          error.response.data?.error || error.response.data?.message || '';
+        if (
+          apiErrorMessage.includes('customerName') &&
+          apiErrorMessage.includes('must be a string')
+        ) {
           // Show profile update modal
           setIsProfileUpdateModalVisible(true);
         } else {
           // Show API error in modal
-          setErrorMessage(apiErrorMessage || 'Failed to create order. Please try again.');
+          setErrorMessage(
+            apiErrorMessage || 'Failed to create order. Please try again.',
+          );
           setIsErrorModalVisible(true);
         }
       } else if (error.request) {
         // Network error
-        setErrorMessage('Network error. Please check your connection and try again.');
+        setErrorMessage(
+          'Network error. Please check your connection and try again.',
+        );
         setIsErrorModalVisible(true);
       } else {
         // Other error
-        setErrorMessage(error.message || 'Something went wrong. Please try again.');
+        setErrorMessage(
+          error.message || 'Something went wrong. Please try again.',
+        );
         setIsErrorModalVisible(true);
       }
     }
   };
 
-  const renderDeliveryModeOption = (option) => (
+  const renderDeliveryModeOption = option => (
     <TouchableOpacity
       key={option.id}
       style={[
@@ -1358,23 +1534,25 @@ const CheckoutScreen = ({ navigation }) => {
       ]}
       onPress={() => dispatch(setDeliveryMode(option.id))}>
       <View style={styles.optionContent}>
-        <Text style={[
-          styles.optionLabel,
-          deliveryMode === option.id && styles.optionLabelSelected,
-        ]}>
+        <Text
+          style={[
+            styles.optionLabel,
+            deliveryMode === option.id && styles.optionLabelSelected,
+          ]}>
           {option.label}
         </Text>
       </View>
-      <View style={[
-        styles.radioButton,
-        deliveryMode === option.id && styles.radioButtonSelected,
-      ]}>
+      <View
+        style={[
+          styles.radioButton,
+          deliveryMode === option.id && styles.radioButtonSelected,
+        ]}>
         {deliveryMode === option.id && <View style={styles.radioButtonInner} />}
       </View>
     </TouchableOpacity>
   );
 
-  const renderDeliveryOption = (option) => (
+  const renderDeliveryOption = option => (
     <TouchableOpacity
       key={option.id}
       style={[
@@ -1383,26 +1561,28 @@ const CheckoutScreen = ({ navigation }) => {
       ]}
       onPress={() => dispatch(setDeliveryType(option.id))}>
       <View style={styles.optionContent}>
-        <Text style={[
-          styles.optionLabel,
-          deliveryType === option.id && styles.optionLabelSelected,
-        ]}>
+        <Text
+          style={[
+            styles.optionLabel,
+            deliveryType === option.id && styles.optionLabelSelected,
+          ]}>
           {option.label}
         </Text>
         {option.price > 0 && (
           <Text style={styles.optionPrice}>${option.price}</Text>
         )}
       </View>
-      <View style={[
-        styles.radioButton,
-        deliveryType === option.id && styles.radioButtonSelected,
-      ]}>
+      <View
+        style={[
+          styles.radioButton,
+          deliveryType === option.id && styles.radioButtonSelected,
+        ]}>
         {deliveryType === option.id && <View style={styles.radioButtonInner} />}
       </View>
     </TouchableOpacity>
   );
 
-  const renderPaymentOption = (option) => (
+  const renderPaymentOption = option => (
     <TouchableOpacity
       key={option.id}
       style={[
@@ -1411,17 +1591,18 @@ const CheckoutScreen = ({ navigation }) => {
       ]}
       onPress={() => dispatch(setPaymentMethod(option.id))}>
       <View style={styles.optionContent}>
-        <Text style={[
-          styles.optionLabel,
-          paymentMethod === option.id && styles.optionLabelSelected,
-        ]}>
+        <Text
+          style={[
+            styles.optionLabel,
+            paymentMethod === option.id && styles.optionLabelSelected,
+          ]}>
           {option.label}
         </Text>
       </View>
     </TouchableOpacity>
   );
 
-  const renderAddressOption = (address) => (
+  const renderAddressOption = address => (
     <TouchableOpacity
       key={address.id}
       style={[
@@ -1432,12 +1613,14 @@ const CheckoutScreen = ({ navigation }) => {
       <View style={styles.addressContent}>
         <Text style={styles.addressTitle}>{address.title}</Text>
         <Text style={styles.addressText}>{address.address}</Text>
-        <Text style={styles.addressText}>{address.city}, {address.pincode}</Text>
+        <Text style={styles.addressText}>
+          {address.city}, {address.pincode}
+        </Text>
       </View>
     </TouchableOpacity>
   );
 
-  const renderAgencyOption = (agency) => (
+  const renderAgencyOption = agency => (
     <View
       key={agency.id}
       style={[
@@ -1447,7 +1630,9 @@ const CheckoutScreen = ({ navigation }) => {
       <View style={styles.agencyContent}>
         <Text style={styles.agencyTitle}>{agency.name}</Text>
         <Text style={styles.agencyText}>{agency.address}</Text>
-        <Text style={styles.agencyText}>{agency.city}, {agency.pincode}</Text>
+        <Text style={styles.agencyText}>
+          {agency.city}, {agency.pincode}
+        </Text>
         <Text style={styles.agencyPhone}>Phone: {agency.phone}</Text>
       </View>
       <View style={styles.agencyActions}>
@@ -1483,7 +1668,11 @@ const CheckoutScreen = ({ navigation }) => {
   }
 
   return (
-    <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
+    <View
+      style={[
+        styles.container,
+        {paddingTop: insets.top, paddingBottom: insets.bottom},
+      ]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -1496,7 +1685,7 @@ const CheckoutScreen = ({ navigation }) => {
       <ScrollView style={styles.content}>
         {/* User Details */}
         <View style={styles.section}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.userDetailsCard}
             onPress={() => {
               setProfileFormData({
@@ -1511,23 +1700,36 @@ const CheckoutScreen = ({ navigation }) => {
               <View style={styles.userDetailsIconContainer}>
                 {userProfile?.profileImage ? (
                   <Image
-                    source={{ uri: userProfile.profileImage }}
+                    source={{uri: userProfile.profileImage}}
                     style={styles.userDetailsProfileImage}
                     resizeMode="cover"
-                    defaultSource={{ uri: 'https://via.placeholder.com/24x24' }}
+                    defaultSource={{uri: 'https://via.placeholder.com/24x24'}}
                   />
                 ) : (
-                  <Ionicons name="person-circle-outline" size={24} color={COLORS.primary} />
+                  <Ionicons
+                    name="person-circle-outline"
+                    size={24}
+                    color={COLORS.primary}
+                  />
                 )}
               </View>
               <Text style={styles.userDetailsTitle}>Account Information</Text>
-              <Ionicons name="create-outline" size={20} color={COLORS.primary} style={styles.editIcon} />
+              <Ionicons
+                name="create-outline"
+                size={20}
+                color={COLORS.primary}
+                style={styles.editIcon}
+              />
             </View>
-            
+
             <View style={styles.userDetailsContent}>
               <View style={styles.userDetailRow}>
                 <View style={styles.userInfoContainer}>
-                  <Ionicons name="person-outline" size={16} color={COLORS.primary} />
+                  <Ionicons
+                    name="person-outline"
+                    size={16}
+                    color={COLORS.primary}
+                  />
                   <View style={styles.userInfo}>
                     <Text style={styles.userDetailLabel}>Name</Text>
                     <Text style={styles.userDetailValue}>
@@ -1536,35 +1738,57 @@ const CheckoutScreen = ({ navigation }) => {
                   </View>
                 </View>
               </View>
-              
+
               {userProfile?.phone && (
                 <View style={styles.userDetailRow}>
                   <View style={styles.userInfoContainer}>
-                    <Ionicons name="call-outline" size={16} color={COLORS.primary} />
+                    <Ionicons
+                      name="call-outline"
+                      size={16}
+                      color={COLORS.primary}
+                    />
                     <View style={styles.userInfo}>
                       <Text style={styles.userDetailLabel}>Phone</Text>
-                      <Text style={styles.userDetailValue}>{userProfile.phone}</Text>
+                      <Text style={styles.userDetailValue}>
+                        {userProfile.phone}
+                      </Text>
                     </View>
                   </View>
                 </View>
               )}
-              
+
               {userProfile?.email && (
-                <View style={[styles.userDetailRow, { borderBottomWidth: 0, marginBottom: 0 }]}>
+                <View
+                  style={[
+                    styles.userDetailRow,
+                    {borderBottomWidth: 0, marginBottom: 0},
+                  ]}>
                   <View style={styles.userInfoContainer}>
-                    <Ionicons name="mail-outline" size={16} color={COLORS.primary} />
+                    <Ionicons
+                      name="mail-outline"
+                      size={16}
+                      color={COLORS.primary}
+                    />
                     <View style={styles.userInfo}>
                       <Text style={styles.userDetailLabel}>Email</Text>
-                      <Text style={styles.userDetailValue}>{userProfile.email}</Text>
+                      <Text style={styles.userDetailValue}>
+                        {userProfile.email}
+                      </Text>
                     </View>
                   </View>
                 </View>
               )}
             </View>
-            
+
             <View style={styles.tapToEditHint}>
-              <Ionicons name="hand-left-outline" size={14} color={COLORS.textSecondary} />
-              <Text style={styles.tapToEditText}>Tap to edit your information</Text>
+              <Ionicons
+                name="hand-left-outline"
+                size={14}
+                color={COLORS.textSecondary}
+              />
+              <Text style={styles.tapToEditText}>
+                Tap to edit your information
+              </Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -1572,46 +1796,52 @@ const CheckoutScreen = ({ navigation }) => {
         {/* Order Items */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Order Items</Text>
-          {(showAllItems ? items : items.slice(0, 2)).map((item) => (
+          {(showAllItems ? items : items.slice(0, 2)).map(item => (
             <View key={item.id} style={styles.orderItem}>
               <View style={styles.orderItemContent}>
                 <View style={styles.orderItemImageContainer}>
-                  <Image 
+                  <Image
                     source={{
-                      uri: item.images?.[0] || item.image || item.productImage || 'https://via.placeholder.com/60x60'
-                    }} 
+                      uri:
+                        item.images?.[0] ||
+                        item.image ||
+                        item.productImage ||
+                        'https://via.placeholder.com/60x60',
+                    }}
                     style={styles.orderItemImage}
                   />
                 </View>
                 <View style={styles.orderItemDetailsContainer}>
                   <Text style={styles.orderItemName}>{item.productName}</Text>
                   <Text style={styles.orderItemDetails}>
-                    Qty: {item.quantity} × ${item.price} = ${item.quantity * item.price}
+                    Qty: {item.quantity} × ${item.price} = $
+                    {item.quantity * item.price}
                   </Text>
                   {item.weight && (
                     <Text style={styles.orderItemWeight}>{item.weight}</Text>
                   )}
                 </View>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.deleteButton}
                   onPress={() => {
                     console.log('Removing item:', item);
-                    dispatch(removeFromCart({ 
-                      productId: item.id,
-                      weight: item.weight,
-                      category: item.category,
-                      type: item.type
-                    }));
-                  }}
-                >
+                    dispatch(
+                      removeFromCart({
+                        productId: item.id,
+                        weight: item.weight,
+                        category: item.category,
+                        type: item.type,
+                      }),
+                    );
+                  }}>
                   <Ionicons name="trash-outline" size={16} color="#ff4444" />
                 </TouchableOpacity>
               </View>
             </View>
           ))}
           {items.length > 2 && !showAllItems && (
-            <TouchableOpacity 
-              style={styles.viewAllButton} 
+            <TouchableOpacity
+              style={styles.viewAllButton}
               onPress={() => setShowAllItems(true)}>
               <Text style={styles.viewAllButtonText}>
                 View All {items.length} Products
@@ -1620,12 +1850,10 @@ const CheckoutScreen = ({ navigation }) => {
             </TouchableOpacity>
           )}
           {items.length > 2 && showAllItems && (
-            <TouchableOpacity 
-              style={styles.viewAllButton} 
+            <TouchableOpacity
+              style={styles.viewAllButton}
               onPress={() => setShowAllItems(false)}>
-              <Text style={styles.viewAllButtonText}>
-                Show Less
-              </Text>
+              <Text style={styles.viewAllButtonText}>Show Less</Text>
               <Ionicons name="chevron-up" size={16} color={COLORS.primary} />
             </TouchableOpacity>
           )}
@@ -1635,33 +1863,51 @@ const CheckoutScreen = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.couponSection}>
             <View style={styles.couponIconContainer}>
-              <Ionicons name="pricetag-outline" size={20} color={COLORS.primary} />
+              <Ionicons
+                name="pricetag-outline"
+                size={20}
+                color={COLORS.primary}
+              />
               <Text style={styles.couponSectionTitle}>Apply Coupon</Text>
             </View>
-            
+
             {appliedCoupon ? (
               <View style={styles.appliedCouponContainer}>
                 <View style={styles.appliedCouponInfo}>
-                  <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={COLORS.success}
+                  />
                   <View style={styles.appliedCouponText}>
-                    <Text style={styles.appliedCouponCode}>{appliedCoupon.couponCode}</Text>
+                    <Text style={styles.appliedCouponCode}>
+                      {appliedCoupon.couponCode}
+                    </Text>
                     <Text style={styles.appliedCouponSavings}>
                       You saved ${appliedCoupon.discountAmount}!
                     </Text>
                   </View>
                 </View>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.removeCouponButton}
                   onPress={removeCoupon}>
-                  <Ionicons name="close-circle" size={24} color={COLORS.error} />
+                  <Ionicons
+                    name="close-circle"
+                    size={24}
+                    color={COLORS.error}
+                  />
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.viewCouponsButton}
                 onPress={handleCouponPress}>
                 <Text style={styles.viewCouponsButtonText}>View Coupons</Text>
-                <Ionicons name="chevron-forward" size={18} color={COLORS.primary} />
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={COLORS.primary}
+                />
               </TouchableOpacity>
             )}
           </View>
@@ -1673,32 +1919,41 @@ const CheckoutScreen = ({ navigation }) => {
             <Ionicons name="receipt-outline" size={20} color={COLORS.primary} />
             <Text style={styles.summaryHeaderTitle}>Order Summary</Text>
           </View>
-          
+
           {isLoadingTax || isLoadingDeliveryCharge ? (
             <View style={styles.summaryLoadingContainer}>
               <Text style={styles.summaryLoadingText}>
-                {isLoadingDeliveryCharge ? 'Calculating delivery charges...' : 'Calculating charges...'}
+                {isLoadingDeliveryCharge
+                  ? 'Calculating delivery charges...'
+                  : 'Calculating charges...'}
               </Text>
             </View>
-          ) : (totalAmount > 0) ? (
+          ) : totalAmount > 0 ? (
             <>
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Subtotal ({totalItems} items)</Text>
-                <Text style={styles.summaryValue}>
-                  ${Math.round(parseFloat(taxData?.baseAmount || totalAmount) || 0)}
-                </Text>
-              </View>
-              
-              <View style={styles.summaryRow}>
-                {deliveryMode === 'home_delivery' &&
                 <Text style={styles.summaryLabel}>
-                  
-                  Delivery Fee
-                  {deliveryChargeData?.distance?.distanceText && (
-                    <Text style={styles.distanceText}> ({deliveryChargeData.distance.distanceText})</Text>
+                  Subtotal ({totalItems} items)
+                </Text>
+                <Text style={styles.summaryValue}>
+                  $
+                  {Math.round(
+                    parseFloat(taxData?.baseAmount || totalAmount) || 0,
                   )}
                 </Text>
-}
+              </View>
+
+              <View style={styles.summaryRow}>
+                {deliveryMode === 'home_delivery' && (
+                  <Text style={styles.summaryLabel}>
+                    Delivery Fee
+                    {deliveryChargeData?.distance?.distanceText && (
+                      <Text style={styles.distanceText}>
+                        {' '}
+                        ({deliveryChargeData.distance.distanceText})
+                      </Text>
+                    )}
+                  </Text>
+                )}
                 {deliveryMode === 'home_delivery' ? (
                   deliveryCharge > 0 ? (
                     <Text style={styles.summaryValue}>
@@ -1707,28 +1962,26 @@ const CheckoutScreen = ({ navigation }) => {
                   ) : (
                     <Text style={styles.freeDelivery}>Free</Text>
                   )
-                ) : (
-                  null
-                )}
+                ) : null}
               </View>
-              
+
               {deliveryChargeError && (
                 <View style={styles.deliveryErrorContainer}>
                   <Ionicons name="warning" size={16} color={COLORS.error} />
-                  <Text style={styles.deliveryErrorText}>{deliveryChargeError}</Text>
+                  <Text style={styles.deliveryErrorText}>
+                    {deliveryChargeError}
+                  </Text>
                 </View>
               )}
-              
+
               {/* Tax Charge - Show even if 0 */}
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>
-                  Tax Charge
-                </Text>
+                <Text style={styles.summaryLabel}>Tax Charge</Text>
                 <Text style={styles.summaryValue}>
                   ${Math.round(parseFloat(taxData?.taxAmount) || 0)}
                 </Text>
               </View>
-              
+
               {/* Platform Charge - Show only if taxData exists */}
               {taxData && (
                 <View style={styles.summaryRow}>
@@ -1738,7 +1991,7 @@ const CheckoutScreen = ({ navigation }) => {
                   </Text>
                 </View>
               )}
-              
+
               {appliedCoupon && couponDiscount > 0 && (
                 <View style={styles.summaryRow}>
                   <Text style={[styles.summaryLabel, styles.discountLabel]}>
@@ -1749,25 +2002,47 @@ const CheckoutScreen = ({ navigation }) => {
                   </Text>
                 </View>
               )}
-              
+
               <View style={styles.summaryDivider} />
-              
+
               <View style={styles.summaryTotalRow}>
                 <View>
                   <Text style={styles.summaryTotalLabel}>Total Amount</Text>
                   <Text style={styles.summaryTotalSubtext}>
-                    {appliedCoupon && couponDiscount > 0 
-                      ? `After discount of $${Math.round(parseFloat(couponDiscount) || 0)}` 
-                      : `Including ${deliveryMode === 'home_delivery' && deliveryCharge > 0 ? 'delivery, ' : ''}tax${(taxData?.platformCharge && parseFloat(taxData.platformCharge) > 0) ? ' & charges' : ''}`}
+                    {appliedCoupon && couponDiscount > 0
+                      ? `After discount of $${Math.round(
+                          parseFloat(couponDiscount) || 0,
+                        )}`
+                      : `Including ${
+                          deliveryMode === 'home_delivery' && deliveryCharge > 0
+                            ? 'delivery, '
+                            : ''
+                        }tax${
+                          taxData?.platformCharge &&
+                          parseFloat(taxData.platformCharge) > 0
+                            ? ' & charges'
+                            : ''
+                        }`}
                   </Text>
                 </View>
                 <Text style={styles.summaryTotalAmount}>
-                  ${(() => {
-                    const taxTotal = parseFloat(taxData?.totalAmount) || parseFloat(totalAmount) || 0;
+                  $
+                  {(() => {
+                    const taxTotal =
+                      parseFloat(taxData?.totalAmount) ||
+                      parseFloat(totalAmount) ||
+                      0;
                     const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
                     const safeCouponDiscount = parseFloat(couponDiscount) || 0;
-                    const finalAmount = taxTotal + safeDeliveryCharge - (appliedCoupon && couponDiscount > 0 ? safeCouponDiscount : 0);
-                    return Math.round(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+                    const finalAmount =
+                      taxTotal +
+                      safeDeliveryCharge -
+                      (appliedCoupon && couponDiscount > 0
+                        ? safeCouponDiscount
+                        : 0);
+                    return Math.round(
+                      isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+                    );
                   })()}
                 </Text>
               </View>
@@ -1776,7 +2051,8 @@ const CheckoutScreen = ({ navigation }) => {
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total Amount:</Text>
               <Text style={styles.totalAmount}>
-                ${(() => {
+                $
+                {(() => {
                   const safeTotal = parseFloat(totalAmount) || 0;
                   const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
                   const total = safeTotal + safeDeliveryCharge;
@@ -1791,24 +2067,31 @@ const CheckoutScreen = ({ navigation }) => {
         <View style={styles.deliveryModeSection}>
           <Text style={styles.deliveryModeTitle}>Delivery Mode</Text>
           <View style={styles.deliveryModeContainer}>
-            {deliveryModeOptions.map((option) => (
+            {deliveryModeOptions.map(option => (
               <TouchableOpacity
                 key={option.id}
                 style={[
                   styles.deliveryModeOption,
-                  deliveryMode === option.id && styles.deliveryModeOptionSelected,
+                  deliveryMode === option.id &&
+                    styles.deliveryModeOptionSelected,
                 ]}
                 onPress={() => dispatch(setDeliveryMode(option.id))}>
-                <View style={[
-                  styles.compactRadioButton,
-                  deliveryMode === option.id && styles.compactRadioButtonSelected,
-                ]}>
-                  {deliveryMode === option.id && <View style={styles.compactRadioButtonInner} />}
+                <View
+                  style={[
+                    styles.compactRadioButton,
+                    deliveryMode === option.id &&
+                      styles.compactRadioButtonSelected,
+                  ]}>
+                  {deliveryMode === option.id && (
+                    <View style={styles.compactRadioButtonInner} />
+                  )}
                 </View>
-                <Text style={[
-                  styles.deliveryModeLabel,
-                  deliveryMode === option.id && styles.deliveryModeLabelSelected,
-                ]}>
+                <Text
+                  style={[
+                    styles.deliveryModeLabel,
+                    deliveryMode === option.id &&
+                      styles.deliveryModeLabelSelected,
+                  ]}>
                   {option.label}
                 </Text>
               </TouchableOpacity>
@@ -1817,62 +2100,82 @@ const CheckoutScreen = ({ navigation }) => {
         </View>
 
         {/* Delivery Address - Only show for home delivery */}
-        {deliveryMode === 'home_delivery' && deliveryType === 'Home Delivery' && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Delivery Address</Text>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('AddAddress')}>
-                <Text style={styles.manageAddressText}>Manage Addresses</Text>
-              </TouchableOpacity>
-            </View>
-
-            {!selectedAddress || addresses.length === 0 ? (
-              <View style={styles.noAddressContainer}>
-                <Text style={styles.noAddressText}>
-                  {addresses.length === 0 ? 'No addresses found' : 'No address selected'}
-                </Text>
+        {deliveryMode === 'home_delivery' &&
+          deliveryType === 'Home Delivery' && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Delivery Address</Text>
                 <TouchableOpacity
-                  style={styles.addAddressButton}
                   onPress={() => navigation.navigate('AddAddress')}>
-                  <Text style={styles.addAddressButtonText}>
-                    {addresses.length === 0 ? 'Add Address' : 'Select Address'}
-                  </Text>
+                  <Text style={styles.manageAddressText}>Manage Addresses</Text>
                 </TouchableOpacity>
               </View>
-            ) : (
-              <View style={styles.selectedAddressCard}>
-                <View style={styles.selectedAddressContent}>
-                  <View style={styles.addressHeader}>
-                    <Text style={styles.addressTitle}>{selectedAddress.title}</Text>
-                    <View style={styles.defaultIndicator}>
-                      <Ionicons name="star" size={14} color={COLORS.primary} />
-                      <Text style={styles.defaultText}>Default</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.addressText}>{selectedAddress.address}</Text>
-                  <Text style={styles.addressText}>{selectedAddress.city}, {selectedAddress.pincode}</Text>
-                  {selectedAddress.landmark && (
-                    <Text style={styles.addressText}>Landmark: {selectedAddress.landmark}</Text>
-                  )}
+
+              {!selectedAddress || addresses.length === 0 ? (
+                <View style={styles.noAddressContainer}>
+                  <Text style={styles.noAddressText}>
+                    {addresses.length === 0
+                      ? 'No addresses found'
+                      : 'No address selected'}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.addAddressButton}
+                    onPress={() => navigation.navigate('AddAddress')}>
+                    <Text style={styles.addAddressButtonText}>
+                      {addresses.length === 0
+                        ? 'Add Address'
+                        : 'Select Address'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-              </View>
-            )}
-          </View>
-        )}
+              ) : (
+                <View style={styles.selectedAddressCard}>
+                  <View style={styles.selectedAddressContent}>
+                    <View style={styles.addressHeader}>
+                      <Text style={styles.addressTitle}>
+                        {selectedAddress.title}
+                      </Text>
+                      <View style={styles.defaultIndicator}>
+                        <Ionicons
+                          name="star"
+                          size={14}
+                          color={COLORS.primary}
+                        />
+                        <Text style={styles.defaultText}>Default</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.addressText}>
+                      {selectedAddress.address}
+                    </Text>
+                    <Text style={styles.addressText}>
+                      {selectedAddress.city}, {selectedAddress.pincode}
+                    </Text>
+                    {selectedAddress.landmark && (
+                      <Text style={styles.addressText}>
+                        Landmark: {selectedAddress.landmark}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
 
         {/* Agency Selection - Only show for pickup */}
         {deliveryMode === 'pickup' && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Selected Agency for Pickup</Text>
-            
+
             {isLoadingAgencies ? (
               <View style={styles.loadingContainer}>
                 <Text style={styles.loadingText}>Loading agency...</Text>
               </View>
             ) : agencies.length === 0 ? (
               <View style={styles.noAgencyContainer}>
-                <Text style={styles.noAgencyText}>No agency selected. Please select an agency from the home page.</Text>
+                <Text style={styles.noAgencyText}>
+                  No agency selected. Please select an agency from the home
+                  page.
+                </Text>
               </View>
             ) : (
               agencies.map(renderAgencyOption)
@@ -1893,12 +2196,21 @@ const CheckoutScreen = ({ navigation }) => {
       <View style={styles.footer}>
         <View style={styles.footerTotal}>
           <Text style={styles.footerTotalLabel}>
-            Total: ${(() => {
-              const taxTotal = parseFloat(taxData?.totalAmount) || parseFloat(totalAmount) || 0;
+            Total: $
+            {(() => {
+              const taxTotal =
+                parseFloat(taxData?.totalAmount) ||
+                parseFloat(totalAmount) ||
+                0;
               const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
               const safeCouponDiscount = parseFloat(couponDiscount) || 0;
-              const finalAmount = taxTotal + safeDeliveryCharge - (appliedCoupon && couponDiscount > 0 ? safeCouponDiscount : 0);
-              return Math.round(isNaN(finalAmount) ? 0 : Math.max(0, finalAmount));
+              const finalAmount =
+                taxTotal +
+                safeDeliveryCharge -
+                (appliedCoupon && couponDiscount > 0 ? safeCouponDiscount : 0);
+              return Math.round(
+                isNaN(finalAmount) ? 0 : Math.max(0, finalAmount),
+              );
             })()}
           </Text>
           {/* {taxData && (
@@ -1909,17 +2221,39 @@ const CheckoutScreen = ({ navigation }) => {
           )} */}
         </View>
         <TouchableOpacity
-          style={[styles.placeOrderButton, (loading || isLoadingProfile || !userProfile || isLoadingTax || isLoadingDeliveryCharge || deliveryChargeError) && styles.placeOrderButtonDisabled]}
+          style={[
+            styles.placeOrderButton,
+            (loading ||
+              isLoadingProfile ||
+              !userProfile ||
+              isLoadingTax ||
+              isLoadingDeliveryCharge ||
+              deliveryChargeError) &&
+              styles.placeOrderButtonDisabled,
+          ]}
           onPress={handlePlaceOrder}
-          disabled={loading || isLoadingProfile || !userProfile || isLoadingTax || isLoadingDeliveryCharge || deliveryChargeError}>
+          disabled={
+            loading ||
+            isLoadingProfile ||
+            !userProfile ||
+            isLoadingTax ||
+            isLoadingDeliveryCharge ||
+            deliveryChargeError
+          }>
           <Text style={styles.placeOrderButtonText}>
-            {loading ? 'Placing Order...' : 
-             isLoadingProfile ? 'Loading Profile...' : 
-             isLoadingTax ? 'Calculating...' : 
-             isLoadingDeliveryCharge ? 'Checking Delivery...' :
-             deliveryChargeError ? 'Delivery Not Available' :
-             !userProfile ? 'Profile Required' : 
-             STRINGS.placeOrder}
+            {loading
+              ? 'Placing Order...'
+              : isLoadingProfile
+              ? 'Loading Profile...'
+              : isLoadingTax
+              ? 'Calculating...'
+              : isLoadingDeliveryCharge
+              ? 'Checking Delivery...'
+              : deliveryChargeError
+              ? 'Delivery Not Available'
+              : !userProfile
+              ? 'Profile Required'
+              : STRINGS.placeOrder}
           </Text>
         </TouchableOpacity>
       </View>
@@ -1931,7 +2265,8 @@ const CheckoutScreen = ({ navigation }) => {
         animationType="fade"
         onRequestClose={() => setIsProfileUpdateModalVisible(false)}>
         <View style={styles.modalOverlay}>
-          <ScrollView contentContainerStyle={styles.profileUpdateModalContainer}>
+          <ScrollView
+            contentContainerStyle={styles.profileUpdateModalContainer}>
             <View style={styles.profileUpdateModal}>
               <Text style={styles.profileUpdateTitle}>Update Profile</Text>
               <Text style={styles.profileUpdateMessage}>
@@ -1944,7 +2279,9 @@ const CheckoutScreen = ({ navigation }) => {
                   <TextInput
                     style={styles.textInput}
                     value={profileFormData.name}
-                    onChangeText={(text) => setProfileFormData(prev => ({ ...prev, name: text }))}
+                    onChangeText={text =>
+                      setProfileFormData(prev => ({...prev, name: text}))
+                    }
                     placeholder="Enter your full name"
                     placeholderTextColor={COLORS.textSecondary}
                   />
@@ -1955,7 +2292,9 @@ const CheckoutScreen = ({ navigation }) => {
                   <TextInput
                     style={styles.textInput}
                     value={profileFormData.email}
-                    onChangeText={(text) => setProfileFormData(prev => ({ ...prev, email: text }))}
+                    onChangeText={text =>
+                      setProfileFormData(prev => ({...prev, email: text}))
+                    }
                     placeholder="Enter your email"
                     placeholderTextColor={COLORS.textSecondary}
                     keyboardType="email-address"
@@ -1968,7 +2307,9 @@ const CheckoutScreen = ({ navigation }) => {
                   <TextInput
                     style={styles.textInput}
                     value={profileFormData.phone}
-                    onChangeText={(text) => setProfileFormData(prev => ({ ...prev, phone: text }))}
+                    onChangeText={text =>
+                      setProfileFormData(prev => ({...prev, phone: text}))
+                    }
                     placeholder="Enter your phone number"
                     placeholderTextColor={COLORS.textSecondary}
                     keyboardType="phone-pad"
@@ -1986,9 +2327,9 @@ const CheckoutScreen = ({ navigation }) => {
 
                 <TouchableOpacity
                   style={[
-                    styles.profileUpdateButton, 
+                    styles.profileUpdateButton,
                     styles.updateProfileButton,
-                    isUpdatingProfile && styles.updateProfileButtonDisabled
+                    isUpdatingProfile && styles.updateProfileButtonDisabled,
                   ]}
                   onPress={updateProfile}
                   disabled={isUpdatingProfile}>
@@ -2011,43 +2352,57 @@ const CheckoutScreen = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.agencyDetailsModal}>
             <Text style={styles.agencyDetailsTitle}>Agency Details</Text>
-            
+
             {selectedAgencyForDetails && (
               <View style={styles.agencyDetailsContent}>
                 <View style={styles.agencyDetailRow}>
                   <Text style={styles.agencyDetailLabel}>Name:</Text>
-                  <Text style={styles.agencyDetailValue}>{selectedAgencyForDetails.name}</Text>
+                  <Text style={styles.agencyDetailValue}>
+                    {selectedAgencyForDetails.name}
+                  </Text>
                 </View>
-                
+
                 <View style={styles.agencyDetailRow}>
                   <Text style={styles.agencyDetailLabel}>Email:</Text>
-                  <Text style={styles.agencyDetailValue}>{selectedAgencyForDetails.email}</Text>
+                  <Text style={styles.agencyDetailValue}>
+                    {selectedAgencyForDetails.email}
+                  </Text>
                 </View>
-                
+
                 <View style={styles.agencyDetailRow}>
                   <Text style={styles.agencyDetailLabel}>Phone:</Text>
-                  <Text style={styles.agencyDetailValue}>{selectedAgencyForDetails.phone}</Text>
+                  <Text style={styles.agencyDetailValue}>
+                    {selectedAgencyForDetails.phone}
+                  </Text>
                 </View>
-                
+
                 <View style={styles.agencyDetailRow}>
                   <Text style={styles.agencyDetailLabel}>Address:</Text>
-                  <Text style={styles.agencyDetailValue}>{selectedAgencyForDetails.address}</Text>
+                  <Text style={styles.agencyDetailValue}>
+                    {selectedAgencyForDetails.address}
+                  </Text>
                 </View>
-                
+
                 <View style={styles.agencyDetailRow}>
                   <Text style={styles.agencyDetailLabel}>City:</Text>
-                  <Text style={styles.agencyDetailValue}>{selectedAgencyForDetails.city}</Text>
+                  <Text style={styles.agencyDetailValue}>
+                    {selectedAgencyForDetails.city}
+                  </Text>
                 </View>
-                
+
                 <View style={styles.agencyDetailRow}>
                   <Text style={styles.agencyDetailLabel}>Pincode:</Text>
-                  <Text style={styles.agencyDetailValue}>{selectedAgencyForDetails.pincode}</Text>
+                  <Text style={styles.agencyDetailValue}>
+                    {selectedAgencyForDetails.pincode}
+                  </Text>
                 </View>
-                
+
                 {selectedAgencyForDetails.landmark && (
                   <View style={styles.agencyDetailRow}>
                     <Text style={styles.agencyDetailLabel}>Landmark:</Text>
-                    <Text style={styles.agencyDetailValue}>{selectedAgencyForDetails.landmark}</Text>
+                    <Text style={styles.agencyDetailValue}>
+                      {selectedAgencyForDetails.landmark}
+                    </Text>
                   </View>
                 )}
               </View>
@@ -2075,7 +2430,7 @@ const CheckoutScreen = ({ navigation }) => {
             </View>
             <Text style={styles.errorModalTitle}>Order Failed</Text>
             <Text style={styles.errorModalMessage}>{errorMessage}</Text>
-            
+
             <TouchableOpacity
               style={styles.errorModalButton}
               onPress={() => {
@@ -2109,44 +2464,61 @@ const CheckoutScreen = ({ navigation }) => {
               </View>
             ) : coupons.length === 0 ? (
               <View style={styles.noCouponsContainer}>
-                <Ionicons name="pricetag-outline" size={60} color={COLORS.textSecondary} />
+                <Ionicons
+                  name="pricetag-outline"
+                  size={60}
+                  color={COLORS.textSecondary}
+                />
                 <Text style={styles.noCouponsText}>No coupons available</Text>
               </View>
             ) : (
-              <ScrollView style={styles.couponsList} showsVerticalScrollIndicator={false}>
-                {coupons.map((coupon) => {
+              <ScrollView
+                style={styles.couponsList}
+                showsVerticalScrollIndicator={false}>
+                {coupons.map(coupon => {
                   const now = new Date();
-                  const expiryDateTime = new Date(`${coupon.expiryDate}T${coupon.expiryTime}`);
+                  const expiryDateTime = new Date(
+                    `${coupon.expiryDate}T${coupon.expiryTime}`,
+                  );
                   const isExpired = expiryDateTime < now;
-                  
+
                   return (
                     <TouchableOpacity
                       key={coupon.id}
-                      style={[styles.couponCard, isExpired && styles.couponCardExpired]}
+                      style={[
+                        styles.couponCard,
+                        isExpired && styles.couponCardExpired,
+                      ]}
                       onPress={() => !isExpired && applyCoupon(coupon.code)}
                       disabled={isExpired || isApplyingCoupon}>
                       <View style={styles.couponLeft}>
                         <View style={styles.couponDiscountBadge}>
                           <Text style={styles.couponDiscountText}>
-                            {coupon.discountType === 'fixed' 
-                              ? `$${coupon.discountValue}` 
+                            {coupon.discountType === 'fixed'
+                              ? `$${coupon.discountValue}`
                               : `${coupon.discountValue}%`}
                           </Text>
                           <Text style={styles.couponDiscountSubtext}>OFF</Text>
                         </View>
                       </View>
-                      
+
                       <View style={styles.couponRight}>
                         <Text style={styles.couponCode}>{coupon.code}</Text>
                         <Text style={styles.couponMinAmount}>
                           Min order: ${coupon.minAmount}
                           {coupon.maxAmount && ` | Max: $${coupon.maxAmount}`}
                         </Text>
-                        <Text style={[styles.couponExpiry, isExpired && styles.couponExpired]}>
-                          {isExpired ? 'Expired' : `Valid till ${coupon.expiryDate}`}
+                        <Text
+                          style={[
+                            styles.couponExpiry,
+                            isExpired && styles.couponExpired,
+                          ]}>
+                          {isExpired
+                            ? 'Expired'
+                            : `Valid till ${coupon.expiryDate}`}
                         </Text>
                       </View>
-                      
+
                       {!isExpired && (
                         <View style={styles.couponApplyButton}>
                           <Text style={styles.couponApplyText}>APPLY</Text>
@@ -2178,7 +2550,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: borderRadius.md,
     borderBottomRightRadius: borderRadius.md,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {width: 0, height: 3},
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 5,
@@ -2222,7 +2594,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.sm,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
@@ -2324,7 +2696,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.04,
     shadowRadius: 2,
     elevation: 1,
@@ -2419,7 +2791,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
     backgroundColor: COLORS.white,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.03,
     shadowRadius: 2,
     elevation: 1,
@@ -2482,7 +2854,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     backgroundColor: COLORS.white,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
@@ -2529,7 +2901,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 3,
@@ -2545,7 +2917,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     marginBottom: spacing.sm,
     shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -2582,13 +2954,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.lightGray,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: -3 },
+    shadowOffset: {width: 0, height: -3},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 8,
-    justifyContent: "space-between",
-    flexDirection: "row",
-    alignItems: "center"
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   footerTotal: {
     alignItems: 'center',
@@ -2836,7 +3208,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary + '40',
     borderStyle: 'dashed',
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -2908,7 +3280,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {width: 0, height: 3},
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 4,
@@ -2930,14 +3302,15 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    // justifyContent: 'center',
+    // alignItems: 'center',
   },
   profileUpdateModalContainer: {
-    flexGrow: 1,
+    // flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    paddingVertical: 80,
+    borderRadius: 10,
   },
   profileUpdateModal: {
     width: '90%',
@@ -3019,7 +3392,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: borderRadius.md,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
@@ -3088,7 +3461,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.05,
     shadowRadius: 6,
     elevation: 2,
@@ -3137,7 +3510,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     backgroundColor: COLORS.white,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 3,
@@ -3180,7 +3553,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     marginBottom: spacing.sm,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
@@ -3310,4 +3683,3 @@ const styles = StyleSheet.create({
 });
 
 export default CheckoutScreen;
-

@@ -12,6 +12,7 @@ import SupportScreen from '../screens/SupportScreen';
 import TrackingScreen from '../screens/TrackingScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import CartScreen from '../screens/CartScreen';
+import HomeScreen from '../screens/HomeScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -55,8 +56,8 @@ const TabNavigator = () => {
         },
       }}>
       <Tab.Screen
-        name="Products"
-        component={ProductsScreen}
+        name="home"
+        component={HomeScreen}
         // options={{
         //   tabBarLabel: ({ focused }) => (
         //     <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>

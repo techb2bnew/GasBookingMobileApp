@@ -16,6 +16,9 @@ import AgencySelectionScreen from '../screens/AgencySelectionScreen';
 
 // Navigation
 import TabNavigator from './TabNavigator';
+import ProductsScreen from '../screens/ProductsScreen';
+import OngoingOrderDetails from '../screens/OngoingOrderDetails';
+import OrdersScreen from '../screens/OrdersScreen';
 
 const Stack = createStackNavigator();
 
@@ -42,6 +45,9 @@ const StackNavigator = () => {
       }}>
       <Stack.Screen name="Main" component={TabNavigator} />
       <Stack.Screen name="Cart" component={CartScreen} />
+      <Stack.Screen name="Products" component={ProductsScreen} />
+      <Stack.Screen name="Orders" component={OrdersScreen} />
+      <Stack.Screen name="OngoingOrder" component={OngoingOrderDetails} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
       <Stack.Screen name="OrderConfirmation" component={OrderConfirmationScreen} />
       <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />

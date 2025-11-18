@@ -15,13 +15,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { COLORS, STRINGS } from '../constants';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
+import apiClient from '../utils/apiConfig';
+import { addOrder } from '../redux/slices/orderSlice';
+import { clearCart } from '../redux/slices/cartSlice';
 
 const OrderDetailsScreen = ({ navigation, route }) => {
   const insets = useSafeAreaInsets();
   const { order } = route.params;
+  console.log("orderorder",order);
+    const dispatch = useDispatch();
+  
   const { products } = useSelector(state => state.products);
   const [currentAgent, setCurrentAgent] = useState(null);
   const [agentModalVisible, setAgentModalVisible] = useState(false);
+    const [loading, setLoading] = useState(false);
+  
 
   // Get product image from Redux products state
   const getProductImage = (productId) => {
@@ -190,6 +198,8 @@ const OrderDetailsScreen = ({ navigation, route }) => {
     setAgentModalVisible(false);
     setCurrentAgent(null);
   };
+
+ 
 
   const renderOrderInfo = () => (
     <View style={styles.section}>
@@ -406,8 +416,13 @@ const OrderDetailsScreen = ({ navigation, route }) => {
         <View style={styles.timelineItem}>
           <View style={styles.timelineDot} />
           <View style={styles.timelineContent}>
+            <View>
+
             <Text style={styles.timelineLabel}>Order Created</Text>
             <Text style={styles.timelineDate}>{formatDate(order.createdAt)}</Text>
+            </View>
+
+         
           </View>
         </View>
         
