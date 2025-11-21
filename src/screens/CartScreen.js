@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -9,32 +9,36 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, STRINGS } from '../constants';
-import { removeFromCart, updateQuantity } from '../redux/slices/cartSlice';
+import {useDispatch, useSelector} from 'react-redux';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {COLORS, STRINGS} from '../constants';
+import {removeFromCart, updateQuantity} from '../redux/slices/cartSlice';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
+import {wp, hp, fontSize, spacing, borderRadius} from '../utils/dimensions';
 
-
-const CartScreen = ({ navigation }) => {
+const CartScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
-  const { items, totalAmount, totalItems } = useSelector(state => state.cart);
+  const {items, totalAmount, totalItems} = useSelector(state => state.cart);
   const [isStockModalVisible, setIsStockModalVisible] = useState(false);
   const [stockModalMessage, setStockModalMessage] = useState('');
 
   // Get available stock for a cart item
-  const getAvailableStock = (item) => {
+  const getAvailableStock = item => {
     if (!item || !item.weight) return 0;
 
     // First check agency variants stock
     if (item.AgencyInventory && item.AgencyInventory.length > 0) {
       const agencyInventory = item.AgencyInventory[0];
-      if (agencyInventory.agencyVariants && agencyInventory.agencyVariants.length > 0) {
-        const agencyVariant = agencyInventory.agencyVariants.find(av => av.label === item.weight);
+      if (
+        agencyInventory.agencyVariants &&
+        agencyInventory.agencyVariants.length > 0
+      ) {
+        const agencyVariant = agencyInventory.agencyVariants.find(
+          av => av.label === item.weight,
+        );
         if (agencyVariant && agencyVariant.stock !== undefined) {
           return agencyVariant.stock;
         }
@@ -53,15 +57,16 @@ const CartScreen = ({ navigation }) => {
   };
 
   // Get total quantity of this item in cart (excluding current item)
-  const getOtherItemsQuantity = (currentItem) => {
+  const getOtherItemsQuantity = currentItem => {
     if (!currentItem?.id || !items || !Array.isArray(items)) return 0;
-    
+
     return items
       .filter(cartItem => {
         // Exclude current item by comparing references or unique identifiers
         const itemProduct = cartItem?.product || cartItem;
-        const isSameProduct = itemProduct?.id === currentItem.id && 
-                              itemProduct?.weight === currentItem.weight;
+        const isSameProduct =
+          itemProduct?.id === currentItem.id &&
+          itemProduct?.weight === currentItem.weight;
         const isCurrentItem = cartItem === currentItem;
         return isSameProduct && !isCurrentItem;
       })
@@ -81,39 +86,46 @@ const CartScreen = ({ navigation }) => {
       const totalAfterUpdate = otherItemsQuantity + newQuantity;
 
       if (totalAfterUpdate > availableStock) {
-        setStockModalMessage(`You can add maximum ${availableStock} units. Only ${availableStock} units are currently available.`);
+        setStockModalMessage(
+          `You can add maximum ${availableStock} units. Only ${availableStock} units are currently available.`,
+        );
         setIsStockModalVisible(true);
         return;
       }
     }
 
     // Update quantity if stock is available
-    dispatch(updateQuantity({
-      productId: item.id,
-      quantity: newQuantity,
-      weight: item.weight,
-      category: item.category,
-      type: item.type
-    }));
+    dispatch(
+      updateQuantity({
+        productId: item.id,
+        quantity: newQuantity,
+        weight: item.weight,
+        category: item.category,
+        type: item.type,
+      }),
+    );
   };
 
-  const handleRemoveItem = (item) => {
+  const handleRemoveItem = item => {
     Alert.alert(
       'Remove Item',
       'Are you sure you want to remove this item from cart?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        {text: 'Cancel', style: 'cancel'},
         {
           text: 'Remove',
           style: 'destructive',
-          onPress: () => dispatch(removeFromCart({
-            productId: item.id,
-            weight: item.weight,
-            category: item.category,
-            type: item.type
-          })),
+          onPress: () =>
+            dispatch(
+              removeFromCart({
+                productId: item.id,
+                weight: item.weight,
+                category: item.category,
+                type: item.type,
+              }),
+            ),
         },
-      ]
+      ],
     );
   };
 
@@ -125,12 +137,12 @@ const CartScreen = ({ navigation }) => {
     navigation.navigate('Checkout');
   };
 
-  const renderCartItem = ({ item }) => {
+  const renderCartItem = ({item}) => {
     return (
       <View style={styles.cartItem}>
         {/* Product Image with Badge */}
         <View style={styles.imageContainer}>
-          <Image source={{ uri: item.images[0] }} style={styles.itemImage} />
+          <Image source={{uri: item.images[0]}} style={styles.itemImage} />
           <View style={styles.quantityBadge}>
             <Text style={styles.quantityBadgeText}>{item.quantity}</Text>
           </View>
@@ -141,7 +153,10 @@ const CartScreen = ({ navigation }) => {
           <View style={styles.itemHeader}>
             <View style={styles.productTitleContainer}>
               <Text style={styles.itemName} numberOfLines={2}>
-                {item.productName ? item.productName.charAt(0).toUpperCase() + item.productName.slice(1) : item.productName}
+                {item.productName
+                  ? item.productName.charAt(0).toUpperCase() +
+                    item.productName.slice(1)
+                  : item.productName}
               </Text>
               <View style={styles.productTags}>
                 {item.weight && (
@@ -169,13 +184,22 @@ const CartScreen = ({ navigation }) => {
               <Text style={styles.unitPrice}>${item.price}</Text>
               <Text style={styles.perUnit}>per unit</Text>
             </View>
-            
+
             <View style={styles.quantityContainer}>
               <TouchableOpacity
-                style={[styles.quantityButton, item.quantity <= 1 && styles.quantityButtonDisabled]}
+                style={[
+                  styles.quantityButton,
+                  item.quantity <= 1 && styles.quantityButtonDisabled,
+                ]}
                 onPress={() => handleUpdateQuantity(item, item.quantity - 1)}
                 disabled={item.quantity <= 1}>
-                <Ionicons name="remove" size={16} color={item.quantity <= 1 ? COLORS.textSecondary : COLORS.white} />
+                <Ionicons
+                  name="remove"
+                  size={16}
+                  color={
+                    item.quantity <= 1 ? COLORS.textSecondary : COLORS.white
+                  }
+                />
               </TouchableOpacity>
 
               <Text style={styles.quantityText}>{item.quantity}</Text>
@@ -192,10 +216,12 @@ const CartScreen = ({ navigation }) => {
           <View style={styles.totalRow}>
             <View style={styles.totalContainer}>
               <Text style={styles.totalLabel}>Item Total</Text>
-              <Text style={styles.itemTotal}>${item.price * item.quantity}</Text>
+              <Text style={styles.itemTotal}>
+                ${item.price * item.quantity}
+              </Text>
             </View>
             <View style={styles.savingsContainer}>
-              <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+              <Ionicons name="checkmark-circle" size={16} color={COLORS.blue} />
               <Text style={styles.savingsText}>Added to cart</Text>
             </View>
           </View>
@@ -203,7 +229,6 @@ const CartScreen = ({ navigation }) => {
       </View>
     );
   };
-
 
   const renderEmptyCart = () => (
     <View style={styles.emptyContainer}>
@@ -217,17 +242,28 @@ const CartScreen = ({ navigation }) => {
       </Text>
       <TouchableOpacity
         style={styles.shopButton}
-        onPress={() => navigation.navigate('Main', {
-          screen: 'Products',
-        })}>
-        <Ionicons name="storefront-outline" size={20} color={COLORS.white} style={styles.shopIcon} />
+        onPress={() =>
+          navigation.navigate('Products', {
+            screen: 'Products',
+          })
+        }>
+        <Ionicons
+          name="storefront-outline"
+          size={20}
+          color={COLORS.white}
+          style={styles.shopIcon}
+        />
         <Text style={styles.shopButtonText}>Start Shopping</Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
+    <View
+      style={[
+        styles.container,
+        {paddingTop: insets.top, paddingBottom: insets.bottom},
+      ]}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -245,14 +281,16 @@ const CartScreen = ({ navigation }) => {
           <FlatList
             data={items}
             renderItem={renderCartItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={item => item.id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.cartContent}
           />
 
           <View style={styles.footer}>
             <View style={styles.totalContainer}>
-              <Text style={styles.totalLabel}>Total Amount</Text>
+              <Text style={[styles.totalLabel, {color: COLORS.blue}]}>
+                Total Amount
+              </Text>
               <Text style={styles.totalAmount}>${totalAmount}</Text>
               <Text style={styles.itemsCount}>{totalItems} items</Text>
             </View>
@@ -306,7 +344,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
@@ -389,7 +427,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: fontSize.sm,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.blue,
     lineHeight: 18,
     marginBottom: spacing.xs / 2,
   },
@@ -455,7 +493,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.15,
     shadowRadius: 2,
     elevation: 1,
@@ -495,14 +533,14 @@ const styles = StyleSheet.create({
   savingsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.success + '10',
+    backgroundColor: COLORS.blue + '10',
     paddingHorizontal: spacing.xs,
     paddingVertical: 2,
     borderRadius: borderRadius.sm,
   },
   savingsText: {
     fontSize: fontSize.xs,
-    color: COLORS.success,
+    color: COLORS.blue,
     fontWeight: '500',
     marginLeft: spacing.xs / 2,
   },
@@ -517,14 +555,14 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   emptyTitle: {
-    fontSize: fontSize.xxl,
+    fontSize: fontSize.lg,
     fontWeight: '800',
-    color: COLORS.text,
+    color: COLORS.blue,
     marginBottom: spacing.md,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: fontSize.md,
+    fontSize: fontSize.sm,
     color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
@@ -538,7 +576,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
@@ -559,7 +597,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: -3 },
+    shadowOffset: {width: 0, height: -3},
     shadowOpacity: 0.12,
     shadowRadius: 10,
     elevation: 8,
@@ -599,7 +637,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
@@ -624,7 +662,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     alignItems: 'center',
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 8,
@@ -663,4 +701,3 @@ const styles = StyleSheet.create({
 });
 
 export default CartScreen;
-

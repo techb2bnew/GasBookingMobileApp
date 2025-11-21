@@ -9,12 +9,12 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { COLORS } from '../constants/colors';
+import {COLORS} from '../constants/colors';
 import apiClient from '../utils/apiConfig';
 
-const PrivacyPolicyScreen = ({ navigation }) => {
+const PrivacyPolicyScreen = ({navigation}) => {
   const insets = useSafeAreaInsets();
   const [privacyData, setPrivacyData] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -70,17 +70,26 @@ const PrivacyPolicyScreen = ({ navigation }) => {
           <Icon name="security" size={24} color={COLORS.white} />
         </View>
         <View style={styles.privacyTitleContainer}>
-          <Text style={styles.privacyTitle}>{policy.title ? policy.title.charAt(0).toUpperCase() + policy.title.slice(1) : policy.title}</Text>
+          <Text style={styles.privacyTitle}>
+            {policy.title
+              ? policy.title.charAt(0).toUpperCase() + policy.title.slice(1)
+              : policy.title}
+          </Text>
         </View>
       </View>
-      
+
       <View style={styles.privacyContent}>
-        <Text style={styles.privacyDescription}>{policy.description ? policy.description.charAt(0).toUpperCase() + policy.description.slice(1) : policy.description}</Text>
+        <Text style={styles.privacyDescription}>
+          {policy.description
+            ? policy.description.charAt(0).toUpperCase() +
+              policy.description.slice(1)
+            : policy.description}
+        </Text>
       </View>
-      
+
       <View style={styles.privacyFooter}>
         <View style={styles.versionContainer}>
-          <Icon name="info" size={16} color={COLORS.success} />
+          <Icon name="info" size={16} color={COLORS.blue} />
           <Text style={styles.versionText}>Version {policy.version}</Text>
         </View>
         <View style={styles.dateContainer}>
@@ -99,7 +108,7 @@ const PrivacyPolicyScreen = ({ navigation }) => {
 
   const renderLoading = () => (
     <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color={COLORS.success} />
+      <ActivityIndicator size="large" color={COLORS.blue} />
       <Text style={styles.loadingText}>Loading Privacy Policy...</Text>
     </View>
   );
@@ -113,12 +122,12 @@ const PrivacyPolicyScreen = ({ navigation }) => {
           refreshing={refreshing}
           onRefresh={onRefresh}
           colors={[COLORS.success]}
-          tintColor={COLORS.success}
+          tintcolor={COLORS.blue}
         />
       }>
       <View style={styles.contentHeader}>
         <View style={styles.headerIconContainer}>
-          <Icon name="shield" size={40} color={COLORS.success} />
+          <Icon name="shield" size={40} color={COLORS.blue} />
         </View>
         <Text style={styles.contentTitle}>LEADWAY GAS Privacy Policy</Text>
         <Text style={styles.contentSubtitle}>
@@ -131,25 +140,29 @@ const PrivacyPolicyScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.footerNote}>
-        <Icon name="verified-user" size={20} color={COLORS.success} />
+        <Icon name="verified-user" size={20} color={COLORS.blue} />
         <Text style={styles.footerText}>
-          We are committed to protecting your privacy and ensuring the security of your personal information.
-          Last updated: {privacyData.length > 0 ? new Date(privacyData[0]?.updatedAt).toLocaleDateString('en-IN') : 'N/A'}
+          We are committed to protecting your privacy and ensuring the security
+          of your personal information. Last updated:{' '}
+          {privacyData.length > 0
+            ? new Date(privacyData[0]?.updatedAt).toLocaleDateString('en-IN')
+            : 'N/A'}
         </Text>
       </View>
 
       <View style={styles.contactInfo}>
         <Text style={styles.contactTitle}>Questions about Privacy?</Text>
         <Text style={styles.contactText}>
-          If you have any questions about this Privacy Policy, please contact us at:
+          If you have any questions about this Privacy Policy, please contact us
+          at:
         </Text>
         <View style={styles.contactDetails}>
           <View style={styles.contactItem}>
-            <Icon name="email" size={16} color={COLORS.success} />
+            <Icon name="email" size={16} color={COLORS.blue} />
             <Text style={styles.contactDetail}>support@gasbooking.com</Text>
           </View>
           <View style={styles.contactItem}>
-            <Icon name="phone" size={16} color={COLORS.success} />
+            <Icon name="phone" size={16} color={COLORS.blue} />
             <Text style={styles.contactDetail}>+91 98765 43210</Text>
           </View>
         </View>
@@ -158,7 +171,11 @@ const PrivacyPolicyScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        {paddingTop: insets.top, paddingBottom: insets.bottom},
+      ]}>
       {renderHeader()}
       {loading ? renderLoading() : renderContent()}
     </SafeAreaView>
@@ -174,7 +191,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.success,
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 20,
     paddingVertical: 15,
     elevation: 4,

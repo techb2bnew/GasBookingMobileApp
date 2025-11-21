@@ -554,9 +554,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   sectionTitle: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.md,
     fontWeight: '700',
-    color: COLORS.text,
+    color: COLORS.blue,
     marginBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
@@ -577,9 +577,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs / 2,
   },
   infoValue: {
-    fontSize: fontSize.md,
+    fontSize: fontSize.sm,
     color: COLORS.text,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   phoneNumber: {
     color: COLORS.primary,
@@ -705,8 +705,8 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
   },
   totalLabel: {
-    fontSize: fontSize.lg,
-    color: COLORS.text,
+    fontSize: fontSize.md,
+    color: COLORS.blue,
     fontWeight: '700',
   },
   totalValue: {

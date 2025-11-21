@@ -203,7 +203,7 @@ const MapPicker = ({ onLocationSelect, initialLocation = null }) => {
             coordinate={currentLocation}
             title="Current Location"
             description="Your current location"
-            pinColor={COLORS.success}
+            pincolor={COLORS.blue}
           />
         </MapView>
       </View>

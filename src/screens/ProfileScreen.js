@@ -1175,7 +1175,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.blue,
   },
   editButton: {
     color: COLORS.primary,

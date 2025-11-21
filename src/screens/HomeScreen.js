@@ -34,6 +34,7 @@ import {
   testProductAvailabilityEvent,
 } from '../utils/socketTest';
 import socketService from '../utils/socketService';
+import LinearGradient from 'react-native-linear-gradient';
 
 const {width: screenWidth} = Dimensions.get('window');
 
@@ -461,11 +462,13 @@ const HomeScreen = ({navigation}) => {
   });
 
   const renderCarouselItem = ({item, index}) => (
-    <View style={[styles.carouselItem, {}]}>
-      <Image source={{uri: item.image}} style={[styles.carouselImage]} />
-      <View style={styles.carouselOverlay}>
-        <Text style={styles.carouselTitle}>{item.title}</Text>
-        <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>
+    <View style={[styles.carouselItem, {paddingHorizontal: 6}]}>
+      <View style={{paddingBottom: 10, borderRadius: 20}}>
+        <Image source={{uri: item.image}} style={[styles.carouselImage]} />
+        {/* <View style={styles.carouselOverlay}>
+          <Text style={styles.carouselTitle}>{item.title}</Text>
+          <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>
+        </View> */}
       </View>
     </View>
   );
@@ -664,11 +667,26 @@ const HomeScreen = ({navigation}) => {
               <TouchableOpacity
                 style={styles.menuButton}
                 onPress={() => setMenuVisible(true)}>
-                <Icon name="menu" size={26} color={COLORS.black} />
+                <Icon name="menu" size={26} color={COLORS.blue} />
               </TouchableOpacity>
-              <View style={styles.titleContainer}>
-                <Text style={styles.title}>{STRINGS.gasBooking}</Text>
-                <Text style={styles.subtitle}>Fast & Safe Delivery</Text>
+              <View style={[styles.titleContainer, {}]}>
+                <View style={{flexDirection: 'row'}}>
+                  <Image
+                    source={require('../assets/leadIcon.png')}
+                    style={{
+                      width: '20%',
+                      height: '100%',
+                      resizeMode: 'contain',
+                      borderRadius: 10,
+                    }}
+                  />
+                  <Text style={[styles.title, {color: COLORS.blue}]}>
+                    {STRINGS.gasBooking}
+                  </Text>
+                </View>
+                {/* <Text style={[styles.subtitle, {color: COLORS.primary}]}>
+                  Fast & Safe Delivery
+                </Text> */}
               </View>
             </View>
 
@@ -702,11 +720,7 @@ const HomeScreen = ({navigation}) => {
                     : agencies.find(a => a.id === selectedAgencyId)?.name ||
                       'Select agency'}
                 </Text>
-                <Icon
-                  name={'expand-more'}
-                  size={20}
-                  color={COLORS.textSecondary}
-                />
+                <Icon name={'expand-more'} size={20} color={COLORS.blue} />
               </TouchableOpacity>
             </View>
           </View>
@@ -715,6 +729,7 @@ const HomeScreen = ({navigation}) => {
 
       <ScrollView
         style={styles.content}
+        scrollEnabled={false}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{paddingBottom: 100}}
         refreshControl={
@@ -782,24 +797,34 @@ const HomeScreen = ({navigation}) => {
           <Text style={styles.subtitle}>Would you like to place an order?</Text>
 
           {/* Place New Order */}
-          <TouchableOpacity
+          <LinearGradient
+            colors={['#DC143C', '#C11236', '#96142eff']}
+            // colors={['#4c669f', '#3b5998', '#192f6a']} // apne hisaab se colors change kar lena
             style={styles.primaryCard}
-            onPress={() => navigation.navigate('Products')}>
-            <View>
-              <Text style={styles.primaryTitle}>Place new order</Text>
-              <Text style={styles.primarySubtitle}>
-                Few clicks away from delivery
-              </Text>
-            </View>
-            <Icon name="chevron-right" size={26} color="#fff" />
-          </TouchableOpacity>
-
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}>
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+              onPress={() => navigation.navigate('Products')}>
+              <View>
+                <Text style={styles.primaryTitle}>Place new order</Text>
+                <Text style={styles.primarySubtitle}>
+                  Few clicks away from delivery
+                </Text>
+              </View>
+              <Icon name="chevron-right" size={26} color="#fff" />
+            </TouchableOpacity>
+          </LinearGradient>
           {/* Repeat Previous Order */}
           <TouchableOpacity
             style={styles.secondaryCard}
             onPress={() => navigation.navigate('Orders')}>
             <Text style={styles.secondaryText}>Repeat my Previous Order</Text>
-            <Icon name="chevron-right" size={26} color="#999" />
+            <Icon name="chevron-right" size={26} color={COLORS.blue} />
           </TouchableOpacity>
 
           {/* Follow Ongoing Order */}
@@ -807,7 +832,7 @@ const HomeScreen = ({navigation}) => {
             style={styles.secondaryCard}
             onPress={() => navigation.navigate('OngoingOrder')}>
             <Text style={styles.secondaryText}>Follow my Ongoing Order</Text>
-            <Icon name="chevron-right" size={26} color="#999" />
+            <Icon name="chevron-right" size={26} color={COLORS.blue} />
           </TouchableOpacity>
         </View>
         {/* <View style={styles.productsSection}>
@@ -895,6 +920,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 8,
+    display: 'flex',
   },
   headerGradient: {
     // backgroundColor: COLORS.primary,
@@ -911,7 +937,7 @@ const styles = StyleSheet.create({
   },
   headerLeft: {
     flexDirection: 'row',
-    alignItems: 'center',
+    // alignItems: 'center',
     flex: 1,
   },
   menuButton: {
@@ -920,29 +946,33 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     shadowColor: COLORS.shadow,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    //  shadowOffset: {width: 0, height: 2},
+    // shadowOpacity: 0.15,
+    // shadowRadius: 4,
+    // elevation: 3,
   },
   titleContainer: {
     flex: 1,
+    // display:"flex",
+    flexDirection: 'column',
+    // alignItems:"center",
+    justifyContent: 'center',
   },
   title: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.md,
     fontWeight: '800',
     color: COLORS.primary,
-    letterSpacing: -0.5,
-    marginBottom: wp('0.5%'),
+    // letterSpacing: -0.5,
+    // marginBottom: wp('0.5%'),
   },
   subtitle: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
     color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '500',
   },
   headerButtons: {
     flexDirection: 'row',
-    alignItems: 'center',
+    // alignItems: 'center',
     gap: spacing.md,
   },
   agencySelectorContainer: {
@@ -1008,8 +1038,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   carouselContainer: {
-    height: hp('25%'),
+    height: hp('27%'),
     marginBottom: 0,
+    paddingTop: 7,
   },
   carousel: {
     flex: 1,
@@ -1022,7 +1053,8 @@ const styles = StyleSheet.create({
   carouselImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
+    // resizeMode: 'cover',
+    borderRadius: 10,
   },
   carouselOverlay: {
     position: 'absolute',
@@ -1048,7 +1080,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'absolute',
-    bottom: spacing.sm,
+    bottom: 0,
     left: 0,
     right: 0,
   },
@@ -1056,8 +1088,8 @@ const styles = StyleSheet.create({
     width: wp('2%'),
     height: wp('2%'),
     borderRadius: wp('1%'),
-    backgroundColor: COLORS.white,
-    opacity: 0.5,
+    backgroundColor: COLORS.blue,
+    opacity: 0.7,
     marginHorizontal: wp('1%'),
   },
   activeDot: {
@@ -1429,13 +1461,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   primaryCard: {
-    backgroundColor: COLORS.primary,
+    // backgroundColor: COLORS.primary,
     padding: 16,
     borderRadius: 10,
     marginBottom: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    // flexDirection: 'row',
+    // justifyContent: 'space-between',
+    // alignItems: 'center',
   },
   primaryTitle: {
     color: '#fff',

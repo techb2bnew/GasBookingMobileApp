@@ -1,6 +1,6 @@
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
-import { COLORS } from '../constants';
+import {createStackNavigator} from '@react-navigation/stack';
+import {COLORS} from '../constants';
 
 // Screens
 import CartScreen from '../screens/CartScreen';
@@ -27,8 +27,8 @@ const StackNavigator = () => {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        cardStyle: { backgroundColor: COLORS.background },
-        cardStyleInterpolator: ({ current, layouts }) => {
+        cardStyle: {backgroundColor: COLORS.background},
+        cardStyleInterpolator: ({current, layouts}) => {
           return {
             cardStyle: {
               transform: [
@@ -49,12 +49,18 @@ const StackNavigator = () => {
       <Stack.Screen name="Orders" component={OrdersScreen} />
       <Stack.Screen name="OngoingOrder" component={OngoingOrderDetails} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
-      <Stack.Screen name="OrderConfirmation" component={OrderConfirmationScreen} />
+      <Stack.Screen
+        name="OrderConfirmation"
+        component={OrderConfirmationScreen}
+      />
       <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
       <Stack.Screen name="AddAddress" component={AddAddressScreen} />
       <Stack.Screen name="ProductDetails" component={ProductDetailsScreen} />
       <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />
-      <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
+      <Stack.Screen
+        name="TermsAndConditions"
+        component={TermsAndConditionsScreen}
+      />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
       <Stack.Screen name="AgencySelection" component={AgencySelectionScreen} />
     </Stack.Navigator>
@@ -62,4 +68,3 @@ const StackNavigator = () => {
 };
 
 export default StackNavigator;
-

@@ -154,45 +154,45 @@ const MenuDrawer = ({ visible, onClose, navigation }) => {
             <View style={styles.menuContainer}>
               <ScrollView style={styles.menuItems}>
                 <TouchableOpacity style={styles.menuItem} onPress={handleMySafety}>
-                  <Icon name="security" size={24} color={COLORS.primary} />
+                  <Icon name="security" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>My Safety</Text>
-                  <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
+                  <Icon name="chevron-right" size={24}  color={COLORS.blue} />
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.menuItem} onPress={handleRateUs}>
-                  <Icon name="star" size={24} color={COLORS.primary} />
+                  <Icon name="star" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>Rate us on Play Store</Text>
-                  <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
+                  <Icon name="chevron-right" size={24}  color={COLORS.blue} />
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.menuItem} onPress={handleProfileDetails}>
-                  <Icon name="person" size={24} color={COLORS.primary} />
+                  <Icon name="person" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>Profile Details</Text>
-                  <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
+                  <Icon name="chevron-right" size={24}  color={COLORS.blue} />
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.menuItem} onPress={handleKnowYourPrice}>
-                  <Icon name="attach-money" size={24} color={COLORS.primary} />
+                  <Icon name="attach-money" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>Know Your Price</Text>
-                  <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
+                  <Icon name="chevron-right" size={24}  color={COLORS.blue} />
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.menuItem} onPress={handleAddress}>
-                  <Icon name="location-on" size={24} color={COLORS.primary} />
+                  <Icon name="location-on" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>Address</Text>
-                  <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
+                  <Icon name="chevron-right" size={24}  color={COLORS.blue} />
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.menuItem} onPress={handleTermsAndConditions}>
-                  <Icon name="description" size={24} color={COLORS.primary} />
+                  <Icon name="description" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>Terms & Conditions</Text>
-                  <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
+                  <Icon name="chevron-right" size={24}  color={COLORS.blue} />
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.menuItem} onPress={handlePrivacyPolicy}>
-                  <Icon name="privacy-tip" size={24} color={COLORS.primary} />
+                  <Icon name="privacy-tip" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>Privacy Policy</Text>
-                  <Icon name="chevron-right" size={24} color={COLORS.textSecondary} />
+                  <Icon name="chevron-right" size={24}  color={COLORS.blue} />
                 </TouchableOpacity>
               </ScrollView>
 
@@ -223,27 +223,27 @@ const MenuDrawer = ({ visible, onClose, navigation }) => {
             </View>
             <ScrollView style={styles.modalBody}>
               <View style={styles.safetyItem}>
-                <Icon name="verified-user" size={20} color={COLORS.success} />
+                <Icon name="verified-user" size={20} color={COLORS.blue} />
                 <Text style={styles.safetyText}>All our delivery partners are verified and background checked</Text>
               </View>
               <View style={styles.safetyItem}>
-                <Icon name="location-on" size={20} color={COLORS.success} />
+                <Icon name="location-on" size={20} color={COLORS.blue} />
                 <Text style={styles.safetyText}>Real-time tracking ensures you know exactly where your order is</Text>
               </View>
               <View style={styles.safetyItem}>
-                <Icon name="phone" size={20} color={COLORS.success} />
+                <Icon name="phone" size={20} color={COLORS.blue} />
                 <Text style={styles.safetyText}>Direct communication with delivery partner through in-app calling</Text>
               </View>
               <View style={styles.safetyItem}>
-                <Icon name="payment" size={20} color={COLORS.success} />
+                <Icon name="payment" size={20} color={COLORS.blue} />
                 <Text style={styles.safetyText}>Secure payment options with multiple verification layers</Text>
               </View>
               <View style={styles.safetyItem}>
-                <Icon name="support-agent" size={20} color={COLORS.success} />
+                <Icon name="support-agent" size={20} color={COLORS.blue} />
                 <Text style={styles.safetyText}>24/7 customer support for any safety concerns</Text>
               </View>
               <View style={styles.safetyItem}>
-                <Icon name="report" size={20} color={COLORS.success} />
+                <Icon name="report" size={20} color={COLORS.blue} />
                 <Text style={styles.safetyText}>Easy reporting system for any issues or concerns</Text>
               </View>
             </ScrollView>

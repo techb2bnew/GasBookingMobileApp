@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -9,35 +9,41 @@ import {
   Alert,
   Linking,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, STRINGS } from '../constants';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {COLORS, STRINGS} from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
+import {wp, hp, fontSize, spacing, borderRadius} from '../utils/dimensions';
 
 const FAQ_DATA = [
   {
     question: 'How do I book a gas cylinder?',
-    answer: 'You can book a gas cylinder through the \'LEADWAY GAS\' section of the app. Simply select the cylinder type and add it to your cart, then proceed to checkout.',
+    answer:
+      "You can book a gas cylinder through the 'LEADWAY GAS' section of the app. Simply select the cylinder type and add it to your cart, then proceed to checkout.",
   },
   {
     question: 'What payment methods are available?',
-    answer: 'Currently, we only support Cash on Delivery (COD). We are working on integrating more payment options soon.',
+    answer:
+      'Currently, we only support Cash on Delivery (COD). We are working on integrating more payment options soon.',
   },
   {
     question: 'How can I track my order?',
-    answer: 'You can track your order status in real-time from the \'Orders\' section. The status will update as your order progresses from Pending to Delivered.',
+    answer:
+      "You can track your order status in real-time from the 'Orders' section. The status will update as your order progresses from Pending to Delivered.",
   },
   {
     question: 'Can I change my delivery address after placing an order?',
-    answer: 'Once an order is placed, the delivery address cannot be changed. Please ensure your delivery address is correct before confirming your order.',
+    answer:
+      'Once an order is placed, the delivery address cannot be changed. Please ensure your delivery address is correct before confirming your order.',
   },
   {
     question: 'How do I raise a complaint or refund request?',
-    answer: 'You can use the \'Raise Complaint\' or \'Refund Request\' forms available on this Support screen. Fill in the details, and our team will get back to you.',
+    answer:
+      "You can use the 'Raise Complaint' or 'Refund Request' forms available on this Support screen. Fill in the details, and our team will get back to you.",
   },
   {
     question: 'What if my OTP is not received?',
-    answer: 'If you do not receive the OTP, please check your network connection or try the \'Resend OTP\' option on the login screen. If the issue persists, please contact our support.',
+    answer:
+      "If you do not receive the OTP, please check your network connection or try the 'Resend OTP' option on the login screen. If the issue persists, please contact our support.",
   },
 ];
 
@@ -46,8 +52,7 @@ const SupportScreen = () => {
   const [expandedFAQ, setExpandedFAQ] = useState(null);
   const [refundText, setRefundText] = useState('');
 
-
-  const toggleFAQ = (index) => {
+  const toggleFAQ = index => {
     setExpandedFAQ(expandedFAQ === index ? null : index);
   };
 
@@ -68,23 +73,34 @@ const SupportScreen = () => {
       Alert.alert('Error', 'Please enter your refund request details.');
       return;
     }
-    Alert.alert('Success', 'Your refund request has been submitted. We will review it and process accordingly.');
+    Alert.alert(
+      'Success',
+      'Your refund request has been submitted. We will review it and process accordingly.',
+    );
     setRefundText('');
   };
 
   return (
-    <ScrollView style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
+    <ScrollView
+      style={[
+        styles.container,
+        {paddingTop: insets.top, paddingBottom: insets.bottom},
+      ]}>
       <View style={styles.header}>
         <Text style={styles.title}>{STRINGS.support}</Text>
       </View>
 
       {/* Raise Complaint Button */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{STRINGS.raiseComplaint}</Text>
+        <Text style={[styles.sectionTitle, {color: COLORS.blue}]}>
+          {STRINGS.raiseComplaint}
+        </Text>
         <Text style={styles.sectionDescription}>
           Click below to send us an email with your complaint details.
         </Text>
-        <TouchableOpacity style={styles.complaintButton} onPress={handleRaiseComplaint}>
+        <TouchableOpacity
+          style={styles.complaintButton}
+          onPress={handleRaiseComplaint}>
           <Icon name="email" size={20} color={COLORS.white} />
           <Text style={styles.complaintButtonText}>Send Email Complaint</Text>
         </TouchableOpacity>
@@ -108,7 +124,9 @@ const SupportScreen = () => {
 
       {/* FAQ Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{STRINGS.faq}</Text>
+        <Text style={[styles.sectionTitle, {color: COLORS.blue}]}>
+          {STRINGS.faq}
+        </Text>
         {FAQ_DATA.map((faq, index) => (
           <View key={index} style={styles.faqItem}>
             <TouchableOpacity
@@ -128,17 +146,19 @@ const SupportScreen = () => {
 
       {/* Contact Us */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{STRINGS.contactUs}</Text>
+        <Text style={[styles.sectionTitle, {color: COLORS.blue}]}>
+          {STRINGS.contactUs}
+        </Text>
         <Text style={styles.contactText}>
           For further assistance, please contact us at:
         </Text>
-        
+
         <TouchableOpacity style={styles.contactItem} onPress={handleEmailPress}>
           <Icon name="email" size={20} color={COLORS.primary} />
           <Text style={styles.contactLink}>support@gasbooking.com</Text>
           <Icon name="launch" size={16} color={COLORS.primary} />
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.contactItem} onPress={handlePhonePress}>
           <Icon name="phone" size={20} color={COLORS.primary} />
           <Text style={styles.contactLink}>+91 98765 43210</Text>
@@ -164,7 +184,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 3,
@@ -183,7 +203,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.06,
     shadowRadius: 6,
     elevation: 3,
@@ -219,7 +239,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
@@ -238,7 +258,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
@@ -310,4 +330,3 @@ const styles = StyleSheet.create({
 });
 
 export default SupportScreen;
-

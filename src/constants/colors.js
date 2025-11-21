@@ -37,6 +37,9 @@ export const COLORS = {
   transparent: 'transparent',
   overlay: 'rgba(0, 0, 0, 0.6)',
   highlight: '#FFE5E5',     // Light Red highlight
-  subtle: '#F8FAFC',        // Very Light Blue
+  subtle: '#F8FAFC',  
+  
+  // Very Light Blue
+  blue:"#008ED8"
 };
 

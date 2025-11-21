@@ -1066,7 +1066,7 @@ const styles = StyleSheet.create({
   productsTitle: {
     fontSize: fontSize.xl,
     fontWeight: 'bold',
-    color: COLORS.textPrimary,
+    color: COLORS.blue,
   },
   refreshProductsButton: {
     padding: wp('2%'),
@@ -1188,7 +1188,7 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: fontSize.xs,
     fontWeight: 'bold',
-    color: COLORS.textPrimary,
+    color: COLORS.blue,
     marginBottom: wp('1%'),
     lineHeight: fontSize.sm,
   },

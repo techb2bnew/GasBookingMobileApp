@@ -274,46 +274,46 @@ console.log("orderIdorderId",orderId);
             {order.deliveryMode === 'pickup' ? (
               <>
                 <View style={styles.statusItem}>
-                  <Ionicons name="construct" size={16} color={COLORS.success} />
+                  <Ionicons name="construct" size={16} color={COLORS.blue} />
                   <Text style={styles.statusText}>Your order is being prepared at the agency</Text>
                 </View>
                 <View style={styles.statusItem}>
-                  <Ionicons name="notifications" size={16} color={COLORS.success} />
+                  <Ionicons name="notifications" size={16} color={COLORS.blue} />
                   <Text style={styles.statusText}>You will receive updates on order status</Text>
                 </View>
                 <View style={styles.statusItem}>
-                  <Ionicons name="eye" size={16} color={COLORS.success} />
+                  <Ionicons name="eye" size={16} color={COLORS.blue} />
                   <Text style={styles.statusText}>Track your order in the Orders section</Text>
                 </View>
                 <View style={styles.statusItem}>
-                  <Ionicons name="card" size={16} color={COLORS.success} />
+                  <Ionicons name="card" size={16} color={COLORS.blue} />
                   <Text style={styles.statusText}>Payment will be collected on pickup</Text>
                 </View>
                 <View style={styles.statusItem}>
-                  <Ionicons name="id-card" size={16} color={COLORS.success} />
+                  <Ionicons name="id-card" size={16} color={COLORS.blue} />
                   <Text style={styles.statusText}>Please bring a valid ID for verification</Text>
                 </View>
               </>
             ) : (
               <>
                 <View style={styles.statusItem}>
-                  <Ionicons name="construct" size={16} color={COLORS.success} />
+                  <Ionicons name="construct" size={16} color={COLORS.blue} />
                   <Text style={styles.statusText}>Your order is being processed</Text>
                 </View>
                 <View style={styles.statusItem}>
-                  <Ionicons name="notifications" size={16} color={COLORS.success} />
+                  <Ionicons name="notifications" size={16} color={COLORS.blue} />
                   <Text style={styles.statusText}>You will receive updates on order status</Text>
                 </View>
                 <View style={styles.statusItem}>
-                  <Ionicons name="eye" size={16} color={COLORS.success} />
+                  <Ionicons name="eye" size={16} color={COLORS.blue} />
                   <Text style={styles.statusText}>Track your order in the Orders section</Text>
                 </View>
                 <View style={styles.statusItem}>
-                  <Ionicons name="card" size={16} color={COLORS.success} />
+                  <Ionicons name="card" size={16} color={COLORS.blue} />
                   <Text style={styles.statusText}>Payment will be collected on delivery</Text>
                 </View>
                 <View style={styles.statusItem}>
-                  <Ionicons name="home" size={16} color={COLORS.success} />
+                  <Ionicons name="home" size={16} color={COLORS.blue} />
                   <Text style={styles.statusText}>Please ensure someone is available to receive the order</Text>
                 </View>
               </>

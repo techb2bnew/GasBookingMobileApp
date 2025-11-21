@@ -13,6 +13,7 @@ import TrackingScreen from '../screens/TrackingScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import CartScreen from '../screens/CartScreen';
 import HomeScreen from '../screens/HomeScreen';
+import CartStack from './CartStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -74,7 +75,7 @@ const TabNavigator = () => {
           tabBarLabel: () => null, // Hide default label
           tabBarIcon: ({ color, size, focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <Icon name="home" color={color} size={focused ? 26 : 24} />
+              <Icon name="home" color={focused ? COLORS.primary: COLORS.blue} size={focused ? 26 : 24} />
               <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
                 Home
               </Text>
@@ -101,7 +102,7 @@ const TabNavigator = () => {
           tabBarLabel: () => null, // Hide default label
           tabBarIcon: ({ color, size, focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <Icon name="list-alt" color={color} size={focused ? 26 : 24} />
+              <Icon name="list-alt" color={focused ? COLORS.primary: COLORS.blue} size={focused ? 26 : 24} />
               <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
                 Orders
               </Text>
@@ -111,7 +112,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen
         name="Cart"
-        component={CartScreen}
+        component={CartStack}
         // options={{
         //   tabBarLabel: ({ focused }) => (
         //     <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
@@ -128,7 +129,7 @@ const TabNavigator = () => {
           tabBarLabel: () => null, // Hide default label
           tabBarIcon: ({ color, size, focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <Icon name="shopping-cart" color={color} size={focused ? 26 : 24} />
+              <Icon name="shopping-cart" color={focused ? COLORS.primary: COLORS.blue} size={focused ? 26 : 24} />
               <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
                 Cart
               </Text>
@@ -155,7 +156,7 @@ const TabNavigator = () => {
           tabBarLabel: () => null, // Hide default label
           tabBarIcon: ({ color, size, focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <Icon name="help-outline" color={color} size={focused ? 26 : 24} />
+              <Icon name="help-outline" color={focused ? COLORS.primary: COLORS.blue} size={focused ? 26 : 24} />
               <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
                 Support
               </Text>
@@ -188,7 +189,7 @@ const TabNavigator = () => {
                   style={[styles.profileTabImage, focused && styles.activeProfileTabImage]}
                 />
               ) : (
-                <Icon name="person" color={color} size={focused ? 26 : 24} />
+                <Icon name="person" color={focused ? COLORS.primary: COLORS.blue} size={focused ? 26 : 24} />
               )}
               <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
                 Profile
@@ -222,7 +223,8 @@ const styles = StyleSheet.create({
     tabLabel: {
     fontSize: 10,
     fontWeight: '600',
-    color: COLORS.textSecondary,
+    // color: COLORS.textSecondary,
+    color: COLORS.blue,
     marginTop: 4,
   },
   activeTabLabel: {

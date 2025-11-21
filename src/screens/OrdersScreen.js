@@ -547,7 +547,9 @@ const OrdersScreen = ({navigation}) => {
                 size={16}
                 color={COLORS.primary}
               />
-              <Text style={styles.orderId}>#{item.orderNumber}</Text>
+              <Text style={[styles.orderId, {color: COLORS.blue}]}>
+                #{item.orderNumber}
+              </Text>
             </View>
             <Text style={styles.orderDate}>{formatDate(item.createdAt)}</Text>
           </View>
@@ -865,7 +867,7 @@ const OrdersScreen = ({navigation}) => {
         title={
           currentAction?.type === 'return'
             ? 'Select a reason for returning the order'
-            : 'Select a reason for cancelling the order'
+            : 'Select a reason for            cancelling the order'
         }
         reasonsList={reasonsList}
         onClose={() => {
@@ -1015,7 +1017,7 @@ const styles = StyleSheet.create({
   orderCard: {
     backgroundColor: COLORS.white,
     borderRadius: borderRadius.md,
-    padding: spacing.xs,
+    padding: spacing.md,
     marginBottom: spacing.md / 2,
     shadowColor: COLORS.shadow,
     shadowOffset: {
@@ -1198,6 +1200,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: COLORS.textSecondary,
     marginRight: spacing.xs,
+    paddingVertical: 4,
   },
   productQuantity: {
     fontSize: fontSize.xs,

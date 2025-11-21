@@ -1877,7 +1877,7 @@ const CheckoutScreen = ({navigation}) => {
                   <Ionicons
                     name="checkmark-circle"
                     size={20}
-                    color={COLORS.success}
+                    color={COLORS.blue}
                   />
                   <View style={styles.appliedCouponText}>
                     <Text style={styles.appliedCouponCode}>

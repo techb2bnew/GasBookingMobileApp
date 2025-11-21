@@ -399,7 +399,7 @@ const TrackingScreen = ({ navigation, route }) => {
               <TouchableOpacity
                 style={styles.callButton}
                 onPress={() => callDriver(trackingData.deliveryPerson.phone)}>
-                <Icon name="phone" size={20} color={COLORS.success} />
+                <Icon name="phone" size={20} color={COLORS.blue} />
               </TouchableOpacity>
             </View>
 
@@ -445,7 +445,7 @@ const TrackingScreen = ({ navigation, route }) => {
                 }}
                 title="Destination"
                 description={trackingData.destinationLocation.address}
-                pinColor={COLORS.success}
+                pincolor={COLORS.blue}
               />
               {/* Route from Pickup to Destination */}
               <MapViewDirections
