@@ -88,13 +88,11 @@ export const STRINGS = {
   required: 'This field is required',
   invalidPhone: 'Invalid phone number',
   invalidEmail: 'Invalid email address',
-  email: "support@gasbooking.com",
-  phone: "+919876543210",
+  email: 'support@gasbooking.com',
+  phone: '+919876543210',
 
-
-  API_BASE_URL: "https://03cf51bbf35b.ngrok-free.app",
-  SOCKET_URL: "https://03cf51bbf35b.ngrok-free.app"
+  API_BASE_URL: 'https://d881671a029a.ngrok-free.app',
+  SOCKET_URL: 'https://d881671a029a.ngrok-free.app',
 };
-
 
 // #00ADEF blue #008ED8

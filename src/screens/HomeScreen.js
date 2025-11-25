@@ -669,27 +669,26 @@ const HomeScreen = ({navigation}) => {
                 onPress={() => setMenuVisible(true)}>
                 <Icon name="menu" size={26} color={COLORS.blue} />
               </TouchableOpacity>
-              <View style={[styles.titleContainer, {}]}>
-                <View style={{flexDirection: 'row'}}>
-                  <Image
-                    source={require('../assets/leadIcon.png')}
-                    style={{
-                      width: '20%',
-                      height: '100%',
-                      resizeMode: 'contain',
-                      borderRadius: 10,
-                    }}
-                  />
-                  <Text style={[styles.title, {color: COLORS.blue}]}>
-                    {STRINGS.gasBooking}
-                  </Text>
-                </View>
-                {/* <Text style={[styles.subtitle, {color: COLORS.primary}]}>
+            </View>
+            <View style={[styles.titleContainer, {}]}>
+              <View style={{flexDirection: 'row'}}>
+                <Image
+                  source={require('../assets/leadIcon.png')}
+                  style={{
+                    width: '20%',
+                    height: '100%',
+                    resizeMode: 'contain',
+                    borderRadius: 10,
+                  }}
+                />
+                <Text style={[styles.title, {color: COLORS.blue}]}>
+                  {STRINGS.gasBooking}
+                </Text>
+              </View>
+              {/* <Text style={[styles.subtitle, {color: COLORS.primary}]}>
                   Fast & Safe Delivery
                 </Text> */}
-              </View>
             </View>
-
             {/* <View style={styles.headerButtons}>
               <TouchableOpacity
                 style={styles.cartButton}
@@ -934,25 +933,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
+    // backgroundColor:"red"
   },
   headerLeft: {
     flexDirection: 'row',
     // alignItems: 'center',
-    flex: 1,
+    flex: 0.6,
   },
   menuButton: {
-    padding: wp('2%'),
-    marginRight: spacing.md,
+    // padding: wp('2%'),
+
+    // marginRight: spacing.md,
     borderRadius: borderRadius.md,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    shadowColor: COLORS.shadow,
+    // shadowColor: COLORS.shadow,
     //  shadowOffset: {width: 0, height: 2},
     // shadowOpacity: 0.15,
     // shadowRadius: 4,
     // elevation: 3,
   },
   titleContainer: {
-    flex: 1,
+    // flex: 1,
     // display:"flex",
     flexDirection: 'column',
     // alignItems:"center",
@@ -987,8 +988,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: wp('1%'),
-    minWidth: wp('40%'),
-    maxWidth: wp('50%'),
+    minWidth: wp('30%'),
+    maxWidth: wp('40%'),
     shadowColor: COLORS.shadow,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.15,

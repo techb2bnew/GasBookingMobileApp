@@ -249,7 +249,7 @@ const CartScreen = ({navigation}) => {
         }>
         <Ionicons
           name="storefront-outline"
-          size={20}
+          size={18}
           color={COLORS.white}
           style={styles.shopIcon}
         />
@@ -570,8 +570,8 @@ const styles = StyleSheet.create({
   },
   shopButton: {
     backgroundColor: COLORS.primary,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderRadius: borderRadius.xl,
     flexDirection: 'row',
     alignItems: 'center',
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
   },
   shopButtonText: {
     color: COLORS.white,
-    fontSize: fontSize.lg,
+    fontSize: fontSize.md,
     fontWeight: '700',
   },
   footer: {

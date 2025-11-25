@@ -775,6 +775,7 @@ const OrdersScreen = ({navigation}) => {
           <Ionicons name="arrow-back" size={28} color={COLORS.white} />
         </TouchableOpacity>
         <Text style={styles.title}>{STRINGS.orders}</Text>
+        <Text style={styles.title}>{}</Text>
       </View>
       <View style={{paddingHorizontal: 6}}>
         {orders.length === 0 ? (
@@ -992,6 +993,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 10,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
