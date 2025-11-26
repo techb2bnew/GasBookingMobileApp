@@ -268,7 +268,7 @@ const CartScreen = ({navigation}) => {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={28} color={COLORS.white} />
+          <Ionicons name="arrow-back" size={24} color={COLORS.white} />
         </TouchableOpacity>
         <Text style={styles.title}>{STRINGS.cart}</Text>
         <View style={styles.placeholder} />
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.lg,
     backgroundColor: COLORS.primary,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,

@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   },
 
   subtitle: {
-    fontSize: 15,
+    fontSize: 12,
     color: COLORS.white,
   },
   statusBox: {

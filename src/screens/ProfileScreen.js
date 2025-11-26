@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,11 @@ import {
   Modal,
   Image,
 } from 'react-native';
-import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
-import { useDispatch, useSelector } from 'react-redux';
-import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, STRINGS } from '../constants';
+import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
+import {useDispatch, useSelector} from 'react-redux';
+import {useFocusEffect} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {COLORS, STRINGS} from '../constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../utils/apiConfig';
 import {
@@ -31,14 +31,17 @@ import {
   deleteAddressAPI,
   clearAddressError,
 } from '../redux/slices/profileSlice';
-import { logout } from '../redux/slices/authSlice';
-import { clearCart } from '../redux/slices/cartSlice';
+import {logout} from '../redux/slices/authSlice';
+import {clearCart} from '../redux/slices/cartSlice';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Ionicons from 'react-native-vector-icons/dist/Ionicons';
 
-const ProfileScreen = ({ navigation }) => {
+const ProfileScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
-  const { profile, addresses, addressLoading, addressError } = useSelector(state => state.profile);
+  const {profile, addresses, addressLoading, addressError} = useSelector(
+    state => state.profile,
+  );
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
     name: '',
@@ -47,15 +50,19 @@ const ProfileScreen = ({ navigation }) => {
     profileImage: null,
   });
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
-  const [isDeleteAccountModalVisible, setIsDeleteAccountModalVisible] = useState(false);
+  const [isDeleteAccountModalVisible, setIsDeleteAccountModalVisible] =
+    useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [validationError, setValidationError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [imageChanged, setImageChanged] = useState(false);
-  const [isAddAddressModalVisible, setIsAddAddressModalVisible] = useState(false);
-  const [isViewAllAddressesModalVisible, setIsViewAllAddressesModalVisible] = useState(false);
-  const [isEditAddressModalVisible, setIsEditAddressModalVisible] = useState(false);
+  const [isAddAddressModalVisible, setIsAddAddressModalVisible] =
+    useState(false);
+  const [isViewAllAddressesModalVisible, setIsViewAllAddressesModalVisible] =
+    useState(false);
+  const [isEditAddressModalVisible, setIsEditAddressModalVisible] =
+    useState(false);
   const [editingAddressId, setEditingAddressId] = useState(null);
   const [addressForm, setAddressForm] = useState({
     title: '',
@@ -65,7 +72,6 @@ const ProfileScreen = ({ navigation }) => {
     landmark: '',
   });
   const [addressErrors, setAddressErrors] = useState({});
-
 
   // Fetch user profile from API
   const fetchUserProfile = async () => {
@@ -81,23 +87,25 @@ const ProfileScreen = ({ navigation }) => {
         const userProfile = response?.data?.data?.user;
 
         // Update Redux state with fresh profile data
-        dispatch(updateProfile({
-          id: userProfile?.id,
-          name: userProfile?.name || '',
-          email: userProfile?.email || '',
-          phone: userProfile.phone || '',
-          role: userProfile?.role || 'customer',
-          profileImage: userProfile?.profileImage || null,
-         }));
+        dispatch(
+          updateProfile({
+            id: userProfile?.id,
+            name: userProfile?.name || '',
+            email: userProfile?.email || '',
+            phone: userProfile.phone || '',
+            role: userProfile?.role || 'customer',
+            profileImage: userProfile?.profileImage || null,
+          }),
+        );
 
-         // Update addresses if available
-         if (userProfile?.addresses && Array.isArray(userProfile.addresses)) {
-           // Clear existing addresses first
-           dispatch(clearAddresses());
-           userProfile.addresses.forEach(address => {
-             dispatch(addAddress(address));
-           });
-         }
+        // Update addresses if available
+        if (userProfile?.addresses && Array.isArray(userProfile.addresses)) {
+          // Clear existing addresses first
+          dispatch(clearAddresses());
+          userProfile.addresses.forEach(address => {
+            dispatch(addAddress(address));
+          });
+        }
 
         // Update local form state
         setProfileForm({
@@ -116,7 +124,13 @@ const ProfileScreen = ({ navigation }) => {
         console.error('Session Expired', 'Please login again');
         dispatch(logout());
         // Clear AsyncStorage
-        await AsyncStorage.multiRemove(['userToken', 'authToken', 'userId', 'userRole', 'agencyId']);
+        await AsyncStorage.multiRemove([
+          'userToken',
+          'authToken',
+          'userId',
+          'userRole',
+          'agencyId',
+        ]);
       } else {
         console.error('Error', 'Failed to fetch profile. Please try again.');
       }
@@ -125,13 +139,12 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
-
   // Fetch profile and addresses when component mounts
   useFocusEffect(
     React.useCallback(() => {
       fetchUserProfile();
       dispatch(fetchAddresses());
-    }, [])
+    }, []),
   );
 
   // Clear address error after 5 seconds
@@ -160,7 +173,7 @@ const ProfileScreen = ({ navigation }) => {
     // Clear previous errors
     setValidationError('');
     setFieldErrors({});
-    
+
     const errors = {};
 
     // Validation
@@ -205,15 +218,17 @@ const ProfileScreen = ({ navigation }) => {
         // Update local Redux state
         dispatch(updateProfile(profileForm));
         setIsEditingProfile(false);
-         setImageChanged(false); // Reset image changed flag after save
+        setImageChanged(false); // Reset image changed flag after save
 
         // Refresh profile data from server
         await fetchUserProfile();
 
         console.log('Success', 'Profile updated successfully');
-
       } else {
-        console.log('Error', response.data?.message || 'Failed to update profile');
+        console.log(
+          'Error',
+          response.data?.message || 'Failed to update profile',
+        );
       }
     } catch (error) {
       console.error('Profile Update Error:', error);
@@ -222,13 +237,22 @@ const ProfileScreen = ({ navigation }) => {
         // Token expired or invalid, logout user
         console.log('Session Expired', 'Please login again');
         dispatch(logout());
-        await AsyncStorage.multiRemove(['userToken', 'authToken', 'userId', 'userRole', 'agencyId']);
+        await AsyncStorage.multiRemove([
+          'userToken',
+          'authToken',
+          'userId',
+          'userRole',
+          'agencyId',
+        ]);
       } else {
-        console.log('Error', error.response?.data?.message || 'Failed to update profile. Please try again.');
+        console.log(
+          'Error',
+          error.response?.data?.message ||
+            'Failed to update profile. Please try again.',
+        );
       }
     }
   };
-
 
   // const handleLogout = () => {
   //   Alert.alert(
@@ -277,7 +301,13 @@ const ProfileScreen = ({ navigation }) => {
     } finally {
       // Only logout auth data, keep cart and other data
       dispatch(logout());
-      await AsyncStorage.multiRemove(['userToken', 'authToken', 'userId', 'userRole', 'agencyId']);
+      await AsyncStorage.multiRemove([
+        'userToken',
+        'authToken',
+        'userId',
+        'userRole',
+        'agencyId',
+      ]);
       console.log('✅ Logout successful - All auth data cleared');
       setIsLogoutModalVisible(false);
     }
@@ -289,7 +319,7 @@ const ProfileScreen = ({ navigation }) => {
 
   const confirmDeleteAccount = async () => {
     setIsDeletingAccount(true);
-    
+
     try {
       // Get token from AsyncStorage
       const token = await AsyncStorage.getItem('userToken');
@@ -308,18 +338,27 @@ const ProfileScreen = ({ navigation }) => {
       // Make API call to delete account
       const response = await apiClient.delete('/api/auth/account', {
         data: {
-          confirmation: 'DELETE_MY_ACCOUNT'
-        }
+          confirmation: 'DELETE_MY_ACCOUNT',
+        },
       });
 
       console.log('Delete Account API Response:', response.data);
 
       if (response.data && response.data.success) {
         console.log('Account deleted successfully');
-        Alert.alert('Account Deleted', 'Your account has been successfully deleted.');
+        Alert.alert(
+          'Account Deleted',
+          'Your account has been successfully deleted.',
+        );
       } else {
-        console.log('Delete account API returned error:', response.data?.message);
-        Alert.alert('Error', response.data?.message || 'Failed to delete account');
+        console.log(
+          'Delete account API returned error:',
+          response.data?.message,
+        );
+        Alert.alert(
+          'Error',
+          response.data?.message || 'Failed to delete account',
+        );
       }
     } catch (error) {
       console.error('Delete Account API Error:', error);
@@ -328,14 +367,18 @@ const ProfileScreen = ({ navigation }) => {
         console.log('Session expired during account deletion');
         Alert.alert('Session Expired', 'Please login again');
       } else {
-        Alert.alert('Error', error.response?.data?.message || 'Failed to delete account. Please try again.');
+        Alert.alert(
+          'Error',
+          error.response?.data?.message ||
+            'Failed to delete account. Please try again.',
+        );
       }
     } finally {
       // Always clear ALL data including cart for account deletion
       dispatch(logout());
-      dispatch(clearCart());        // Clear cart data
-      dispatch(clearAddresses());   // Clear address data
-      await AsyncStorage.clear();   // Clear all AsyncStorage
+      dispatch(clearCart()); // Clear cart data
+      dispatch(clearAddresses()); // Clear address data
+      await AsyncStorage.clear(); // Clear all AsyncStorage
       setIsDeleteAccountModalVisible(false);
       setIsDeletingAccount(false);
     }
@@ -343,15 +386,11 @@ const ProfileScreen = ({ navigation }) => {
 
   // Image upload functions
   const showImagePicker = () => {
-    Alert.alert(
-      'Select Image',
-      'Choose an option',
-      [
-        { text: 'Camera', onPress: () => openCamera() },
-        { text: 'Gallery', onPress: () => openImageLibrary() },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    Alert.alert('Select Image', 'Choose an option', [
+      {text: 'Camera', onPress: () => openCamera()},
+      {text: 'Gallery', onPress: () => openImageLibrary()},
+      {text: 'Cancel', style: 'cancel'},
+    ]);
   };
 
   const openCamera = () => {
@@ -362,7 +401,7 @@ const ProfileScreen = ({ navigation }) => {
       maxHeight: 500,
     };
 
-    launchCamera(options, (response) => {
+    launchCamera(options, response => {
       if (response.assets && response.assets[0]) {
         handleImageSelection(response.assets[0]);
       } else if (response.error) {
@@ -380,7 +419,7 @@ const ProfileScreen = ({ navigation }) => {
       maxHeight: 500,
     };
 
-    launchImageLibrary(options, (response) => {
+    launchImageLibrary(options, response => {
       if (response.assets && response.assets[0]) {
         handleImageSelection(response.assets[0]);
       } else if (response.error) {
@@ -390,7 +429,7 @@ const ProfileScreen = ({ navigation }) => {
     });
   };
 
-  const handleImageSelection = async (imageAsset) => {
+  const handleImageSelection = async imageAsset => {
     try {
       const formData = new FormData();
       formData.append('image', {
@@ -408,7 +447,7 @@ const ProfileScreen = ({ navigation }) => {
       if (response.data && response.data.success) {
         const imageUrl = response.data.data.user.profileImage;
         dispatch(setProfileImage(imageUrl));
-        setProfileForm({ ...profileForm, profileImage: imageUrl });
+        setProfileForm({...profileForm, profileImage: imageUrl});
         setImageChanged(true); // Enable save button after image upload
       }
     } catch (error) {
@@ -420,7 +459,7 @@ const ProfileScreen = ({ navigation }) => {
   // Address functions
   const validateAddressForm = () => {
     const errors = {};
-    
+
     if (!addressForm.title.trim()) {
       errors.title = 'Address title is required';
     }
@@ -462,7 +501,12 @@ const ProfileScreen = ({ navigation }) => {
       let result;
       if (editingAddressId) {
         // Update existing address
-        result = await dispatch(updateAddressAPI({ addressId: editingAddressId, addressData: addressPayload }));
+        result = await dispatch(
+          updateAddressAPI({
+            addressId: editingAddressId,
+            addressData: addressPayload,
+          }),
+        );
         if (result && result.payload) {
           setIsEditAddressModalVisible(false);
           Alert.alert('Success', 'Address updated successfully');
@@ -485,7 +529,7 @@ const ProfileScreen = ({ navigation }) => {
           dispatch(fetchAddresses());
         }
       }
-      
+
       // Reset form and editing state
       setAddressForm({
         title: '',
@@ -502,7 +546,7 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
-  const handleDeleteAddress = async (addressId) => {
+  const handleDeleteAddress = async addressId => {
     try {
       const result = await dispatch(deleteAddressAPI(addressId));
       if (result && result.payload) {
@@ -529,7 +573,7 @@ const ProfileScreen = ({ navigation }) => {
     setIsAddAddressModalVisible(true);
   };
 
-  const openEditAddressModal = (address) => {
+  const openEditAddressModal = address => {
     setAddressForm({
       title: address.title || '',
       address: address.address || '',
@@ -542,14 +586,23 @@ const ProfileScreen = ({ navigation }) => {
     setIsEditAddressModalVisible(true);
   };
 
-
-
   return (
-    <ScrollView style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      style={[
+        styles.container,
+        {paddingTop: insets.top, paddingBottom: insets.bottom},
+      ]}>
       <View style={styles.header}>
+        <Ionicons
+          name="arrow-back"
+          size={24}
+          color={COLORS.white}
+          onPress={() => navigation.goBack()}
+        />
         <Text style={styles.title}>{STRINGS.profile}</Text>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Icon name="logout" size={24} color={COLORS.error} />
+          <Icon name="logout" size={24} color={COLORS.white} />
         </TouchableOpacity>
       </View>
 
@@ -561,7 +614,12 @@ const ProfileScreen = ({ navigation }) => {
             {/* Always show Edit/Save button */}
             <TouchableOpacity
               onPress={() => {
-                if (isEditingProfile || (!profile || !profile.name || !profile.name.trim())) {
+                if (
+                  isEditingProfile ||
+                  !profile ||
+                  !profile.name ||
+                  !profile.name.trim()
+                ) {
                   handleUpdateProfile();
                 } else {
                   setIsEditingProfile(true);
@@ -576,7 +634,12 @@ const ProfileScreen = ({ navigation }) => {
                 }
               }}>
               <Text style={styles.editButton}>
-                {isEditingProfile || (!profile || !profile.name || !profile.name.trim()) ? STRINGS.save : STRINGS.edit}
+                {isEditingProfile ||
+                !profile ||
+                !profile.name ||
+                !profile.name.trim()
+                  ? STRINGS.save
+                  : STRINGS.edit}
               </Text>
             </TouchableOpacity>
           </View>
@@ -590,18 +653,20 @@ const ProfileScreen = ({ navigation }) => {
           <>
             {/* Profile Image Section */}
             <View style={styles.profileImageSection}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.profileImageContainer}
                 onPress={showImagePicker}>
                 {profile && profile.profileImage ? (
                   <Image
-                    source={{ uri: profile.profileImage }}
+                    source={{uri: profile.profileImage}}
                     style={styles.profileImage}
                   />
                 ) : (
                   <View style={styles.profileImagePlaceholder}>
                     <Text style={styles.profileImagePlaceholderText}>
-                      {profile && profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+                      {profile && profile.name
+                        ? profile.name.charAt(0).toUpperCase()
+                        : 'U'}
                     </Text>
                   </View>
                 )}
@@ -616,19 +681,28 @@ const ProfileScreen = ({ navigation }) => {
               <Text style={styles.label}>{STRINGS.name}</Text>
               <TextInput
                 style={[
-                  styles.input, 
-                  (!isEditingProfile && profile && profile.name && profile.name.trim()) && styles.inputDisabled,
-                  fieldErrors.name && styles.inputError
+                  styles.input,
+                  !isEditingProfile &&
+                    profile &&
+                    profile.name &&
+                    profile.name.trim() &&
+                    styles.inputDisabled,
+                  fieldErrors.name && styles.inputError,
                 ]}
                 value={profileForm.name}
-                onChangeText={(text) => {
-                  setProfileForm({ ...profileForm, name: text });
+                onChangeText={text => {
+                  setProfileForm({...profileForm, name: text});
                   // Clear name error when user starts typing
                   if (fieldErrors.name) {
-                    setFieldErrors({ ...fieldErrors, name: null });
+                    setFieldErrors({...fieldErrors, name: null});
                   }
                 }}
-                editable={isEditingProfile || !profile || !profile.name || !profile.name.trim()}
+                editable={
+                  isEditingProfile ||
+                  !profile ||
+                  !profile.name ||
+                  !profile.name.trim()
+                }
                 placeholder="Enter your name"
               />
               {fieldErrors.name && (
@@ -640,23 +714,32 @@ const ProfileScreen = ({ navigation }) => {
               <Text style={styles.label}>{STRINGS.phoneNumber}</Text>
               <TextInput
                 style={[
-                  styles.input, 
-                  (!isEditingProfile && profile && profile.name && profile.name.trim()) && styles.inputDisabled,
-                  fieldErrors.phone && styles.inputError
+                  styles.input,
+                  !isEditingProfile &&
+                    profile &&
+                    profile.name &&
+                    profile.name.trim() &&
+                    styles.inputDisabled,
+                  fieldErrors.phone && styles.inputError,
                 ]}
                 value={profileForm.phone}
-                onChangeText={(text) => {
+                onChangeText={text => {
                   // Only allow 10 digits
                   const cleanedText = text.replace(/[^0-9]/g, '');
                   if (cleanedText.length <= 10) {
-                    setProfileForm({ ...profileForm, phone: cleanedText });
+                    setProfileForm({...profileForm, phone: cleanedText});
                     // Clear phone error when user starts typing
                     if (fieldErrors.phone) {
-                      setFieldErrors({ ...fieldErrors, phone: null });
+                      setFieldErrors({...fieldErrors, phone: null});
                     }
                   }
                 }}
-                editable={isEditingProfile || !profile || !profile.name || !profile.name.trim()}
+                editable={
+                  isEditingProfile ||
+                  !profile ||
+                  !profile.name ||
+                  !profile.name.trim()
+                }
                 placeholder="Enter your phone number"
                 keyboardType="phone-pad"
                 maxLength={10}
@@ -670,7 +753,9 @@ const ProfileScreen = ({ navigation }) => {
               <Text style={styles.label}>E-mail</Text>
               <TextInput
                 style={[styles.input, styles.inputDisabled]}
-                value={profile && profile.email ? profile.email : 'Not provided'}
+                value={
+                  profile && profile.email ? profile.email : 'Not provided'
+                }
                 editable={false}
                 placeholder="Enter your email"
                 keyboardType="email-address"
@@ -679,9 +764,15 @@ const ProfileScreen = ({ navigation }) => {
           </>
         ) : (
           <View style={styles.emptyProfileContainer}>
-            <Text style={styles.emptyProfileText}>No profile data available</Text>
-            <TouchableOpacity style={styles.refreshProfileButton} onPress={fetchUserProfile}>
-              <Text style={styles.refreshProfileButtonText}>Refresh Profile</Text>
+            <Text style={styles.emptyProfileText}>
+              No profile data available
+            </Text>
+            <TouchableOpacity
+              style={styles.refreshProfileButton}
+              onPress={fetchUserProfile}>
+              <Text style={styles.refreshProfileButtonText}>
+                Refresh Profile
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -693,15 +784,19 @@ const ProfileScreen = ({ navigation }) => {
           {isEditingProfile && (
             <TouchableOpacity
               style={styles.cancelButton}
-               onPress={() => {
-                 setIsEditingProfile(false);
-                 setImageChanged(false); // Reset image changed flag on cancel
-               }}>
-              <Text style={[styles.cancelButtonText, { color: COLORS.primary }]}>{STRINGS.cancel}</Text>
+              onPress={() => {
+                setIsEditingProfile(false);
+                setImageChanged(false); // Reset image changed flag on cancel
+              }}>
+              <Text style={[styles.cancelButtonText, {color: COLORS.primary}]}>
+                {STRINGS.cancel}
+              </Text>
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity style={styles.deleteAccountButton} onPress={handleDeleteAccount}>
+          <TouchableOpacity
+            style={styles.deleteAccountButton}
+            onPress={handleDeleteAccount}>
             <Text style={styles.deleteAccountText}>Delete Account</Text>
           </TouchableOpacity>
         </View>
@@ -711,8 +806,16 @@ const ProfileScreen = ({ navigation }) => {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Addresses</Text>
-          <TouchableOpacity onPress={openAddAddressModal} disabled={addressLoading}>
-            <Text style={[styles.editButton, addressLoading && styles.disabledButton]}>Add Address</Text>
+          <TouchableOpacity
+            onPress={openAddAddressModal}
+            disabled={addressLoading}>
+            <Text
+              style={[
+                styles.editButton,
+                addressLoading && styles.disabledButton,
+              ]}>
+              Add Address
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -723,34 +826,37 @@ const ProfileScreen = ({ navigation }) => {
         ) : addressError ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{addressError}</Text>
-            <TouchableOpacity 
-              style={styles.retryButton} 
+            <TouchableOpacity
+              style={styles.retryButton}
               onPress={() => dispatch(fetchAddresses())}>
               <Text style={styles.retryButtonText}>Retry</Text>
             </TouchableOpacity>
           </View>
         ) : addresses.length > 0 ? (
           <>
-                         {/* Show first address */}
-             <View style={styles.addressCard}>
-               <View style={styles.addressHeader}>
-                 <Text style={styles.addressTitle}>
-                   {addresses[0].title?.charAt(0).toUpperCase() + addresses[0].title?.slice(1).toLowerCase()}
-                 </Text>
-            <TouchableOpacity
-                   onPress={() => openEditAddressModal(addresses[0])}
-                   style={styles.editAddressButton}>
-                   <Icon name="edit" size={18} color={COLORS.primary} />
-            </TouchableOpacity>
-               </View>
-               <Text style={styles.addressText}>{addresses[0].address}</Text>
-               {addresses[0].landmark && (
-                 <Text style={styles.landmarkText}>Landmark: {addresses[0].landmark}</Text>
-               )}
-               <Text style={styles.pincodeText}>
-                 {addresses[0].city} - {addresses[0].pincode}
-               </Text>
-             </View>
+            {/* Show first address */}
+            <View style={styles.addressCard}>
+              <View style={styles.addressHeader}>
+                <Text style={styles.addressTitle}>
+                  {addresses[0].title?.charAt(0).toUpperCase() +
+                    addresses[0].title?.slice(1).toLowerCase()}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => openEditAddressModal(addresses[0])}
+                  style={styles.editAddressButton}>
+                  <Icon name="edit" size={18} color={COLORS.primary} />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.addressText}>{addresses[0].address}</Text>
+              {addresses[0].landmark && (
+                <Text style={styles.landmarkText}>
+                  Landmark: {addresses[0].landmark}
+                </Text>
+              )}
+              <Text style={styles.pincodeText}>
+                {addresses[0].city} - {addresses[0].pincode}
+              </Text>
+            </View>
 
             {/* View All Addresses Button */}
             {addresses.length > 1 && (
@@ -766,8 +872,12 @@ const ProfileScreen = ({ navigation }) => {
         ) : (
           <View style={styles.emptyAddressContainer}>
             <Text style={styles.emptyAddressText}>No addresses added yet</Text>
-            <TouchableOpacity style={styles.addFirstAddressButton} onPress={openAddAddressModal}>
-              <Text style={styles.addFirstAddressText}>Add Your First Address</Text>
+            <TouchableOpacity
+              style={styles.addFirstAddressButton}
+              onPress={openAddAddressModal}>
+              <Text style={styles.addFirstAddressText}>
+                Add Your First Address
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -786,7 +896,7 @@ const ProfileScreen = ({ navigation }) => {
             </Text>
 
             <View style={styles.confirmActions}>
-            <TouchableOpacity
+              <TouchableOpacity
                 style={[styles.confirmButton, styles.logoutcancelButton]}
                 onPress={() => setIsLogoutModalVisible(false)}>
                 <Text style={styles.cancelText}>Cancel</Text>
@@ -812,7 +922,8 @@ const ProfileScreen = ({ navigation }) => {
           <View style={styles.confirmModal}>
             <Text style={styles.confirmTitle}>Delete Account</Text>
             <Text style={styles.confirmMessage}>
-              Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.
+              Are you sure you want to delete your account? This action cannot
+              be undone and all your data will be permanently removed.
             </Text>
 
             <View style={styles.confirmActions}>
@@ -823,7 +934,11 @@ const ProfileScreen = ({ navigation }) => {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.confirmButton, styles.logoutConfirmButton, isDeletingAccount && styles.disabledButton]}
+                style={[
+                  styles.confirmButton,
+                  styles.logoutConfirmButton,
+                  isDeletingAccount && styles.disabledButton,
+                ]}
                 onPress={confirmDeleteAccount}
                 disabled={isDeletingAccount}>
                 <Text style={styles.logoutConfirmText}>
@@ -833,271 +948,344 @@ const ProfileScreen = ({ navigation }) => {
             </View>
           </View>
         </View>
-             </Modal>
-
-       {/* Add Address Modal */}
-       <Modal
-         visible={isAddAddressModalVisible}
-         transparent
-         animationType="slide"
-         onRequestClose={() => setIsAddAddressModalVisible(false)}>
-         <View style={styles.modalOverlay}>
-           <View style={styles.addressModal}>
-             <View style={styles.modalHeader}>
-               <Text style={styles.modalTitle}>Add New Address</Text>
-               <TouchableOpacity onPress={() => setIsAddAddressModalVisible(false)}>
-                 <Icon name="close" size={24} color={COLORS.text} />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalContent}>
-               {/* Address Title */}
-            <View style={styles.inputGroup}>
-                 <Text style={styles.label}>Address Title *</Text>
-              <TextInput
-                   style={[styles.input, addressErrors.title && styles.inputError]}
-                value={addressForm.title}
-                onChangeText={(text) => setAddressForm({ ...addressForm, title: text })}
-                   placeholder="e.g., Home, Office, Parents House"
-              />
-                 {addressErrors.title && (
-                   <Text style={styles.validationError}>{addressErrors.title}</Text>
-                 )}
-            </View>
-
-               {/* Address */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Address *</Text>
-              <TextInput
-                   style={[styles.input, styles.textArea, addressErrors.address && styles.inputError]}
-                value={addressForm.address}
-                onChangeText={(text) => setAddressForm({ ...addressForm, address: text })}
-                   placeholder="Enter complete address"
-                multiline
-                numberOfLines={3}
-              />
-                 {addressErrors.address && (
-                   <Text style={styles.validationError}>{addressErrors.address}</Text>
-                 )}
-            </View>
-
-               {/* Landmark */}
-            <View style={styles.inputGroup}>
-                 <Text style={styles.label}>Landmark</Text>
-              <TextInput
-                style={styles.input}
-                   value={addressForm.landmark}
-                   onChangeText={(text) => setAddressForm({ ...addressForm, landmark: text })}
-                   placeholder="e.g., Near Metro Station, Behind Mall"
-              />
-            </View>
-
-               {/* Pincode */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Pincode *</Text>
-              <TextInput
-                   style={[styles.input, addressErrors.pincode && styles.inputError]}
-                value={addressForm.pincode}
-                onChangeText={(text) => setAddressForm({ ...addressForm, pincode: text })}
-                   placeholder="Enter 6-digit pincode"
-                keyboardType="numeric"
-                maxLength={6}
-              />
-                 {addressErrors.pincode && (
-                   <Text style={styles.validationError}>{addressErrors.pincode}</Text>
-                 )}
-            </View>
-
-               {/* City */}
-            <View style={styles.inputGroup}>
-                 <Text style={styles.label}>City *</Text>
-              <TextInput
-                   style={[styles.input, addressErrors.city && styles.inputError]}
-                   value={addressForm.city}
-                   onChangeText={(text) => setAddressForm({ ...addressForm, city: text })}
-                   placeholder="Enter city name"
-                 />
-                 {addressErrors.city && (
-                   <Text style={styles.validationError}>{addressErrors.city}</Text>
-                 )}
-            </View>
-             </ScrollView>
-
-             <View style={styles.modalActions}>
-               <TouchableOpacity
-                 style={styles.cancelModalButton}
-                 onPress={() => setIsAddAddressModalVisible(false)}>
-                 <Text style={styles.cancelModalButtonText}>Cancel</Text>
-            </TouchableOpacity>
-               <TouchableOpacity
-                 style={[styles.saveAddressButton, addressLoading && styles.saveButtonDisabled]}
-                 onPress={handleSaveAddress}
-                 disabled={addressLoading}>
-                 <Text style={styles.saveAddressButtonText}>
-                   {addressLoading ? 'Saving...' : 'Save Address'}
-                 </Text>
-               </TouchableOpacity>
-             </View>
-           </View>
-        </View>
       </Modal>
 
-       {/* View All Addresses Modal */}
+      {/* Add Address Modal */}
       <Modal
-         visible={isViewAllAddressesModalVisible}
+        visible={isAddAddressModalVisible}
         transparent
-         animationType="slide"
-         onRequestClose={() => setIsViewAllAddressesModalVisible(false)}>
+        animationType="slide"
+        onRequestClose={() => setIsAddAddressModalVisible(false)}>
         <View style={styles.modalOverlay}>
-           <View style={styles.addressModal}>
-             <View style={styles.modalHeader}>
-               <Text style={styles.modalTitle}>All Addresses</Text>
-               <TouchableOpacity onPress={() => setIsViewAllAddressesModalVisible(false)}>
-                 <Icon name="close" size={24} color={COLORS.text} />
-               </TouchableOpacity>
-             </View>
-
-             <ScrollView style={styles.modalContent}>
-               {addresses.map((address, index) => (
-                 <View key={address.id} style={styles.addressCard}>
-                   <View style={styles.addressHeader}>
-                     <Text style={styles.addressTitle}>
-                       {address.title?.charAt(0).toUpperCase() + address.title?.slice(1).toLowerCase()}
-                     </Text>
-                     <View style={styles.addressActions}>
+          <View style={styles.addressModal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add New Address</Text>
               <TouchableOpacity
-                         onPress={() => openEditAddressModal(address)}
-                         style={styles.editAddressButton}>
-                         <Icon name="edit" size={18} color={COLORS.primary} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                         onPress={() => handleDeleteAddress(address.id)}
-                         style={styles.deleteAddressButton}>
-                         <Icon name="close" size={20} color={COLORS.error} />
+                onPress={() => setIsAddAddressModalVisible(false)}>
+                <Icon name="close" size={24} color={COLORS.text} />
               </TouchableOpacity>
             </View>
-                   </View>
-                   <Text style={styles.addressText}>{address.address}</Text>
-                   {address.landmark && (
-                     <Text style={styles.landmarkText}>Landmark: {address.landmark}</Text>
-                   )}
-                   <Text style={styles.pincodeText}>
-                     {address.city} - {address.pincode}
-                   </Text>
-                 </View>
-               ))}
-             </ScrollView>
+
+            <ScrollView style={styles.modalContent}>
+              {/* Address Title */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Address Title *</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    addressErrors.title && styles.inputError,
+                  ]}
+                  value={addressForm.title}
+                  onChangeText={text =>
+                    setAddressForm({...addressForm, title: text})
+                  }
+                  placeholder="e.g., Home, Office, Parents House"
+                />
+                {addressErrors.title && (
+                  <Text style={styles.validationError}>
+                    {addressErrors.title}
+                  </Text>
+                )}
+              </View>
+
+              {/* Address */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Address *</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    styles.textArea,
+                    addressErrors.address && styles.inputError,
+                  ]}
+                  value={addressForm.address}
+                  onChangeText={text =>
+                    setAddressForm({...addressForm, address: text})
+                  }
+                  placeholder="Enter complete address"
+                  multiline
+                  numberOfLines={3}
+                />
+                {addressErrors.address && (
+                  <Text style={styles.validationError}>
+                    {addressErrors.address}
+                  </Text>
+                )}
+              </View>
+
+              {/* Landmark */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Landmark</Text>
+                <TextInput
+                  style={styles.input}
+                  value={addressForm.landmark}
+                  onChangeText={text =>
+                    setAddressForm({...addressForm, landmark: text})
+                  }
+                  placeholder="e.g., Near Metro Station, Behind Mall"
+                />
+              </View>
+
+              {/* Pincode */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Pincode *</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    addressErrors.pincode && styles.inputError,
+                  ]}
+                  value={addressForm.pincode}
+                  onChangeText={text =>
+                    setAddressForm({...addressForm, pincode: text})
+                  }
+                  placeholder="Enter 6-digit pincode"
+                  keyboardType="numeric"
+                  maxLength={6}
+                />
+                {addressErrors.pincode && (
+                  <Text style={styles.validationError}>
+                    {addressErrors.pincode}
+                  </Text>
+                )}
+              </View>
+
+              {/* City */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>City *</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    addressErrors.city && styles.inputError,
+                  ]}
+                  value={addressForm.city}
+                  onChangeText={text =>
+                    setAddressForm({...addressForm, city: text})
+                  }
+                  placeholder="Enter city name"
+                />
+                {addressErrors.city && (
+                  <Text style={styles.validationError}>
+                    {addressErrors.city}
+                  </Text>
+                )}
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelModalButton}
+                onPress={() => setIsAddAddressModalVisible(false)}>
+                <Text style={styles.cancelModalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.saveAddressButton,
+                  addressLoading && styles.saveButtonDisabled,
+                ]}
+                onPress={handleSaveAddress}
+                disabled={addressLoading}>
+                <Text style={styles.saveAddressButtonText}>
+                  {addressLoading ? 'Saving...' : 'Save Address'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
 
-       {/* Edit Address Modal */}
+      {/* View All Addresses Modal */}
       <Modal
-         visible={isEditAddressModalVisible}
+        visible={isViewAllAddressesModalVisible}
         transparent
-         animationType="slide"
-         onRequestClose={() => setIsEditAddressModalVisible(false)}>
+        animationType="slide"
+        onRequestClose={() => setIsViewAllAddressesModalVisible(false)}>
         <View style={styles.modalOverlay}>
-           <View style={styles.addressModal}>
-             <View style={styles.modalHeader}>
-               <Text style={styles.modalTitle}>Edit Address</Text>
-               <TouchableOpacity onPress={() => setIsEditAddressModalVisible(false)}>
-                 <Icon name="close" size={24} color={COLORS.text} />
-               </TouchableOpacity>
-             </View>
-
-             <ScrollView style={styles.modalContent}>
-               {/* Address Title */}
-               <View style={styles.inputGroup}>
-                 <Text style={styles.label}>Address Title *</Text>
-                 <TextInput
-                   style={[styles.input, addressErrors.title && styles.inputError]}
-                   value={addressForm.title}
-                   onChangeText={(text) => setAddressForm({ ...addressForm, title: text })}
-                   placeholder="e.g., Home, Office, Parents House"
-                 />
-                 {addressErrors.title && (
-                   <Text style={styles.validationError}>{addressErrors.title}</Text>
-                 )}
-               </View>
-
-               {/* Address */}
-               <View style={styles.inputGroup}>
-                 <Text style={styles.label}>Address *</Text>
-                 <TextInput
-                   style={[styles.input, styles.textArea, addressErrors.address && styles.inputError]}
-                   value={addressForm.address}
-                   onChangeText={(text) => setAddressForm({ ...addressForm, address: text })}
-                   placeholder="Enter complete address"
-                   multiline
-                   numberOfLines={3}
-                 />
-                 {addressErrors.address && (
-                   <Text style={styles.validationError}>{addressErrors.address}</Text>
-                 )}
-               </View>
-
-               {/* Landmark */}
-               <View style={styles.inputGroup}>
-                 <Text style={styles.label}>Landmark</Text>
-                 <TextInput
-                   style={styles.input}
-                   value={addressForm.landmark}
-                   onChangeText={(text) => setAddressForm({ ...addressForm, landmark: text })}
-                   placeholder="e.g., Near Metro Station, Behind Mall"
-                 />
-               </View>
-
-               {/* Pincode */}
-               <View style={styles.inputGroup}>
-                 <Text style={styles.label}>Pincode *</Text>
-                 <TextInput
-                   style={[styles.input, addressErrors.pincode && styles.inputError]}
-                   value={addressForm.pincode}
-                   onChangeText={(text) => setAddressForm({ ...addressForm, pincode: text })}
-                   placeholder="Enter 6-digit pincode"
-                   keyboardType="numeric"
-                   maxLength={6}
-                 />
-                 {addressErrors.pincode && (
-                   <Text style={styles.validationError}>{addressErrors.pincode}</Text>
-                 )}
-               </View>
-
-               {/* City */}
-               <View style={styles.inputGroup}>
-                 <Text style={styles.label}>City *</Text>
-                 <TextInput
-                   style={[styles.input, addressErrors.city && styles.inputError]}
-                   value={addressForm.city}
-                   onChangeText={(text) => setAddressForm({ ...addressForm, city: text })}
-                   placeholder="Enter city name"
-                 />
-                 {addressErrors.city && (
-                   <Text style={styles.validationError}>{addressErrors.city}</Text>
-                 )}
-               </View>
-             </ScrollView>
-
-             <View style={styles.modalActions}>
+          <View style={styles.addressModal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>All Addresses</Text>
               <TouchableOpacity
-                 style={styles.cancelModalButton}
-                 onPress={() => setIsEditAddressModalVisible(false)}>
-                 <Text style={styles.cancelModalButtonText}>Cancel</Text>
+                onPress={() => setIsViewAllAddressesModalVisible(false)}>
+                <Icon name="close" size={24} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalContent}>
+              {addresses.map((address, index) => (
+                <View key={address.id} style={styles.addressCard}>
+                  <View style={styles.addressHeader}>
+                    <Text style={styles.addressTitle}>
+                      {address.title?.charAt(0).toUpperCase() +
+                        address.title?.slice(1).toLowerCase()}
+                    </Text>
+                    <View style={styles.addressActions}>
+                      <TouchableOpacity
+                        onPress={() => openEditAddressModal(address)}
+                        style={styles.editAddressButton}>
+                        <Icon name="edit" size={18} color={COLORS.primary} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleDeleteAddress(address.id)}
+                        style={styles.deleteAddressButton}>
+                        <Icon name="close" size={20} color={COLORS.error} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <Text style={styles.addressText}>{address.address}</Text>
+                  {address.landmark && (
+                    <Text style={styles.landmarkText}>
+                      Landmark: {address.landmark}
+                    </Text>
+                  )}
+                  <Text style={styles.pincodeText}>
+                    {address.city} - {address.pincode}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Address Modal */}
+      <Modal
+        visible={isEditAddressModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsEditAddressModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.addressModal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Address</Text>
+              <TouchableOpacity
+                onPress={() => setIsEditAddressModalVisible(false)}>
+                <Icon name="close" size={24} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalContent}>
+              {/* Address Title */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Address Title *</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    addressErrors.title && styles.inputError,
+                  ]}
+                  value={addressForm.title}
+                  onChangeText={text =>
+                    setAddressForm({...addressForm, title: text})
+                  }
+                  placeholder="e.g., Home, Office, Parents House"
+                />
+                {addressErrors.title && (
+                  <Text style={styles.validationError}>
+                    {addressErrors.title}
+                  </Text>
+                )}
+              </View>
+
+              {/* Address */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Address *</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    styles.textArea,
+                    addressErrors.address && styles.inputError,
+                  ]}
+                  value={addressForm.address}
+                  onChangeText={text =>
+                    setAddressForm({...addressForm, address: text})
+                  }
+                  placeholder="Enter complete address"
+                  multiline
+                  numberOfLines={3}
+                />
+                {addressErrors.address && (
+                  <Text style={styles.validationError}>
+                    {addressErrors.address}
+                  </Text>
+                )}
+              </View>
+
+              {/* Landmark */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Landmark</Text>
+                <TextInput
+                  style={styles.input}
+                  value={addressForm.landmark}
+                  onChangeText={text =>
+                    setAddressForm({...addressForm, landmark: text})
+                  }
+                  placeholder="e.g., Near Metro Station, Behind Mall"
+                />
+              </View>
+
+              {/* Pincode */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Pincode *</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    addressErrors.pincode && styles.inputError,
+                  ]}
+                  value={addressForm.pincode}
+                  onChangeText={text =>
+                    setAddressForm({...addressForm, pincode: text})
+                  }
+                  placeholder="Enter 6-digit pincode"
+                  keyboardType="numeric"
+                  maxLength={6}
+                />
+                {addressErrors.pincode && (
+                  <Text style={styles.validationError}>
+                    {addressErrors.pincode}
+                  </Text>
+                )}
+              </View>
+
+              {/* City */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>City *</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    addressErrors.city && styles.inputError,
+                  ]}
+                  value={addressForm.city}
+                  onChangeText={text =>
+                    setAddressForm({...addressForm, city: text})
+                  }
+                  placeholder="Enter city name"
+                />
+                {addressErrors.city && (
+                  <Text style={styles.validationError}>
+                    {addressErrors.city}
+                  </Text>
+                )}
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelModalButton}
+                onPress={() => setIsEditAddressModalVisible(false)}>
+                <Text style={styles.cancelModalButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                 style={[styles.saveAddressButton, addressLoading && styles.saveButtonDisabled]}
-                 onPress={handleSaveAddress}
-                 disabled={addressLoading}>
-                 <Text style={styles.saveAddressButtonText}>
-                   {addressLoading ? 'Updating...' : 'Update Address'}
-                 </Text>
+                style={[
+                  styles.saveAddressButton,
+                  addressLoading && styles.saveButtonDisabled,
+                ]}
+                onPress={handleSaveAddress}
+                disabled={addressLoading}>
+                <Text style={styles.saveAddressButtonText}>
+                  {addressLoading ? 'Updating...' : 'Update Address'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-
     </ScrollView>
   );
 };
@@ -1117,7 +1305,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 3,
@@ -1159,7 +1347,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.06,
     shadowRadius: 6,
     elevation: 3,
@@ -1379,62 +1567,62 @@ const styles = StyleSheet.create({
   imageEditText: {
     fontSize: 12,
   },
-     imageEditHint: {
-     fontSize: 11,
-     color: COLORS.textSecondary,
-     textAlign: 'center',
-   },
-   // Address styles
-   addressCard: {
-     backgroundColor: COLORS.white,
-     padding: 12,
-     borderRadius: 10,
-     marginBottom: 6,
-     borderWidth: 1,
-     borderColor: COLORS.border,
-   },
-   addressHeader: {
-     flexDirection: 'row',
-     justifyContent: 'space-between',
-     alignItems: 'center',
-     marginBottom: 6,
-   },
-   addressTitle: {
-     fontSize: 14,
-     fontWeight: '600',
-     color: COLORS.text,
-   },
-   addressText: {
-     fontSize: 13,
-     color: COLORS.text,
-     lineHeight: 18,
-     marginBottom: 3,
-   },
-   landmarkText: {
-     fontSize: 11,
-     color: COLORS.textSecondary,
-     marginBottom: 3,
-   },
-   pincodeText: {
-     fontSize: 11,
-     color: COLORS.textSecondary,
-     fontWeight: '500',
-   },
-   viewAllAddressesButton: {
-     backgroundColor: COLORS.primary + '10',
-     paddingVertical: 8,
-     paddingHorizontal: 12,
-     borderRadius: 6,
-     alignItems: 'center',
-     marginTop: 6,
-     borderWidth: 1,
-     borderColor: COLORS.primary + '30',
-   },
-   viewAllAddressesText: {
-     color: COLORS.primary,
-     fontWeight: '500',
-     fontSize: 13,
-   },
+  imageEditHint: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+  },
+  // Address styles
+  addressCard: {
+    backgroundColor: COLORS.white,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  addressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  addressTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  addressText: {
+    fontSize: 13,
+    color: COLORS.text,
+    lineHeight: 18,
+    marginBottom: 3,
+  },
+  landmarkText: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginBottom: 3,
+  },
+  pincodeText: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  viewAllAddressesButton: {
+    backgroundColor: COLORS.primary + '10',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '30',
+  },
+  viewAllAddressesText: {
+    color: COLORS.primary,
+    fontWeight: '500',
+    fontSize: 13,
+  },
   emptyAddressContainer: {
     alignItems: 'center',
     paddingVertical: 12,
@@ -1455,77 +1643,77 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-   // Modal styles
-   addressModal: {
-     width: '90%',
-     maxHeight: '80%',
-     backgroundColor: COLORS.white,
-     borderRadius: 16,
-     overflow: 'hidden',
-   },
-   modalHeader: {
-     flexDirection: 'row',
-     justifyContent: 'space-between',
-     alignItems: 'center',
-     padding: 20,
-     borderBottomWidth: 1,
-     borderBottomColor: COLORS.border,
-   },
-   modalTitle: {
-     fontSize: 18,
-     fontWeight: '600',
-     color: COLORS.text,
-   },
-   modalContent: {
-     maxHeight: 400,
-     padding: 20,
-   },
-   modalActions: {
-     flexDirection: 'row',
-     justifyContent: 'space-between',
-     padding: 20,
-     borderTopWidth: 1,
-     borderTopColor: COLORS.border,
-   },
-   cancelModalButton: {
-     flex: 1,
-     backgroundColor: COLORS.lightGray,
-     paddingVertical: 12,
-     borderRadius: 8,
-     alignItems: 'center',
-     marginRight: 10,
-   },
-   cancelModalButtonText: {
-     color: COLORS.text,
-     fontWeight: '600',
-   },
-   saveAddressButton: {
-     flex: 1,
-     backgroundColor: COLORS.primary,
-     paddingVertical: 12,
-     borderRadius: 8,
-     alignItems: 'center',
-     marginLeft: 10,
-   },
-   saveAddressButtonText: {
-     color: COLORS.white,
-     fontWeight: '600',
-   },
-   // Input error styles
-   inputError: {
-     borderColor: COLORS.error,
-   },
-   deleteAddressButton: {
-     padding: 5,
-   },
-   // Address actions styles
-   addressActions: {
-     flexDirection: 'row',
-     alignItems: 'center',
-   },
-   editAddressButton: {
-     padding: 5,
-     marginRight: 10,
+  // Modal styles
+  addressModal: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  modalContent: {
+    maxHeight: 400,
+    padding: 20,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  cancelModalButton: {
+    flex: 1,
+    backgroundColor: COLORS.lightGray,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  cancelModalButtonText: {
+    color: COLORS.text,
+    fontWeight: '600',
+  },
+  saveAddressButton: {
+    flex: 1,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  saveAddressButtonText: {
+    color: COLORS.white,
+    fontWeight: '600',
+  },
+  // Input error styles
+  inputError: {
+    borderColor: COLORS.error,
+  },
+  deleteAddressButton: {
+    padding: 5,
+  },
+  // Address actions styles
+  addressActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  editAddressButton: {
+    padding: 5,
+    marginRight: 10,
   },
   // Loading and error styles
   errorContainer: {
@@ -1555,8 +1743,6 @@ const styles = StyleSheet.create({
   saveButtonDisabled: {
     opacity: 0.5,
   },
-
 });
 
 export default ProfileScreen;
-

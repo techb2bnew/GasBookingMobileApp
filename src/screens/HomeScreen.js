@@ -671,7 +671,7 @@ const HomeScreen = ({navigation}) => {
               </TouchableOpacity>
             </View>
             <View style={[styles.titleContainer, {}]}>
-              <View style={{flexDirection: 'row'}}>
+              <View style={{flexDirection: 'row', justifyContent: 'center'}}>
                 <Image
                   source={require('../assets/leadIcon.png')}
                   style={{
@@ -938,11 +938,10 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     // alignItems: 'center',
-    flex: 0.6,
+    flex: 0,
   },
   menuButton: {
     // padding: wp('2%'),
-
     // marginRight: spacing.md,
     borderRadius: borderRadius.md,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
@@ -955,9 +954,9 @@ const styles = StyleSheet.create({
   titleContainer: {
     // flex: 1,
     // display:"flex",
-    flexDirection: 'column',
+    // flexDirection: 'column',
     // alignItems:"center",
-    justifyContent: 'center',
+    // justifyContent: 'center',
   },
   title: {
     fontSize: fontSize.md,

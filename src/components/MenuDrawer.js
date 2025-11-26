@@ -10,16 +10,19 @@ import {
   Linking,
   StyleSheet,
   Platform,
+  Image,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useDispatch } from 'react-redux';
-import { COLORS } from '../constants/colors';
-import { logout } from '../redux/slices/authSlice';
+import {useDispatch} from 'react-redux';
+import {COLORS} from '../constants/colors';
+import {logout} from '../redux/slices/authSlice';
+import {fontSize} from '../utils/dimensions';
+import {STRINGS} from '../constants';
 
-const { width } = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 
-const MenuDrawer = ({ visible, onClose, navigation }) => {
+const MenuDrawer = ({visible, onClose, navigation}) => {
   const dispatch = useDispatch();
   const slideAnim = React.useRef(new Animated.Value(-width)).current;
   const insets = useSafeAreaInsets();
@@ -50,7 +53,7 @@ const MenuDrawer = ({ visible, onClose, navigation }) => {
     });
   };
 
-  const handleMenuCloseWithCallback = (callback) => {
+  const handleMenuCloseWithCallback = callback => {
     Animated.timing(slideAnim, {
       toValue: -width,
       duration: 300,
@@ -64,7 +67,9 @@ const MenuDrawer = ({ visible, onClose, navigation }) => {
   };
 
   const handleRateUs = () => {
-    Linking.openURL('https://play.google.com/store/apps/details?id=com.gasbooking.app');
+    Linking.openURL(
+      'https://play.google.com/store/apps/details?id=com.gasbooking.app',
+    );
   };
 
   const handleMySafety = () => {
@@ -106,7 +111,6 @@ const MenuDrawer = ({ visible, onClose, navigation }) => {
     handleMenuClose();
   };
 
-
   // Menu handlers
   const handleTermsAndConditions = () => {
     handleMenuCloseWithCallback(() => {
@@ -141,63 +145,108 @@ const MenuDrawer = ({ visible, onClose, navigation }) => {
             style={[
               styles.drawer,
               {
-                transform: [{ translateX: slideAnim }],
+                transform: [{translateX: slideAnim}],
               },
             ]}>
-            <View style={[styles.header, { paddingTop: 20 + insets.top }]}>
-              <Text style={styles.headerTitle}>Menu</Text>
-              <TouchableOpacity onPress={handleMenuClose} style={styles.closeButton}>
-                <Icon name="close" size={24} color={COLORS.white} />
+            <View style={[styles.header, {paddingTop: 20 + insets.top}]}>
+              <View style={[styles.titleContainer, {}]}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    gap: 2,
+                    justifyContent: 'center',
+                  }}>
+                  <Image
+                    source={require('../assets/leadIcon.png')}
+                    style={{
+                      width: '20%',
+                      height: '100%',
+                      resizeMode: 'contain',
+                      borderRadius: 10,
+                    }}
+                  />
+                  <Text
+                    style={{
+                      color: COLORS.blue,
+                      fontSize: fontSize.lg,
+                      fontWeight: '800',
+                      // color: COLORS.primary,
+                    }}>
+                    {STRINGS.gasBooking}
+                  </Text>
+                </View>
+              </View>
+              {/* <Text style={styles.headerTitle}>Menu</Text> */}
+              <TouchableOpacity
+                onPress={handleMenuClose}
+                style={styles.closeButton}>
+                <Icon name="close" size={24} color={COLORS.blue} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.menuContainer}>
               <ScrollView style={styles.menuItems}>
-                <TouchableOpacity style={styles.menuItem} onPress={handleMySafety}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleMySafety}>
                   <Icon name="security" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>My Safety</Text>
-                  <Icon name="chevron-right" size={24}  color={COLORS.blue} />
+                  <Icon name="chevron-right" size={24} color={COLORS.blue} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem} onPress={handleRateUs}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleRateUs}>
                   <Icon name="star" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>Rate us on Play Store</Text>
-                  <Icon name="chevron-right" size={24}  color={COLORS.blue} />
+                  <Icon name="chevron-right" size={24} color={COLORS.blue} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem} onPress={handleProfileDetails}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleProfileDetails}>
                   <Icon name="person" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>Profile Details</Text>
-                  <Icon name="chevron-right" size={24}  color={COLORS.blue} />
+                  <Icon name="chevron-right" size={24} color={COLORS.blue} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem} onPress={handleKnowYourPrice}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleKnowYourPrice}>
                   <Icon name="attach-money" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>Know Your Price</Text>
-                  <Icon name="chevron-right" size={24}  color={COLORS.blue} />
+                  <Icon name="chevron-right" size={24} color={COLORS.blue} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem} onPress={handleAddress}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleAddress}>
                   <Icon name="location-on" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>Address</Text>
-                  <Icon name="chevron-right" size={24}  color={COLORS.blue} />
+                  <Icon name="chevron-right" size={24} color={COLORS.blue} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem} onPress={handleTermsAndConditions}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleTermsAndConditions}>
                   <Icon name="description" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>Terms & Conditions</Text>
-                  <Icon name="chevron-right" size={24}  color={COLORS.blue} />
+                  <Icon name="chevron-right" size={24} color={COLORS.blue} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem} onPress={handlePrivacyPolicy}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handlePrivacyPolicy}>
                   <Icon name="privacy-tip" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>Privacy Policy</Text>
-                  <Icon name="chevron-right" size={24}  color={COLORS.blue} />
+                  <Icon name="chevron-right" size={24} color={COLORS.blue} />
                 </TouchableOpacity>
               </ScrollView>
 
               <View style={styles.logoutSection}>
-                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                <TouchableOpacity
+                  style={styles.logoutButton}
+                  onPress={handleLogout}>
                   <Icon name="logout" size={24} color={COLORS.error} />
                   <Text style={styles.logoutText}>Logout</Text>
                 </TouchableOpacity>
@@ -224,27 +273,41 @@ const MenuDrawer = ({ visible, onClose, navigation }) => {
             <ScrollView style={styles.modalBody}>
               <View style={styles.safetyItem}>
                 <Icon name="verified-user" size={20} color={COLORS.blue} />
-                <Text style={styles.safetyText}>All our delivery partners are verified and background checked</Text>
+                <Text style={styles.safetyText}>
+                  All our delivery partners are verified and background checked
+                </Text>
               </View>
               <View style={styles.safetyItem}>
                 <Icon name="location-on" size={20} color={COLORS.blue} />
-                <Text style={styles.safetyText}>Real-time tracking ensures you know exactly where your order is</Text>
+                <Text style={styles.safetyText}>
+                  Real-time tracking ensures you know exactly where your order
+                  is
+                </Text>
               </View>
               <View style={styles.safetyItem}>
                 <Icon name="phone" size={20} color={COLORS.blue} />
-                <Text style={styles.safetyText}>Direct communication with delivery partner through in-app calling</Text>
+                <Text style={styles.safetyText}>
+                  Direct communication with delivery partner through in-app
+                  calling
+                </Text>
               </View>
               <View style={styles.safetyItem}>
                 <Icon name="payment" size={20} color={COLORS.blue} />
-                <Text style={styles.safetyText}>Secure payment options with multiple verification layers</Text>
+                <Text style={styles.safetyText}>
+                  Secure payment options with multiple verification layers
+                </Text>
               </View>
               <View style={styles.safetyItem}>
                 <Icon name="support-agent" size={20} color={COLORS.blue} />
-                <Text style={styles.safetyText}>24/7 customer support for any safety concerns</Text>
+                <Text style={styles.safetyText}>
+                  24/7 customer support for any safety concerns
+                </Text>
               </View>
               <View style={styles.safetyItem}>
                 <Icon name="report" size={20} color={COLORS.blue} />
-                <Text style={styles.safetyText}>Easy reporting system for any issues or concerns</Text>
+                <Text style={styles.safetyText}>
+                  Easy reporting system for any issues or concerns
+                </Text>
               </View>
             </ScrollView>
           </View>
@@ -266,7 +329,9 @@ const MenuDrawer = ({ visible, onClose, navigation }) => {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalBody}>
-              <Text style={styles.priceSubtitle}>Gas Cylinder Prices by State</Text>
+              <Text style={styles.priceSubtitle}>
+                Gas Cylinder Prices by State
+              </Text>
 
               <View style={styles.priceItem}>
                 <Text style={styles.stateName}>Punjab</Text>
@@ -404,7 +469,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.blue,
   },
   headerTitle: {
     fontSize: 20,

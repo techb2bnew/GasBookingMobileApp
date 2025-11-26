@@ -9,6 +9,7 @@ import {
   Alert,
   Modal,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useDispatch, useSelector} from 'react-redux';
@@ -198,7 +199,6 @@ const AddAddressScreen = ({navigation}) => {
     if (selectedAddress) {
       dispatch(setSelectedAddress(selectedAddress));
     }
-
     console.log('Success', 'Default address updated successfully');
   };
 
@@ -294,102 +294,125 @@ const AddAddressScreen = ({navigation}) => {
   );
 
   const renderAddressForm = () => (
-    <View style={styles.formSection}>
-      <View style={styles.formHeader}>
-        <Text style={styles.formTitle}>
-          {isEditing ? 'Edit Address' : 'Add New Address'}
-        </Text>
-        {isEditing && (
-          <TouchableOpacity onPress={handleCancelEdit}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 100}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{paddingBottom: 10}}
+        keyboardShouldPersistTaps="handled">
+        <View style={styles.formSection}>
+          <View style={styles.formHeader}>
+            <Text style={styles.formTitle}>
+              {isEditing ? 'Edit Address' : 'Add New Address'}
+            </Text>
+            {isEditing && (
+              <TouchableOpacity onPress={handleCancelEdit}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Title *</Text>
-        <TextInput
-          style={styles.input}
-          value={addressForm.title}
-          onChangeText={text => setAddressForm({...addressForm, title: text})}
-          placeholder="e.g., Home, Office"
-        />
-        {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
-      </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Title *</Text>
+            <TextInput
+              style={styles.input}
+              value={addressForm.title}
+              onChangeText={text =>
+                setAddressForm({...addressForm, title: text})
+              }
+              placeholder="e.g., Home, Office"
+            />
+            {errors.title && (
+              <Text style={styles.errorText}>{errors.title}</Text>
+            )}
+          </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Address *</Text>
-        <View style={styles.addressInputContainer}>
-          <TextInput
-            style={[styles.input, styles.textArea, styles.addressInput]}
-            value={addressForm.address}
-            onChangeText={text =>
-              setAddressForm({...addressForm, address: text})
-            }
-            placeholder="Enter full address"
-            multiline
-            numberOfLines={3}
-          />
-          <TouchableOpacity style={styles.mapButton} onPress={openMapPicker}>
-            <Ionicons name="map" size={20} color={COLORS.blue} />
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Address *</Text>
+            <View style={styles.addressInputContainer}>
+              <TextInput
+                style={[styles.input, styles.textArea, styles.addressInput]}
+                value={addressForm.address}
+                onChangeText={text =>
+                  setAddressForm({...addressForm, address: text})
+                }
+                placeholder="Enter full address"
+                multiline
+                numberOfLines={3}
+              />
+              <TouchableOpacity
+                style={styles.mapButton}
+                onPress={openMapPicker}>
+                <Ionicons name="map" size={20} color={COLORS.blue} />
+              </TouchableOpacity>
+            </View>
+            {errors.address && (
+              <Text style={styles.errorText}>{errors.address}</Text>
+            )}
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>City *</Text>
+            <TextInput
+              style={styles.input}
+              value={addressForm.city}
+              onChangeText={text =>
+                setAddressForm({...addressForm, city: text})
+              }
+              placeholder="Enter city"
+            />
+            {errors.city && <Text style={styles.errorText}>{errors.city}</Text>}
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Pincode *</Text>
+            <TextInput
+              style={styles.input}
+              value={addressForm.pincode}
+              onChangeText={text =>
+                setAddressForm({...addressForm, pincode: text})
+              }
+              placeholder="Enter pincode"
+              keyboardType="numeric"
+              maxLength={6}
+            />
+            {errors.pincode && (
+              <Text style={styles.errorText}>{errors.pincode}</Text>
+            )}
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Landmark</Text>
+            <TextInput
+              style={styles.input}
+              value={addressForm.landmark}
+              onChangeText={text =>
+                setAddressForm({...addressForm, landmark: text})
+              }
+              placeholder="Enter landmark (optional)"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              addressLoading && styles.saveButtonDisabled,
+            ]}
+            onPress={handleAddAddress}
+            disabled={addressLoading}>
+            <Text style={styles.saveButtonText}>
+              {addressLoading
+                ? 'Saving...'
+                : isEditing
+                ? 'Update Address'
+                : 'Add Address'}
+            </Text>
           </TouchableOpacity>
         </View>
-        {errors.address && (
-          <Text style={styles.errorText}>{errors.address}</Text>
-        )}
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>City *</Text>
-        <TextInput
-          style={styles.input}
-          value={addressForm.city}
-          onChangeText={text => setAddressForm({...addressForm, city: text})}
-          placeholder="Enter city"
-        />
-        {errors.city && <Text style={styles.errorText}>{errors.city}</Text>}
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Pincode *</Text>
-        <TextInput
-          style={styles.input}
-          value={addressForm.pincode}
-          onChangeText={text => setAddressForm({...addressForm, pincode: text})}
-          placeholder="Enter pincode"
-          keyboardType="numeric"
-          maxLength={6}
-        />
-        {errors.pincode && (
-          <Text style={styles.errorText}>{errors.pincode}</Text>
-        )}
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Landmark</Text>
-        <TextInput
-          style={styles.input}
-          value={addressForm.landmark}
-          onChangeText={text =>
-            setAddressForm({...addressForm, landmark: text})
-          }
-          placeholder="Enter landmark (optional)"
-        />
-      </View>
-
-      <TouchableOpacity
-        style={[styles.saveButton, addressLoading && styles.saveButtonDisabled]}
-        onPress={handleAddAddress}
-        disabled={addressLoading}>
-        <Text style={styles.saveButtonText}>
-          {addressLoading
-            ? 'Saving...'
-            : isEditing
-            ? 'Update Address'
-            : 'Add Address'}
-        </Text>
-      </TouchableOpacity>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 
   return (
@@ -409,7 +432,7 @@ const AddAddressScreen = ({navigation}) => {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Help message for address selection */}
         {!addressLoading && !addressError && addresses.length > 1 && (
           <View style={styles.helpContainer}>
@@ -523,7 +546,8 @@ const styles = StyleSheet.create({
   formSection: {
     backgroundColor: COLORS.cardBackground,
     margin: spacing.md,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 2,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -535,7 +559,7 @@ const styles = StyleSheet.create({
   },
   formTitle: {fontSize: fontSize.lg, fontWeight: '600', color: COLORS.text},
   cancelButtonText: {color: COLORS.textSecondary, fontSize: fontSize.md},
-  inputGroup: {marginBottom: spacing.md},
+  inputGroup: {marginBottom: spacing.sm},
   label: {
     fontSize: fontSize.sm,
     color: COLORS.text,

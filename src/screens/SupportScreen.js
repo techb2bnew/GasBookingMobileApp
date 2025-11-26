@@ -12,6 +12,7 @@ import {
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {COLORS, STRINGS} from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Ionicons from 'react-native-vector-icons/dist/Ionicons';
 import {wp, hp, fontSize, spacing, borderRadius} from '../utils/dimensions';
 
 const FAQ_DATA = [
@@ -47,7 +48,7 @@ const FAQ_DATA = [
   },
 ];
 
-const SupportScreen = () => {
+const SupportScreen = ({navigation}) => {
   const insets = useSafeAreaInsets();
   const [expandedFAQ, setExpandedFAQ] = useState(null);
   const [refundText, setRefundText] = useState('');
@@ -87,7 +88,14 @@ const SupportScreen = () => {
         {paddingTop: insets.top, paddingBottom: insets.bottom},
       ]}>
       <View style={styles.header}>
+        <Ionicons
+          name="arrow-back"
+          size={24}
+          color={COLORS.white}
+          onPress={() => navigation.goBack()}
+        />
         <Text style={styles.title}>{STRINGS.support}</Text>
+        <Text style={styles.title}>{}</Text>
       </View>
 
       {/* Raise Complaint Button */}
@@ -178,8 +186,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
     backgroundColor: COLORS.primary,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
@@ -190,7 +198,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   title: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.xl,
     fontWeight: '600',
     color: COLORS.white,
     letterSpacing: -0.3,

@@ -666,11 +666,11 @@ const ProductsScreen = ({navigation}) => {
               <TouchableOpacity onPress={() => navigation.goBack()}>
                  <Ionicons name="arrow-back" size={28} color={COLORS.white} />
               </TouchableOpacity>
+            </View>
               <View style={styles.titleContainer}>
                 <Text style={styles.title}>{'Choose Products'}</Text>
                 {/* <Text style={styles.subtitle}>Fast & Safe Delivery</Text> */}
               </View>
-            </View>
 
             <View style={styles.agencySelectorContainer}>
               <TouchableOpacity
@@ -839,7 +839,7 @@ const styles = StyleSheet.create({
     backgroundColor:COLORS.primary,
     paddingVertical: spacing.lg,
     // borderBottomLeftRadius: wp('5%'),
-    borderBottomRightRadius: wp('5%'),
+    // borderBottomRightRadius: wp('5%'),
   },
   headerContent: {
     flexDirection: 'row',
@@ -848,9 +848,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   headerLeft: {
-    flexDirection: 'row',
+    // flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    // flex: 1,
   },
 
   titleContainer: {

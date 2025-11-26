@@ -772,12 +772,12 @@ const OrdersScreen = ({navigation}) => {
       ]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={28} color={COLORS.white} />
+          <Ionicons name="arrow-back" size={24} color={COLORS.white} />
         </TouchableOpacity>
         <Text style={styles.title}>{STRINGS.orders}</Text>
         <Text style={styles.title}>{}</Text>
       </View>
-      <View style={{paddingHorizontal: 6}}>
+      <View style={{paddingHorizontal: 6, paddingBottom:66}}>
         {orders.length === 0 ? (
           renderEmptyOrders()
         ) : (
