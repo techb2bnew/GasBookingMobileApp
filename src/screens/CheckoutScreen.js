@@ -9,6 +9,7 @@ import {
   Modal,
   TextInput,
   Image,
+  Linking,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -1357,8 +1358,62 @@ const CheckoutScreen = ({navigation}) => {
   ];
 
   const paymentOptions = [
-    {id: 'Cash on Delivery', label: STRINGS.cashOnDelivery},
+    {id: 'Cash on Delivery', label: 'Cash on Delivery'},
+    {id: 'Pay Online', label: 'Pay Online (PesaPal)'},
   ];
+  // const startOnlinePayment = async (orderId) => {
+  //   console.log("orderIdorderId>>",orderId);
+
+  //   try {
+  //     const paymentResponse = await apiClient.post(`/api/order/payment`, {
+  //       orderId: orderId
+  //     });
+
+  //     console.log("Payment URL Response:", paymentResponse.data);
+
+  //     if (paymentResponse?.data?.paymentUrl) {
+  //       const paymentUrl = paymentResponse.data.paymentUrl;
+
+  //       // 🔥 IMPORTANT → Browser open karwana hoga
+  //       Linking.openURL(paymentUrl);
+
+  //       // Ab status check screen pe bhejo
+  //       navigation.navigate('PaymentStatus', { orderId });
+  //     } else {
+  //       Alert.alert("Error", "Payment URL not received");
+  //     }
+  //   } catch (error) {
+  //     console.log("PesaPal Payment Error:", error);
+  //     Alert.alert("Error", "Unable to start online payment");
+  //   }
+  // };
+  const startOnlinePayment = async orderId => {
+    console.log('orderIdorderId>>', orderId);
+
+    try {
+      const paymentResponse = await apiClient.post('/api/orders/payment', {
+        orderId: orderId,
+      });
+
+      console.log('PAYMENT RESPONSE:', paymentResponse.data);
+
+      const payUrl =
+        paymentResponse.data?.redirect_url ||
+        paymentResponse.data?.data?.redirect_url;
+
+      if (!payUrl) {
+        Alert.alert('Error', 'Payment URL missing');
+        return;
+      }
+
+      Linking.openURL(payUrl);
+
+      navigation.navigate('PaymentStatus', {orderId: orderId});
+    } catch (error) {
+      console.log('PesaPal Payment Error:', error.response?.data || error);
+      Alert.alert('Error', 'Payment failed');
+    }
+  };
 
   const handlePlaceOrder = async () => {
     // Check delivery mode specific validations
@@ -1427,10 +1482,11 @@ const CheckoutScreen = ({navigation}) => {
         items: formattedItems,
         paymentMethod:
           deliveryMode === 'pickup'
-            ? 'Cash on Pickup'
+            ? 'cash_on_pickup'
             : paymentMethod === 'Cash on Delivery'
             ? 'cash_on_delivery'
-            : 'cash_on_delivery',
+            : 'online_payment',
+
         ...(appliedCoupon && {couponCode: appliedCoupon.couponCode}),
       };
 
@@ -1449,9 +1505,16 @@ const CheckoutScreen = ({navigation}) => {
       // Make API call
       const response = await apiClient.post('/api/orders/checkout', orderData);
 
-      console.log('Order API Response:', response.data);
+      console.log('Order API Response:', response.data.data.order.id);
 
       if (response?.data && response?.data?.success) {
+        const createdOrderId = response?.data?.data?.order?.id;
+
+        //  Online Payment Start
+        if (paymentMethod === 'Pay Online') {
+          startOnlinePayment(createdOrderId);
+          return;
+        }
         // Order created successfully
         const order = {
           id: response?.data.data?.orderId || Date.now().toString(),
@@ -1461,7 +1524,12 @@ const CheckoutScreen = ({navigation}) => {
           deliveryType:
             deliveryMode === 'pickup' ? 'Pickup from Agency' : 'Home Delivery',
           paymentMethod:
-            deliveryMode === 'pickup' ? 'Cash on Pickup' : 'Cash on Delivery',
+            deliveryMode === 'pickup'
+              ? 'Cash on Pickup'
+              : paymentMethod === 'Cash on Delivery'
+              ? 'Cash on Delivery'
+              : 'Online Payment',
+
           address: deliveryMode === 'home_delivery' ? selectedAddress : null,
           agency:
             selectedAgency ||
