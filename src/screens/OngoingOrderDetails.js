@@ -1,242 +1,138 @@
-// import React, {useState} from 'react';
-// import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
-// import Icon from 'react-native-vector-icons/MaterialIcons';
-// import {COLORS} from '../constants';
-// import {fontSize, spacing} from '../utils/dimensions';
-// import Ionicons from 'react-native-vector-icons/dist/Ionicons';
-
-// export default function OngoingOrderDetails({navigation}) {
-//   const [ongoingOrder, setOngoingOrder] = useState({id: '4521'});
-
-//   return (
-//     <View style={styles.container}>
-//       {/* HEADER */}
-//       <View style={styles.header}>
-//         <TouchableOpacity onPress={() => navigation.goBack()}>
-//           <Ionicons name="arrow-back" size={28} color={COLORS.white} />
-//         </TouchableOpacity>
-//         <View>
-//           <Text style={styles.title}>Ongoing Order</Text>
-//           <Text style={styles.subtitle}>
-//             {ongoingOrder
-//               ? 'Your gas cylinder is on the way'
-//               : 'No active order'}
-//           </Text>
-//         </View>
-//       </View>
-
-//       <View style={{padding: 16}}>
-//         {/* If NO order */}
-//         {!ongoingOrder && (
-//           <View style={{alignItems: 'center', marginTop: 50}}>
-//             <Icon name="info" size={60} color={COLORS.primary} />
-//             <Text style={{fontSize: 20, marginTop: 10, color: '#555'}}>
-//               No ongoing order
-//             </Text>
-//             <Text style={{fontSize: 14, color: '#777', marginTop: 5}}>
-//               You have no active gas booking right now.
-//             </Text>
-//           </View>
-//         )}
-
-//         {/* If order EXISTS, show details */}
-//         {ongoingOrder && (
-//           <>
-//             {/* Order Details */}
-//             <View style={{padding: 16}}>
-//               {/* Status Box */}
-//               <View style={styles.statusBox}>
-//                 <Icon
-//                   name="local-gas-station"
-//                   size={40}
-//                   color={COLORS.primary}
-//                 />
-//                 <View>
-//                   <Text style={styles.statusText}>Cylinder Booked</Text>
-//                   <Text style={styles.statusSub}>Booking ID: #LG4521</Text>
-//                 </View>
-//               </View>
-
-//               {/* Details Card */}
-//               <View style={styles.card}>
-//                 <Text style={styles.cardTitle}>Order Details</Text>
-
-//                 <View style={styles.row}>
-//                   <Text style={styles.label}>Delivery Person:</Text>
-//                   <Text style={styles.value}>Rahul Kumar</Text>
-//                 </View>
-
-//                 <View style={styles.row}>
-//                   <Text style={styles.label}>Contact:</Text>
-//                   <Text style={styles.value}>+91 9876543210</Text>
-//                 </View>
-
-//                 <View style={styles.row}>
-//                   <Text style={styles.label}>Cylinder Type:</Text>
-//                   <Text style={styles.value}>14.2 KG</Text>
-//                 </View>
-
-//                 <View style={styles.row}>
-//                   <Text style={styles.label}>Amount:</Text>
-//                   <Text style={styles.value}>₹ 1140</Text>
-//                 </View>
-
-//                 <View style={styles.row}>
-//                   <Text style={styles.label}>Delivery ETA:</Text>
-//                   <Text style={styles.value}>Today, 3:00 PM - 5:00 PM</Text>
-//                 </View>
-//               </View>
-//             </View>
-//           </>
-//         )}
-//       </View>
-//     </View>
-//   );
-// }
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: '#fff',
-//   },
-//   header: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     gap: 10,
-//     paddingHorizontal: spacing.lg,
-//     paddingVertical: spacing.sm,
-//     backgroundColor: COLORS.primary,
-//     borderBottomWidth: 1,
-//     borderBottomColor: COLORS.border,
-//     shadowColor: COLORS.shadow,
-//     shadowOffset: {width: 0, height: 2},
-//     shadowOpacity: 0.1,
-//     shadowRadius: 8,
-//     elevation: 5,
-//   },
-//   title: {
-//     fontSize: fontSize.xl,
-//     fontWeight: '600',
-//     color: COLORS.white,
-//   },
-
-//   subtitle: {
-//     fontSize: 12,
-//     color: COLORS.white,
-//   },
-//   statusBox: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     backgroundColor: '#eaf2ff',
-//     padding: 16,
-//     borderRadius: 16,
-//     marginBottom: 20,
-//     gap: 14,
-//   },
-//   statusText: {
-//     fontSize: 18,
-//     fontWeight: '600',
-//     color: COLORS.primary,
-//   },
-//   statusSub: {
-//     fontSize: 14,
-//     color: '#555',
-//   },
-//   card: {
-//     backgroundColor: '#f8f8f8',
-//     padding: 16,
-//     borderRadius: 16,
-//     marginBottom: 20,
-//   },
-//   cardTitle: {
-//     fontSize: 18,
-//     fontWeight: '600',
-//     marginBottom: 12,
-//     color: '#333',
-//   },
-//   row: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     marginBottom: 8,
-//   },
-//   label: {
-//     fontSize: 15,
-//     color: '#555',
-//   },
-//   value: {
-//     fontSize: 15,
-//     fontWeight: '600',
-//     color: '#222',
-//   },
-//   trackBtn: {
-//     backgroundColor: '#007bff',
-//     padding: 16,
-//     borderRadius: 18,
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//   },
-//   trackText: {
-//     color: '#fff',
-//     fontSize: 17,
-//     fontWeight: '600',
-//   },
-// });
 import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, FlatList} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {COLORS} from '../constants';
 import apiClient from '../utils/apiConfig';
+import {fontSize, spacing} from '../utils/dimensions';
 
 export default function OngoingOrderDetails({navigation}) {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchAgents();
   }, []);
 
-  const fetchAgents = async () => {
+  const fetchAgents = async (isRefresh = false) => {
     try {
+      if (!isRefresh) setLoading(true);
       const response = await apiClient.post('/api/orders/orderdetails');
+      console.log('jhsfbas', response?.data?.data?.orders?.length);
 
-      console.log('');
-
-      setAgents(response?.data?.data?.orders);
+      setAgents(response?.data?.data?.orders || []);
     } catch (error) {
+      console.log('Error fetching orders', error);
     } finally {
-      setLoading(false);
+      if (isRefresh) {
+        setRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
-  const renderAgent = ({item}) => (
-    <View style={styles.card}>
-      <View style={{flexDirection: 'row', gap: 12, alignItems: 'center'}}>
-        <View style={{flex: 1}}>
-          <Text style={styles.sub}>
-            <Text style={{fontWeight: '700', fontSize: 15, color: 'black'}}>
-              Name:{' '}
+  // Pull to refresh handler
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchAgents(true); // isRefresh = true
+  };
+
+  const renderOrderCard = ({item}) => {
+    return (
+      <View style={styles.card}>
+        {/* ORDER INFO */}
+        <View style={{marginBottom: 10}}>
+          <View style={styles.rowBetween}>
+            <Text style={styles.label}>Order No:</Text>
+            <Text style={styles.value}>#{item?.orderNumber || '—'}</Text>
+          </View>
+
+          <View style={styles.rowBetween}>
+            <Text style={[styles.label]}>Order Status:</Text>
+            <Text
+              style={[
+                styles.value,
+                {color: item?.status === 'delivered' ? 'green' : 'orange'},
+              ]}>
+              {item?.status?.toUpperCase() || '—'}
             </Text>
-            {item.name}
-          </Text>
-          <Text style={styles.sub}>
-            <Text style={{fontWeight: '700', fontSize: 15, color: 'black'}}>
-              Phone:{' '}
-            </Text>{' '}
-            {item.phone}
-          </Text>
-          <Text style={styles.sub}>Vehicle: {item.vehicleNumber}</Text>
-          <Text
-            style={[
-              styles.status,
-              {color: item.status === 'offline' ? 'red' : 'green'},
-            ]}>
-            {item.status.toUpperCase()}
-          </Text>
+          </View>
+
+          <View style={styles.rowBetween}>
+            <Text style={styles.label}>Payment:</Text>
+            <Text
+              style={[
+                styles.value,
+                {color: item?.paymentStatus === 'pending' ? 'red' : 'green'},
+              ]}>
+              {item?.paymentStatus?.toUpperCase() || '—'}
+            </Text>
+          </View>
         </View>
+
+        {/* AGENCY INFO */}
+        <View style={{marginBottom: 10}}>
+          <Text style={styles.sectionTitle}>Agency Info</Text>
+
+          <View style={styles.rowBetween}>
+            <Text style={styles.label}>Agency Name:</Text>
+            <Text style={styles.value}>{item?.agency?.name || '—'}</Text>
+          </View>
+
+          <View style={styles.rowBetween}>
+            <Text style={styles.label}>Phone:</Text>
+            <Text style={styles.value}>{item?.agency?.phone || '—'}</Text>
+          </View>
+
+          <View style={styles.rowBetween}>
+            <Text style={styles.label}>City:</Text>
+            <Text style={styles.value}>{item?.agency?.city || '—'}</Text>
+          </View>
+
+          <View style={styles.rowBetween}>
+            <Text style={styles.label}>Status:</Text>
+            <Text
+              style={[
+                styles.value,
+                {color: item?.agency?.status === 'active' ? 'green' : 'red'},
+              ]}>
+              {item?.agency?.status?.toUpperCase()}
+            </Text>
+          </View>
+        </View>
+
+        {/* ASSIGNED AGENT */}
+        {item?.assignedAgent && (
+          <View>
+            <Text style={styles.sectionTitle}>Assigned Agent</Text>
+
+            <View style={styles.rowBetween}>
+              <Text style={styles.label}>Name:</Text>
+              <Text style={styles.value}>
+                {item?.assignedAgent?.name || '—'}
+              </Text>
+            </View>
+
+            <View style={styles.rowBetween}>
+              <Text style={styles.label}>Phone:</Text>
+              <Text style={styles.value}>
+                {item?.assignedAgent?.phone || '—'}
+              </Text>
+            </View>
+
+            <View style={styles.rowBetween}>
+              <Text style={styles.label}>Vehicle:</Text>
+              <Text style={styles.value}>
+                {item?.assignedAgent?.vehicleNumber || '—'}
+              </Text>
+            </View>
+          </View>
+        )}
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -254,13 +150,19 @@ export default function OngoingOrderDetails({navigation}) {
 
       <View style={{padding: 16, flex: 1}}>
         {loading ? (
-          <Text style={{textAlign: 'center', marginTop: 40}}>Loading...</Text>
+          <View style={{flex: 1, backgroundColor: COLORS.background}}>
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Loading orders...</Text>
+            </View>
+          </View>
         ) : (
           <FlatList
             data={agents}
             keyExtractor={item => item.id}
-            renderItem={renderAgent}
+            renderItem={renderOrderCard}
             showsVerticalScrollIndicator={false}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
           />
         )}
       </View>
@@ -271,9 +173,19 @@ export default function OngoingOrderDetails({navigation}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background,
   },
-
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+  },
+  loadingText: {
+    fontSize: fontSize.lg,
+    color: COLORS.textSecondary,
+    fontStyle: 'italic',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -294,33 +206,48 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: '#f8f8f8',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 14,
+    backgroundColor: '#fff',
+    padding: 14,
+    borderRadius: 10,
+    marginVertical: 8,
+    elevation: 3,
   },
-
-  avatar: {
-    width: 55,
-    height: 55,
-    borderRadius: 50,
-    backgroundColor: '#ddd',
-  },
-
-  name: {
-    fontSize: 17,
+  label: {
     fontWeight: '700',
-    color: '#333',
+    color: 'black',
+    fontSize: 15,
   },
-
   sub: {
-    fontSize: 13,
-    color: '#666',
+    fontSize: 14,
+    color: '#444',
+    marginBottom: 3,
   },
-
-  status: {
-    marginTop: 4,
-    fontSize: 13,
+  sectionTitle: {
+    fontSize: 16,
     fontWeight: '700',
+    marginBottom: 5,
+    color: COLORS.primary,
+  },
+  status: {
+    marginTop: 6,
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  rowBetween: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.blue,
+  },
+  value: {
+    fontSize: 12,
+    color: '#444',
+    maxWidth: '60%',
+    textAlign: 'right',
   },
 });

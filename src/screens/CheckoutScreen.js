@@ -1511,7 +1511,7 @@ const CheckoutScreen = ({navigation}) => {
         const createdOrderId = response?.data?.data?.order?.id;
 
         //  Online Payment Start
-        if (paymentMethod === 'Pay Online') {
+        if (paymentMethod == 'Pay Online') {
           startOnlinePayment(createdOrderId);
           return;
         }
@@ -1652,19 +1652,19 @@ const CheckoutScreen = ({navigation}) => {
 
   const renderPaymentOption = option => (
     <TouchableOpacity
-      key={option.id}
+      key={option?.id}
       style={[
         styles.optionCard,
-        paymentMethod === option.id && styles.optionCardSelected,
+        paymentMethod === option?.id && styles.optionCardSelected,
       ]}
       onPress={() => dispatch(setPaymentMethod(option.id))}>
       <View style={styles.optionContent}>
         <Text
           style={[
             styles.optionLabel,
-            paymentMethod === option.id && styles.optionLabelSelected,
+            paymentMethod === option?.id && styles.optionLabelSelected,
           ]}>
-          {option.label}
+          {option?.label}
         </Text>
       </View>
     </TouchableOpacity>
@@ -1818,7 +1818,7 @@ const CheckoutScreen = ({navigation}) => {
                     <View style={styles.userInfo}>
                       <Text style={styles.userDetailLabel}>Phone</Text>
                       <Text style={styles.userDetailValue}>
-                        {userProfile.phone}
+                        {userProfile?.phone}
                       </Text>
                     </View>
                   </View>

@@ -734,7 +734,7 @@ const OrdersScreen = ({navigation}) => {
   );
 
   // Loading state
-  if (isLoading && orders.length === 0) {
+  if (orders.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -777,7 +777,7 @@ const OrdersScreen = ({navigation}) => {
         <Text style={styles.title}>{STRINGS.orders}</Text>
         <Text style={styles.title}>{}</Text>
       </View>
-      <View style={{paddingHorizontal: 6, paddingBottom:66}}>
+      <View style={{paddingHorizontal: 6, paddingBottom: 66}}>
         {orders.length === 0 ? (
           renderEmptyOrders()
         ) : (

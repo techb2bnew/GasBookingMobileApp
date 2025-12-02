@@ -389,7 +389,7 @@ const OrderConfirmationScreen = ({route, navigation}) => {
 
         {/* Action Buttons */}
         <View style={styles.buttonContainer}>
-          {order.deliveryMode !== 'pickup' && (
+          {/* {order.deliveryMode !== 'pickup' && (
             <TouchableOpacity
               style={styles.trackButton}
               onPress={() =>
@@ -401,7 +401,7 @@ const OrderConfirmationScreen = ({route, navigation}) => {
               <Ionicons name="eye" size={20} color={COLORS.white} />
               <Text style={styles.trackButtonText}>{STRINGS.trackOrder}</Text>
             </TouchableOpacity>
-          )}
+          )} */}
           <TouchableOpacity
             style={styles.continueButton}
             onPress={() => navigation.navigate('Products')}>
