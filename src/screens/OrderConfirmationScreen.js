@@ -23,6 +23,50 @@ const OrderConfirmationScreen = ({route, navigation}) => {
     state.orders.orders.find(order => order.id == orderId),
   );
   console.log('orderIdorderId', orderId, order);
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [
+              {
+                name: 'Main',
+                params: {screen: 'Products'},
+              },
+            ],
+          }),
+        );
+        return true; 
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress,
+      );
+
+      return () => subscription.remove();
+    }, [navigation]),
+  );
+  // useEffect(() => {
+  //   const unsub = navigation.addListener('beforeRemove', e => {
+  //     e.preventDefault();
+
+  //     navigation.dispatch(
+  //       CommonActions.reset({
+  //         index: 0,
+  //         routes: [
+  //           {
+  //             name: 'Main',
+  //             params: {screen: 'Products'},
+  //           },
+  //         ],
+  //       }),
+  //     );
+  //   });
+
+  //   return unsub;
+  // }, [navigation]);
 
   // Handle all types of back navigation to redirect to home page
   // useFocusEffect(

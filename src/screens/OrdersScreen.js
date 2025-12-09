@@ -741,7 +741,7 @@ const OrdersScreen = ({navigation}) => {
           <Text style={styles.title}>{STRINGS.orders}</Text>
         </View>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading orders...</Text>
+          <Text style={styles.loadingText}>No Data Found </Text>
         </View>
       </View>
     );

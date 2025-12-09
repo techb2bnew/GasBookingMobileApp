@@ -1,6 +1,6 @@
 export const STRINGS = {
   // App
-  appName: 'LEADWAY GAS',
+  appName: 'Leadway Gas',
 
   // Authentication
   login: 'Login',
@@ -91,8 +91,8 @@ export const STRINGS = {
   email: 'support@gasbooking.com',
   phone: '+919876543210',
 
-  API_BASE_URL: 'https://1273325d20c4.ngrok-free.app',
-  SOCKET_URL: 'https://1273325d20c4.ngrok-free.app',
+  API_BASE_URL: 'https://259810bf9c42.ngrok-free.app',
+  SOCKET_URL: 'https://259810bf9c42.ngrok-free.app',
 };
 
 // #00ADEF blue #008ED8

@@ -782,7 +782,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: wp('2%'),
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.blue,
     paddingVertical: spacing.sm,
     paddingHorizontal: wp('4.5%'),
     borderRadius: borderRadius.md,
@@ -791,7 +791,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.lightShadeBlue || '#9aa3b2',
   },
   ctaBtnInCart: {
-    backgroundColor: COLORS.goldColor || '#FFA500',
+    backgroundColor: COLORS.primary ,
   },
   ctaTxt: {
     color: COLORS.white,

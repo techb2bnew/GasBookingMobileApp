@@ -272,20 +272,23 @@ const LoginScreen = ({ navigation }) => {
           </TouchableOpacity>
         )}
         <View style={styles.content}>
+          <View style={{ alignItems: 'center'}}>
+            <Image source={require('../assets/leadIcon.png')} style={styles.logoImage} />
+          </View>
           <Text style={styles.title}>{STRINGS.appName}</Text>
           <Text style={styles.subtitle}>
             {otpSent ? STRINGS.verifyOTP : STRINGS.login}
           </Text>
-          <View style={{ alignItems: 'center'}}>
-            <Image source={require('../assets/leadIcon.png')} style={styles.logoImage} />
-          </View>
+        
           <View style={{ justifyContent: 'center', height: '40%' }}>
             {!otpSent ? (
               <View style={styles.card}>
-                <Text style={styles.label}>{STRINGS.phoneNumber}</Text>
+                {/* <Text style={styles.label}>{STRINGS.phoneNumber}</Text> */}
                 <TextInput
                   style={styles.input}
-                  placeholder={STRINGS.enterPhoneNumber}
+                  placeholder="Email"
+                    placeholderTextColor="#6b7280"
+                  // placeholder={STRINGS.enterPhoneNumber}
                   value={phoneNumber}
                   onChangeText={text => dispatch(setPhoneNumber(text))}
                   autoCapitalize="none"
@@ -409,6 +412,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    justifyContent:"center",
+    // alignItems:"center",
   },
   title: {
     fontSize: fontSize.xxl,
@@ -424,13 +429,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   card: {
-    backgroundColor: COLORS.white,
-    borderRadius: borderRadius.lg,
+    // backgroundColor: COLORS.white,
+    // borderRadius: borderRadius.lg,
     padding: spacing.lg,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 4,
+    // shadowOpacity: 0.05,
+    // shadowRadius: 10,
+    // elevation: 4,
   },
   logoImage: {
     width: 80,

@@ -529,10 +529,12 @@ const CheckoutScreen = ({navigation}) => {
   const updateProfile = async () => {
     try {
       setIsUpdatingProfile(true);
-
       // Validate required fields
       if (!profileFormData.name.trim()) {
         Alert.alert('Error', 'Name is required');
+        return;
+      } else if (!profileFormData.phone.trim()) {
+        Alert.alert('Error', 'Phone number is required');
         return;
       }
 
@@ -1213,11 +1215,11 @@ const CheckoutScreen = ({navigation}) => {
         !isApplied
       ) {
         // Show success message for activation (only for current agency, if not already applied)
-        Alert.alert(
-          'Coupon Activated',
-          `Coupon ${couponData.code} is now available!`,
-          [{text: 'OK'}],
-        );
+        // Alert.alert(
+        //   'Coupon Activated',
+        //   `Coupon ${couponData.code} is now available!`,
+        //   [{text: 'OK'}],
+        // );
       }
     },
     onCouponDeleted: couponData => {
@@ -2491,7 +2493,11 @@ const CheckoutScreen = ({navigation}) => {
         transparent
         animationType="fade"
         onRequestClose={() => setIsErrorModalVisible(false)}>
-        <View style={styles.modalOverlay}>
+        <View
+          style={[
+            styles.modalOverlay,
+            {display: 'flex', justifyContent: 'center', alignItems: 'center'},
+          ]}>
           <View style={styles.errorModal}>
             <View style={styles.errorIconContainer}>
               <Ionicons name="alert-circle" size={50} color={COLORS.error} />
@@ -3342,18 +3348,18 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
   placeOrderButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.blue,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
-    shadowColor: COLORS.primary,
+    shadowColor: COLORS.blue,
     shadowOffset: {width: 0, height: 3},
     shadowOpacity: 0.2,
     shadowRadius: 6,
     elevation: 4,
     borderWidth: 1,
-    borderColor: COLORS.primary,
+    borderColor: COLORS.blue,
   },
   placeOrderButtonDisabled: {
     backgroundColor: COLORS.gray,
