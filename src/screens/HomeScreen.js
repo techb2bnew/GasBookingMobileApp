@@ -60,6 +60,8 @@ const HomeScreen = ({navigation}) => {
   const [forceUpdate, setForceUpdate] = useState(0);
   const [processedEvents, setProcessedEvents] = useState(new Set());
   const [refreshing, setRefreshing] = useState(false);
+  const [serverImages, setServerImages] = useState([]); // saved banners from backend
+console.log("serverImagesserverImages",serverImages);
   const carouselRef = useRef(null);
   const carouselIntervalRef = useRef(null);
 
@@ -386,7 +388,40 @@ const HomeScreen = ({navigation}) => {
   console.log('🔄 Selected Agency ID:', selectedAgencyId);
 
   // Debug logging
+const fetchBanners = async () => {
+  try {
+      const res = await apiClient.get('/api/banners');
+    // const res = await fetch(`${API_BASE_URL}/api/banners`,
+    //   {
+    //     headers: {
+    //       Authorization: `Bearer ${token}`,
+    //       Accept: "application/json",
+    //       "ngrok-skip-browser-warning": "true",
+    //     },
+    //   }
+    // );
 
+    console.log("RAW RES:", res.data.data);
+
+    // 💥 Fetch se JSON lene ka sahi method
+    const data = res;
+
+    console.log("PARSED JSON:", data?.data.data);
+
+    if (data?.data?.data?.banners) {
+      setServerImages(data?.data?.data?.banners?.[0]?.images);
+    } else {
+      console.log("Invalid data:", data);
+    }
+
+  } catch (err) {
+    console.log("Fetch Error:", err);
+  }
+};
+
+  useEffect(() => {
+    fetchBanners();
+  }, []);
   // Carousel banner data
   const carouselData = [
     {
@@ -413,10 +448,10 @@ const HomeScreen = ({navigation}) => {
   ];
   // Auto-play carousel banner
   useEffect(() => {
-    if (carouselData.length > 1) {
+    if (serverImages?.length > 1) {
       carouselIntervalRef.current = setInterval(() => {
         setCurrentCarouselIndex(prevIndex => {
-          const nextIndex = (prevIndex + 1) % carouselData.length;
+          const nextIndex = (prevIndex + 1) % serverImages?.length;
           // Scroll to next slide
           if (carouselRef.current) {
             carouselRef.current.scrollToIndex({
@@ -434,7 +469,7 @@ const HomeScreen = ({navigation}) => {
         clearInterval(carouselIntervalRef.current);
       }
     };
-  }, [carouselData.length]);
+  }, [serverImages?.length]);
   // Filter products based on selected category and price availability
   const filteredProducts = (
     selectedCategory === 'All'
@@ -464,7 +499,7 @@ const HomeScreen = ({navigation}) => {
   const renderCarouselItem = ({item, index}) => (
     <View style={[styles.carouselItem, {paddingHorizontal: 6}]}>
       <View style={{paddingBottom: 10, borderRadius: 20}}>
-        <Image source={{uri: item.image}} style={[styles.carouselImage]} />
+        <Image source={{uri: item?.url}} style={[styles.carouselImage]} />
         {/* <View style={styles.carouselOverlay}>
           <Text style={styles.carouselTitle}>{item.title}</Text>
           <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>
@@ -475,7 +510,7 @@ const HomeScreen = ({navigation}) => {
 
   const renderCarouselDots = () => (
     <View style={styles.carouselDots}>
-      {carouselData.map((_, index) => (
+      {serverImages?.map((_, index) => (
         <View
           key={index}
           style={[
@@ -743,7 +778,7 @@ const HomeScreen = ({navigation}) => {
         <View style={styles.carouselContainer}>
           <FlatList
             ref={carouselRef}
-            data={carouselData}
+            data={serverImages}
             renderItem={renderCarouselItem}
             keyExtractor={item => item.id}
             horizontal
@@ -764,10 +799,10 @@ const HomeScreen = ({navigation}) => {
             }}
             onScrollEndDrag={() => {
               // Resume auto-play after user stops scrolling
-              if (carouselData.length > 1) {
+              if (serverImages?.length > 1) {
                 carouselIntervalRef.current = setInterval(() => {
                   setCurrentCarouselIndex(prevIndex => {
-                    const nextIndex = (prevIndex + 1) % carouselData.length;
+                    const nextIndex = (prevIndex + 1) % serverImages?.length;
                     if (carouselRef.current) {
                       carouselRef.current.scrollToIndex({
                         index: nextIndex,
