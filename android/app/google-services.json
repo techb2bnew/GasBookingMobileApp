@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "994025048168",
+    "project_id": "gas-booking-7ba4d",
+    "storage_bucket": "gas-booking-7ba4d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:994025048168:android:d4790baa79fa0dcb4393dd",
+        "android_client_info": {
+          "package_name": "com.gasbooking"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBefyljmQeSMX2gThiYwap9_XRX13hQOHA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

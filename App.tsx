@@ -21,7 +21,7 @@ import {
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
-
+ 
   return (
     <SafeAreaProvider>
       <KeyboardAvoidingView
