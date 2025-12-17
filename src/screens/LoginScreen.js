@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,10 @@ import {
   Linking,
   Image,
 } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {useDispatch, useSelector} from 'react-redux';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import FastOTPInput from '../components/FastOTPInput';
-import { COLORS, STRINGS } from '../constants';
+import {COLORS, STRINGS} from '../constants';
 import {
   setPhoneNumber,
   sendOTPStart,
@@ -28,19 +28,20 @@ import {
   resetOTP,
 } from '../redux/slices/authSlice';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
-import { updateProfile } from '../redux/slices/profileSlice';
+import {updateProfile} from '../redux/slices/profileSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../utils/apiConfig';
-import { hp, wp, fontSize, spacing, borderRadius } from '../utils/dimensions';
+import {hp, wp, fontSize, spacing, borderRadius} from '../utils/dimensions';
 
-const LoginScreen = ({ navigation }) => {
+const LoginScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
-  const { phoneNumber, otpSent, loading } = useSelector(state => state.auth);
+  const {phoneNumber, otpSent, loading} = useSelector(state => state.auth);
   const [otpValue, setOtpValue] = useState('');
   const [error, setError] = useState('');
   const [timer, setTimer] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
+  const [fcmToken, setFcmToken] = useState('');
 
   useEffect(() => {
     let interval;
@@ -67,40 +68,41 @@ const LoginScreen = ({ navigation }) => {
       setTimeout(() => setError(''), 3000); // ✅ Clear error after 3 seconds
       return;
     }
-    setError(""); // ✅ Clear any previous errors
+    setError(''); // ✅ Clear any previous errors
     dispatch(sendOTPStart());
 
     try {
       const response = await apiClient.post('/api/auth/request-otp', {
         email: phoneNumber,
-        role: "customer",
+        role: 'customer',
       });
 
-      console.log("OTP API Success:", response.data);
+      console.log('OTP API Success:', response.data);
 
       dispatch(sendOTPSuccess());
       // setTimer(30); // ❌ Timer removed - only starts on resend click
     } catch (error) {
-      console.error("OTP Request Error:", error);
-      console.error("Error Response:", error.response);
-      console.error("Error Response Data:", error.response?.data);
+      console.error('OTP Request Error:', error);
+      console.error('Error Response:>>', error.response);
+      console.error('Error Response Data:', error.response?.data);
 
       // Try multiple possible error message locations
       const message =
-        error.response?.data?.message || 
+        error.response?.data?.message ||
         error.response?.data?.error?.message ||
-        error.response?.data?.error || 
-        (typeof error.response?.data === 'string' ? error.response?.data : null) ||
-        error.message || 
-        "Something went wrong. Please try again.";
+        error.response?.data?.error ||
+        (typeof error.response?.data === 'string'
+          ? error.response?.data
+          : null) ||
+        error.message ||
+        'Something went wrong. Please try again.';
 
-      console.log("Final Error Message:", message);
+      console.log('Final Error Message:', message);
       setError(message);
       setTimeout(() => setError(''), 3000); // ✅ Clear error after 3 seconds
       dispatch(sendOTPFailure(message)); // ✅ Reset loading state on error
     }
   };
-
 
   // const handleVerifyOTP = () => {
   //   if (!otpValue || otpValue.length < 6) {
@@ -128,7 +130,23 @@ const LoginScreen = ({ navigation }) => {
   //     }
   //   }, 1000);
   // };
+  useEffect(() => {
+    const fetchFcmToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('fcmToken');
+        if (token) {
+          console.log('FCM token (from storage):', token);
+          setFcmToken(token);
+        } else {
+          console.log('No FCM token found in storage');
+        }
+      } catch (error) {
+        console.log('Error fetching FCM token:', error);
+      }
+    };
 
+    fetchFcmToken();
+  }, []);
   const handleVerifyOTP = async () => {
     if (!otpValue || otpValue.length < 6) {
       setError('Please enter a valid OTP');
@@ -138,26 +156,39 @@ const LoginScreen = ({ navigation }) => {
 
     setError('');
     dispatch(verifyOTPStart());
+    const payload = {
+       email: phoneNumber,
+        otp: otpValue,
+        role: 'customer',
+        fcmToken: fcmToken,
+        fcmDeviceType: Platform.OS,
+    }
+console.log("payload>>",payload);
 
     try {
       const response = await apiClient.post('/api/auth/verify-otp', {
         email: phoneNumber,
         otp: otpValue,
-        role: "customer"
+        role: 'customer',
+        fcmToken: fcmToken,
+        fcmDeviceType: Platform.OS,
       });
 
-      console.log("Verify OTP API Response:", response.data);
+      console.log('Verify OTP API Response:', response.data);
 
       if (response.data && response.data.success) {
         const userData = {
           id: response.data.data.user?.id || '1',
-          name: response.data.data.user?.name || `Customer_${phoneNumber.slice(-4)}`,
-          phoneNumber: response.data.data.user?.phone ,
-          email: response.data.data.user?.email ,
+          name:
+            response.data.data.user?.name ||
+            `Customer_${phoneNumber.slice(-4)}`,
+          phoneNumber: response.data.data.user?.phone,
+          email: response.data.data.user?.email,
           role: response.data.data.user?.role || 'customer',
           profileImage: response.data.data.user?.profileImage || null,
           address: response.data.data.user?.address || null,
-          isProfileComplete: response.data.data.user?.isProfileComplete || false,
+          isProfileComplete:
+            response.data.data.user?.isProfileComplete || false,
         };
 
         const token = response.data.data.token;
@@ -167,39 +198,43 @@ const LoginScreen = ({ navigation }) => {
         await AsyncStorage.setItem('authToken', token); // For socket service
         await AsyncStorage.setItem('userId', userData.id.toString());
         await AsyncStorage.setItem('userRole', userData.role);
-        
+
         console.log('✅ Login successful - Auth data saved for socket');
         console.log('📝 UserId:', userData.id);
         console.log('📝 UserRole:', userData.role);
-        
+
         // ✅ Save user data to Redux
-        dispatch(verifyOTPSuccess({
-          user: userData,
-          token: token
-        }));
+        dispatch(
+          verifyOTPSuccess({
+            user: userData,
+            token: token,
+          }),
+        );
         dispatch(updateProfile(userData));
-        
-        console.log("Login successful! Token:", token);
-        console.log("User data saved:", userData);
+
+        console.log('Login successful! Token:', token);
+        console.log('User data saved:', userData);
       } else {
         dispatch(verifyOTPFailure('Invalid OTP'));
         setError('Invalid OTP');
         setTimeout(() => setError(''), 3000); // ✅ Clear error after 3 seconds
       }
     } catch (error) {
-      console.error("Verify OTP Error:", error);
-      console.error("Error Response Data:", error.response?.data);
-      
+      console.error('Verify OTP Error:', error);
+      console.error('Error Response Data:', error.response?.data);
+
       // Try multiple possible error message locations
-      const message = 
-        error.response?.data?.message || 
+      const message =
+        error.response?.data?.message ||
         error.response?.data?.error?.message ||
-        error.response?.data?.error || 
-        (typeof error.response?.data === 'string' ? error.response?.data : null) ||
-        error.message || 
+        error.response?.data?.error ||
+        (typeof error.response?.data === 'string'
+          ? error.response?.data
+          : null) ||
+        error.message ||
         'Something went wrong';
-      
-      console.log("Final Error Message:", message);
+
+      console.log('Final Error Message:', message);
       dispatch(verifyOTPFailure(message));
       setError(message);
       setTimeout(() => setError(''), 3000); // ✅ Clear error after 3 seconds
@@ -217,35 +252,37 @@ const LoginScreen = ({ navigation }) => {
     try {
       const response = await apiClient.post('/api/auth/request-otp', {
         email: phoneNumber,
-        role: "customer",
+        role: 'customer',
       });
 
-      console.log("Resend OTP API Success:", response.data);
+      console.log('Resend OTP API Success:', response.data);
 
       if (response.data && response.data.success) {
         dispatch(sendOTPSuccess());
         setTimer(30); // Start resend timer
         setOtpValue(''); // Clear previous OTP input
       } else {
-        const errorMsg = response.data?.message || "Failed to resend OTP";
+        const errorMsg = response.data?.message || 'Failed to resend OTP';
         setError(errorMsg);
         setTimeout(() => setError(''), 3000); // ✅ Clear error after 3 seconds
         dispatch(sendOTPFailure(errorMsg));
       }
     } catch (error) {
-      console.error("Resend OTP Error:", error);
-      console.error("Error Response Data:", error.response?.data);
-      
+      console.error('Resend OTP Error:', error);
+      console.error('Error Response Data:', error.response?.data);
+
       // Try multiple possible error message locations
-      const message = 
-        error.response?.data?.message || 
+      const message =
+        error.response?.data?.message ||
         error.response?.data?.error?.message ||
-        error.response?.data?.error || 
-        (typeof error.response?.data === 'string' ? error.response?.data : null) ||
-        error.message || 
-        "Something went wrong. Please try again.";
-      
-      console.log("Final Error Message:", message);
+        error.response?.data?.error ||
+        (typeof error.response?.data === 'string'
+          ? error.response?.data
+          : null) ||
+        error.message ||
+        'Something went wrong. Please try again.';
+
+      console.log('Final Error Message:', message);
       setError(message);
       setTimeout(() => setError(''), 3000); // ✅ Clear error after 3 seconds
       dispatch(sendOTPFailure(message));
@@ -253,7 +290,11 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
+    <View
+      style={[
+        styles.container,
+        {paddingTop: insets.top, paddingBottom: insets.bottom},
+      ]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContainer}
@@ -265,9 +306,8 @@ const LoginScreen = ({ navigation }) => {
             onPress={() => {
               setOtpValue('');
               setError('');
-              dispatch(resetOTP());  // ✅ ab ye kaam karega
-            }}
-          >
+              dispatch(resetOTP()); // ✅ ab ye kaam karega
+            }}>
             <Ionicons name="arrow-back" size={28} color={COLORS.primary} />
           </TouchableOpacity>
         )}
@@ -276,10 +316,13 @@ const LoginScreen = ({ navigation }) => {
           <Text style={styles.subtitle}>
             {otpSent ? STRINGS.verifyOTP : STRINGS.login}
           </Text>
-          <View style={{ alignItems: 'center'}}>
-            <Image source={require('../assets/leadIcon.png')} style={styles.logoImage} />
+          <View style={{alignItems: 'center'}}>
+            <Image
+              source={require('../assets/leadIcon.png')}
+              style={styles.logoImage}
+            />
           </View>
-          <View style={{ justifyContent: 'center', height: '40%' }}>
+          <View style={{justifyContent: 'center', height: '40%'}}>
             {!otpSent ? (
               <View style={styles.card}>
                 <Text style={styles.label}>{STRINGS.phoneNumber}</Text>
@@ -333,11 +376,9 @@ const LoginScreen = ({ navigation }) => {
                   <Text
                     style={[
                       styles.resendText,
-                      timer > 0 && { color: COLORS.gray },
+                      timer > 0 && {color: COLORS.gray},
                     ]}>
-                    {timer > 0
-                      ? `Resend OTP in ${timer}s`
-                      : STRINGS.resendOTP}
+                    {timer > 0 ? `Resend OTP in ${timer}s` : STRINGS.resendOTP}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -374,15 +415,29 @@ const LoginScreen = ({ navigation }) => {
 
             <TouchableOpacity
               style={styles.contactItem}
-              onPress={() => Linking.openURL(`mailto:${STRINGS.email}?subject=Support%20Request&body=Hello%20Support%20Team,`)}>
-              <Ionicons name="mail-outline" size={20} color={COLORS.primary} style={styles.contactIcon} />
+              onPress={() =>
+                Linking.openURL(
+                  `mailto:${STRINGS.email}?subject=Support%20Request&body=Hello%20Support%20Team,`,
+                )
+              }>
+              <Ionicons
+                name="mail-outline"
+                size={20}
+                color={COLORS.primary}
+                style={styles.contactIcon}
+              />
               <Text style={styles.contactText}>{STRINGS.email}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.contactItem}
               onPress={() => Linking.openURL(`tel:${STRINGS.phone}`)}>
-              <Ionicons name="call-outline" size={20} color={COLORS.primary} style={styles.contactIcon} />
+              <Ionicons
+                name="call-outline"
+                size={20}
+                color={COLORS.primary}
+                style={styles.contactIcon}
+              />
               <Text style={styles.contactText}>{STRINGS.phone}</Text>
             </TouchableOpacity>
           </View>
@@ -508,7 +563,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: spacing.sm,  // notch ke niche rakhne ke liye (iOS/Android adjust kar lena)
+    top: spacing.sm, // notch ke niche rakhne ke liye (iOS/Android adjust kar lena)
     left: spacing.lg,
     zIndex: 10,
     padding: wp('2%'),
@@ -534,7 +589,11 @@ const styles = StyleSheet.create({
     margin: spacing.lg,
     alignItems: 'center',
   },
-  contactButtonText: { color: COLORS.black, fontSize: fontSize.md, fontWeight: '600' },
+  contactButtonText: {
+    color: COLORS.black,
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

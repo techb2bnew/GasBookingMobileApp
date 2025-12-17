@@ -734,21 +734,32 @@ const OrdersScreen = ({navigation}) => {
   );
 
   // Loading state
-  if (isLoading && orders.length === 0) {
+  if ( orders?.length === 0) {
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{STRINGS.orders}</Text>
-        </View>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading orders...</Text>
-        </View>
-      </View>
+      // <View style={styles.container}>
+      //   <View style={styles.header}>
+      //     <Text style={styles.title}>{STRINGS.orders}</Text>
+      //   </View>
+      //   <View style={styles.loadingContainer}>
+      //     <Text style={styles.loadingText}>Loading orders...</Text>
+      //   </View>
+      // </View>
+      <View style={styles.emptyContainer}>
+      <Text style={styles.emptyTitle}>No orders yet!</Text>
+      <Text style={styles.emptySubtitle}>
+        Place your first order to see it here.
+      </Text>
+      <TouchableOpacity
+        style={styles.shopButton}
+        onPress={() => navigation.navigate('Products', {screen: 'Products'})}>
+        <Text style={styles.shopButtonText}>Start Shopping</Text>
+      </TouchableOpacity>
+    </View>
     );
   }
 
   // Error state
-  if (error && orders.length === 0) {
+  if (error && orders?.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -763,6 +774,7 @@ const OrdersScreen = ({navigation}) => {
       </View>
     );
   }
+console.log("ordersssss",orders);
 
   return (
     <View
@@ -778,7 +790,7 @@ const OrdersScreen = ({navigation}) => {
         <Text style={styles.title}>{}</Text>
       </View>
       <View style={{paddingHorizontal: 6, paddingBottom:66}}>
-        {orders.length === 0 ? (
+        {orders?.length == 0 ? (
           renderEmptyOrders()
         ) : (
           <FlatList

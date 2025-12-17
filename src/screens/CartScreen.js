@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   checkoutButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.blue,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.xl,

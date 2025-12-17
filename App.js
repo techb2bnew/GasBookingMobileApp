@@ -23,10 +23,6 @@ const LoadingScreen = () => (
 
 const App = () => {
   useEffect(() => {
-    // Request location permission when app starts
-    requestLocationPermission();
-  }, []);
-useEffect(() => {
     const requestPermissions = async () => {
       if (Platform.OS === 'ios') {
         await requestUserIosPermission();
@@ -35,6 +31,10 @@ useEffect(() => {
       }
     };
     requestPermissions();
+  }, []);
+  useEffect(() => {
+    // Request location permission when app starts
+    // requestLocationPermission();
   }, []);
   const requestNotificationPermission = async () => {
     if (Platform.OS === 'android' && Platform.Version >= 33) {

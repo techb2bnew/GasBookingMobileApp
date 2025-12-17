@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
   },
   textArea: {height: hp('10%'), textAlignVertical: 'top'},
   saveButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.blue,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
     alignItems: 'center',
@@ -704,7 +704,7 @@ const styles = StyleSheet.create({
   deleteButton: {borderColor: COLORS.error},
   deleteButtonText: {color: COLORS.error},
   addButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.blue,
     margin: spacing.md,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,

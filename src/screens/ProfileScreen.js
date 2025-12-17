@@ -711,7 +711,7 @@ const ProfileScreen = ({navigation}) => {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>{STRINGS.phoneNumber}</Text>
+              <Text style={styles.label}>{'Phone Number'}</Text>
               <TextInput
                 style={[
                   styles.input,
@@ -1633,7 +1633,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   addFirstAddressButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.blue,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 6,
