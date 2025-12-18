@@ -1409,8 +1409,8 @@ const CheckoutScreen = ({navigation}) => {
       }
 
       Linking.openURL(payUrl);
-
-      navigation.navigate('PaymentStatus', {orderId: orderId});
+      navigation.navigate('OrderConfirmation', {orderId: orderId});
+      // navigation.navigate('PaymentStatus', {orderId: orderId});
     } catch (error) {
       console.log('PesaPal Payment Error:', error.response?.data || error);
       Alert.alert('Error', 'Payment failed');

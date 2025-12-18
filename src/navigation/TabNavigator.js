@@ -2,6 +2,8 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, StyleSheet, Platform, Text, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+
 import { useSelector } from 'react-redux';
 import { COLORS } from '../constants';
 
@@ -14,6 +16,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import CartScreen from '../screens/CartScreen';
 import HomeScreen from '../screens/HomeScreen';
 import CartStack from './CartStack';
+import NotificationScreen from '../screens/NotificationScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -102,7 +105,7 @@ const TabNavigator = () => {
           tabBarLabel: () => null, // Hide default label
           tabBarIcon: ({ color, size, focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <Icon name="list-alt" color={focused ? COLORS.primary: COLORS.blue} size={focused ? 26 : 24} />
+              <Ionicons name="newspaper" color={focused ? COLORS.primary: COLORS.blue} size={focused ? 26 : 24} />
               <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
                 Orders
               </Text>
@@ -138,8 +141,8 @@ const TabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Support"
-        component={SupportScreen}
+        name="Notification"
+        component={NotificationScreen}
         // options={{
         //   tabBarLabel: ({ focused }) => (
         //     <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
@@ -156,9 +159,9 @@ const TabNavigator = () => {
           tabBarLabel: () => null, // Hide default label
           tabBarIcon: ({ color, size, focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <Icon name="help-outline" color={focused ? COLORS.primary: COLORS.blue} size={focused ? 26 : 24} />
+              <Ionicons name="notifications" color={focused ? COLORS.primary: COLORS.blue} size={focused ? 26 : 24} />
               <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
-                Support
+                Notification
               </Text>
             </View>
           ),

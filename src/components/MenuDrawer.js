@@ -117,6 +117,11 @@ const MenuDrawer = ({visible, onClose, navigation}) => {
       navigation.navigate('TermsAndConditions');
     });
   };
+  const handleSupport = () => {
+    handleMenuCloseWithCallback(() => {
+      navigation.navigate('SupportScreen');
+    });
+  };
 
   const handlePrivacyPolicy = () => {
     handleMenuCloseWithCallback(() => {
@@ -234,6 +239,13 @@ const MenuDrawer = ({visible, onClose, navigation}) => {
                   <Icon name="chevron-right" size={24} color={COLORS.blue} />
                 </TouchableOpacity>
 
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleSupport}>
+                  <Icon name="help-outline" color={COLORS.blue} size={24} />
+                  <Text style={styles.menuText}>Support</Text>
+                  <Icon name="chevron-right" size={24} color={COLORS.blue} />
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={handlePrivacyPolicy}>

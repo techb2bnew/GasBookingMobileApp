@@ -19,6 +19,8 @@ import TabNavigator from './TabNavigator';
 import ProductsScreen from '../screens/ProductsScreen';
 import OngoingOrderDetails from '../screens/OngoingOrderDetails';
 import OrdersScreen from '../screens/OrdersScreen';
+import SupportScreen from '../screens/SupportScreen';
+import NotificationScreen from '../screens/NotificationScreen';
 
 const Stack = createStackNavigator();
 
@@ -53,6 +55,7 @@ const StackNavigator = () => {
         name="OrderConfirmation"
         component={OrderConfirmationScreen}
       />
+      <Stack.Screen name="Notification" component={NotificationScreen} />
       <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
       <Stack.Screen name="AddAddress" component={AddAddressScreen} />
       <Stack.Screen name="ProductDetails" component={ProductDetailsScreen} />
@@ -61,6 +64,7 @@ const StackNavigator = () => {
         name="TermsAndConditions"
         component={TermsAndConditionsScreen}
       />
+      <Stack.Screen name="SupportScreen" component={SupportScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
       <Stack.Screen name="AgencySelection" component={AgencySelectionScreen} />
     </Stack.Navigator>
