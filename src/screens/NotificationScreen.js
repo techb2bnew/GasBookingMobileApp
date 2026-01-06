@@ -1,166 +1,3 @@
-// import React from 'react';
-// import {
-//   View,
-//   Text,
-//   StyleSheet,
-//   FlatList,
-//   TouchableOpacity,
-//   SafeAreaView,
-// } from 'react-native';
-// import {useSafeAreaInsets} from 'react-native-safe-area-context';
-// import Icon from 'react-native-vector-icons/Ionicons';
-// import {COLORS} from '../constants';
-// import Ionicons from 'react-native-vector-icons/dist/Ionicons';
-
-// const notifications = [
-//   {
-//     id: '1',
-//     title: 'New Order Assigned',
-//     message: 'You have received a new order. Please check details.',
-//     time: '2 min ago',
-//     read: false,
-//   },
-//   {
-//     id: '2',
-//     title: 'Payment Successful',
-//     message: 'Your last payment was completed successfully.',
-//     time: '1 hr ago',
-//     read: true,
-//   },
-//   {
-//     id: '3',
-//     title: 'Profile Updated',
-//     message: 'Your profile information has been updated.',
-//     time: 'Yesterday',
-//     read: true,
-//   },
-// ];
-
-// const NotificationItem = ({item}) => {
-//   return (
-//     <TouchableOpacity style={styles.card} activeOpacity={0.8}>
-//       <View style={styles.iconWrap}>
-//         <Icon
-//           name={item.read ? 'notifications-outline' : 'notifications'}
-//           size={22}
-//           color={COLORS.PRIMARY}
-//         />
-//       </View>
-
-//       <View style={styles.content}>
-//         <Text style={styles.title}>{item.title}</Text>
-//         <Text style={styles.message} numberOfLines={2}>
-//           {item.message}
-//         </Text>
-//         <Text style={styles.time}>{item.time}</Text>
-//       </View>
-
-//       {!item.read && <View style={styles.dot} />}
-//     </TouchableOpacity>
-//   );
-// };
-
-// const NotificationScreen = ({navigation}) => {
-//   const insets = useSafeAreaInsets();
-
-//   return (
-//     <SafeAreaView style={[styles.container, {paddingTop: insets.top}]}>
-//       {/* Header */}
-//       <View style={styles.header}>
-//         <TouchableOpacity
-//           style={styles.backButton}
-//           onPress={() => navigation.goBack()}>
-//           <Ionicons name="arrow-back" size={24} color={COLORS.white} />
-//         </TouchableOpacity>
-//         <Text style={styles.headerTitle}>Notifications</Text>
-//         <TouchableOpacity>
-//           <Text style={styles.clearText}>Clear All</Text>
-//         </TouchableOpacity>
-//       </View>
-
-//       {/* List */}
-//       <FlatList
-//         data={notifications}
-//         keyExtractor={item => item.id}
-//         renderItem={({item}) => <NotificationItem item={item} />}
-//         contentContainerStyle={{paddingBottom: 20}}
-//         showsVerticalScrollIndicator={false}
-//       />
-//     </SafeAreaView>
-//   );
-// };
-
-// export default NotificationScreen;
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: COLORS.background,
-//   },
-//   header: {
-//     padding: 16,
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//     backgroundColor: COLORS.primary,
-//   },
-//   headerTitle: {
-//     fontSize: 20,
-//     fontWeight: '700',
-//     color: COLORS.white,
-//   },
-//   clearText: {
-//     fontSize: 14,
-//     color: COLORS.white,
-//     fontWeight: '600',
-//   },
-//   card: {
-//     backgroundColor: COLORS.CARD,
-//     marginHorizontal: 16,
-//     marginVertical: 8,
-//     borderRadius: 14,
-//     padding: 14,
-//     flexDirection: 'row',
-//     alignItems: 'flex-start',
-//     borderWidth: 1,
-//     borderColor: COLORS.border,
-//   },
-//   iconWrap: {
-//     width: 40,
-//     height: 40,
-//     borderRadius: 20,
-//     backgroundColor: '#EAF4FB',
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     marginRight: 12,
-//   },
-//   content: {
-//     flex: 1,
-//   },
-//   title: {
-//     fontSize: 15,
-//     fontWeight: '600',
-//     color: COLORS.text,
-//     marginBottom: 4,
-//   },
-//   message: {
-//     fontSize: 13,
-//     color: COLORS.SUB_TEXT,
-//     marginBottom: 6,
-//   },
-//   time: {
-//     fontSize: 12,
-//     color: COLORS.SUB_TEXT,
-//   },
-//   dot: {
-//     width: 8,
-//     height: 8,
-//     borderRadius: 4,
-//     backgroundColor: COLORS.blue,
-//     marginLeft: 6,
-//     marginTop: 6,
-//   },
-// });
 import React, {useEffect, useState} from 'react';
 import {
   View,
@@ -250,9 +87,9 @@ const NotificationScreen = ({navigation}) => {
       setNotifications(prev =>
         prev.map(n => (n.id === notification.id ? {...n, read: true} : n)),
       );
-      
-      navigation.navigate('Orders')
-      console.log("changedfdf");
+
+      navigation.navigate('Orders');
+      console.log('changedfdf');
       setUnreadCount(prev => Math.max(prev - 1, 0));
     } catch (error) {
       console.log('markAsRead error', error);
@@ -268,8 +105,21 @@ const NotificationScreen = ({navigation}) => {
     } catch (error) {
       console.log('markAllAsRead error', error);
     }
+  }; const EmptyNotification = () => {
+    return (
+      <View style={styles.emptyContainer}>
+        <Ionicons
+          name="notifications-off-outline"
+          size={64}
+          color={COLORS.gray}
+        />
+        <Text style={styles.emptyTitle}>Notification not found</Text>
+        <Text style={styles.emptySubText}>
+          You don’t have any notifications right now
+        </Text>
+      </View>
+    );
   };
-
   return (
     <SafeAreaView style={[styles.container, {paddingTop: insets.top}]}>
       {/* Header */}
@@ -307,6 +157,7 @@ const NotificationScreen = ({navigation}) => {
           )}
           contentContainerStyle={{paddingBottom: 20}}
           showsVerticalScrollIndicator={false}
+           ListEmptyComponent={!loading ? <EmptyNotification /> : null}
         />
       )}
     </SafeAreaView>
@@ -387,4 +238,24 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     marginTop: 6,
   },
+  emptyContainer: {
+  flex: 1,
+  marginVertical:300,
+  justifyContent: 'center',
+  alignItems: 'center',
+  paddingHorizontal: 20,
+},
+emptyTitle: {
+  marginTop: 12,
+  fontSize: 16,
+  fontWeight: '600',
+  color: COLORS.blue,
+},
+emptySubText: {
+  marginTop: 6,
+  fontSize: 13,
+  color: COLORS.textSecondary,
+  textAlign: 'center',
+},
+
 });
