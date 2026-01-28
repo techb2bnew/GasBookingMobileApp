@@ -61,11 +61,11 @@ const SplashScreen = () => {
       <StatusBar backgroundColor={COLORS.primary} barStyle="light-content" />
       
       {/* Background Gradient Effect */}
-      <View style={styles.backgroundGradient}>
+      {/* <View style={styles.backgroundGradient}>
         <View style={styles.gradientCircle1} />
         <View style={styles.gradientCircle2} />
         <View style={styles.gradientCircle3} />
-      </View>
+      </View> */}
 
       {/* Main Content */}
       <Animated.View 
@@ -82,18 +82,16 @@ const SplashScreen = () => {
       >
         {/* Logo Container */}
         <View style={styles.logoContainer}>
-          <View style={styles.logoBackground}>
             <Image 
               source={require('../assets/leadIcon.png')} 
               style={styles.logoImage}
               resizeMode="contain"
             />
           </View>
-        </View>
 
         {/* App Name */}
-        <Text style={styles.appName}>Leadway Gas</Text>
-        <Text style={styles.tagline}>Your Gas, Your Way</Text>
+        {/* <Text style={styles.appName}>Leadway Gas</Text> */}
+        {/* <Text style={styles.tagline}>Your Gas, Your Way</Text> */}
 
         {/* Loading Indicator */}
         <View style={styles.loadingContainer}>
@@ -119,7 +117,7 @@ const SplashScreen = () => {
         ]}
       >
         <Text style={styles.versionText}>Version 1.0.0</Text>
-        <Text style={styles.copyrightText}>© 2024 Leadway. All rights reserved.</Text>
+        <Text style={styles.copyrightText}>© {new Date().getFullYear()} Leadway Petroleum. All rights reserved.</Text>
       </Animated.View>
     </View>
   );
@@ -128,10 +126,11 @@ const SplashScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    // backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+    backgroundColor: 'white',
   },
   backgroundGradient: {
     position: 'absolute',
@@ -169,15 +168,19 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: height * 0.18,
     flex: 1,
   },
-  logoContainer: {
-    marginBottom: 30,
+   logoContainer: {
+    // backgroundColor: 'white', // 👈 yahin white background
+    // borderRadius: 50, // optional
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logoBackground: {
     width: 120,
-    height: 120,
+    height: 100,
     borderRadius: 60,
     backgroundColor: COLORS.white + '20',
     justifyContent: 'center',
@@ -191,33 +194,33 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   logoImage: {
-    width: 80,
-    height: 80,
+    width: 150,
+    height: 150,
   },
   appName: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: '700',
-    color: COLORS.white,
+    color: '#035DB7',
     marginBottom: 8,
     letterSpacing: 1,
   },
   tagline: {
     fontSize: 16,
-    color: COLORS.white + '90',
+    color: COLORS.text,
     marginBottom: 60,
     fontWeight: '400',
   },
   loadingContainer: {
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 70,
   },
   loadingCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
     borderWidth: 3,
-    borderColor: COLORS.white + '30',
-    borderTopColor: COLORS.white,
+    borderColor: COLORS.blue + '30',
+    borderTopColor: COLORS.blue,
     marginBottom: 15,
     justifyContent: 'center',
     alignItems: 'center',
@@ -228,7 +231,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.blue,
   },
   loadingDot2: {
     position: 'absolute',
@@ -236,7 +239,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.blue,
   },
   loadingDot3: {
     position: 'absolute',
@@ -244,11 +247,11 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.blue,
   },
   loadingText: {
     fontSize: 14,
-    color: COLORS.white + '80',
+    color: COLORS.blue,
     fontWeight: '500',
   },
   bottomText: {
@@ -258,12 +261,12 @@ const styles = StyleSheet.create({
   },
   versionText: {
     fontSize: 12,
-    color: COLORS.white + '60',
+    color: COLORS.text,
     marginBottom: 5,
   },
   copyrightText: {
     fontSize: 11,
-    color: COLORS.white + '50',
+    color: COLORS.text,
   },
 });
 

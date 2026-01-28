@@ -312,7 +312,7 @@ console.log("payload>>",payload);
           </TouchableOpacity>
         )}
         <View style={styles.content}>
-          <Text style={styles.title}>{STRINGS.appName}</Text>
+          {/* <Text style={styles.title}>{STRINGS.appName}</Text> */}
           <Text style={styles.subtitle}>
             {otpSent ? STRINGS.verifyOTP : STRINGS.login}
           </Text>
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 20,
     paddingVertical: 40,
-    paddingBottom: 120, // Extra padding for support button
+    paddingBottom: 30, // Extra padding for support button
   },
   content: {
     flex: 1,
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xxl,
     fontWeight: '800',
-    color: COLORS.primary,
+    color: '#035DB7',
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
@@ -488,8 +488,8 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   logoImage: {
-    width: 80,
-    height: 80,
+    width: 160,
+    height: 140,
   },
   label: {
     fontSize: fontSize.md,

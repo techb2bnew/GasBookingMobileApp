@@ -1,8 +1,8 @@
 export const COLORS = {
   // Red Theme Colors
-  primary: '#DC143C',      // Crimson Red - Main primary color
-  secondary: '#C41E3A',    // Dark Red - Secondary color
-  accent: '#E53E3E',       // Bright Red - Accent color
+  primary: '#E0202D',      // Crimson Red - Main primary color
+  secondary: '#E0202D',    // Dark Red - Secondary color
+  accent: '#E0202D',       // Bright Red - Accent color
   
   // Background Colors
   background: '#F8FAFC',   // Light Gray Blue
@@ -17,8 +17,8 @@ export const COLORS = {
   // Status Colors
   success: '#10B981',      // Emerald
   warning: '#F59E0B',      // Amber
-  error: '#DC143C',        // Red - Matching theme
-  info: '#DC143C',         // Red - Matching theme
+  error: '#E0202D',        // Red - Matching theme
+  info: '#E0202D',         // Red - Matching theme
   
   // UI Colors
   border: '#E2E8F0',       // Light Border
@@ -30,8 +30,8 @@ export const COLORS = {
   darkGray: '#475569',     // Dark Gray
   
   // Gradient Colors
-  gradientStart: '#DC143C', // Crimson Red Start
-  gradientEnd: '#C41E3A',   // Dark Red End
+  gradientStart: '#E0202D', // Crimson Red Start
+  gradientEnd: '#E0202D',   // Dark Red End
   
   // Special Colors
   transparent: 'transparent',
@@ -40,6 +40,6 @@ export const COLORS = {
   subtle: '#F8FAFC',  
   
   // Very Light Blue
-  blue:"#008ED8"
+  blue:"#027FFF"
 };
 

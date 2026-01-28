@@ -153,7 +153,7 @@ const MenuDrawer = ({visible, onClose, navigation}) => {
                 transform: [{translateX: slideAnim}],
               },
             ]}>
-            <View style={[styles.header, {paddingTop: 20 + insets.top}]}>
+            <View style={[styles.header,]}>
               <View style={[styles.titleContainer, {}]}>
                 <View
                   style={{
@@ -162,15 +162,15 @@ const MenuDrawer = ({visible, onClose, navigation}) => {
                     justifyContent: 'center',
                   }}>
                   <Image
-                    source={require('../assets/leadIcon.png')}
+                    source={require('../assets/leadIcon2.png')}
                     style={{
-                      width: '20%',
-                      height: '100%',
+                      width: 150,
+                      height: 40,
                       resizeMode: 'contain',
                       borderRadius: 10,
                     }}
                   />
-                  <Text
+                  {/* <Text
                     style={{
                       color: COLORS.blue,
                       fontSize: fontSize.lg,
@@ -178,7 +178,7 @@ const MenuDrawer = ({visible, onClose, navigation}) => {
                       // color: COLORS.primary,
                     }}>
                     {STRINGS.gasBooking}
-                  </Text>
+                  </Text> */}
                 </View>
               </View>
               {/* <Text style={styles.headerTitle}>Menu</Text> */}
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: 10,
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.blue,

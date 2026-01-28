@@ -2204,19 +2204,19 @@ const fetchBanners = async () => {
               </TouchableOpacity>
             </View>
             <View style={[styles.titleContainer, {}]}>
-              <View style={{flexDirection: 'row', justifyContent: 'center'}}>
+              <View style={{flexDirection: 'row', justifyContent: 'center',alignItems: 'center'}}>
                 <Image
-                  source={require('../assets/leadIcon.png')}
+                  source={require('../assets/leadIcon2.png')}
                   style={{
-                    width: '20%',
-                    height: '100%',
+                    width: 150,
+                    height: 40,
                     resizeMode: 'contain',
                     borderRadius: 10,
                   }}
                 />
-                <Text style={[styles.title, {color: COLORS.blue}]}>
+                {/* <Text style={[styles.title, {color: COLORS.blue}]}>
                   {STRINGS.gasBooking}
-                </Text>
+                </Text> */}
               </View>
               {/* <Text style={[styles.subtitle, {color: COLORS.primary}]}>
                   Fast & Safe Delivery
@@ -2324,13 +2324,13 @@ const fetchBanners = async () => {
         <View style={styles.container1}>
           <Text style={styles.hello}>Hello,</Text>
           <Text style={styles.welcome}>
-            Welcome to <Text style={styles.brand}>LeadGas</Text>,
+            Welcome to <Text style={styles.brand}>Leadway Gas</Text>,
           </Text>
           <Text style={styles.subtitle}>Would you like to place an order?</Text>
 
           {/* Place New Order */}
           <LinearGradient
-            colors={['#DC143C', '#C11236', '#96142eff']}
+            colors={[COLORS.primary, COLORS.primary]}
             // colors={['#4c669f', '#3b5998', '#192f6a']} // apne hisaab se colors change kar lena
             style={styles.primaryCard}
             start={{x: 0, y: 0}}
@@ -2457,7 +2457,7 @@ const styles = StyleSheet.create({
   headerGradient: {
     // backgroundColor: COLORS.primary,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.md,
+    // paddingBottom: spacing.md,
     borderBottomLeftRadius: wp('5%'),
     borderBottomRightRadius: wp('5%'),
   },

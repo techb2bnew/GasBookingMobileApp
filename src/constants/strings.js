@@ -27,7 +27,7 @@ export const STRINGS = {
 
   // Products
   products: 'Products',
-  gasBooking: 'LEADWAY',
+  gasBooking: 'LEADWAY GAS',
   lpgCylinder: 'LPG Cylinder',
   accessories: 'Accessories',
   addToCart: 'Add to Cart',
@@ -91,8 +91,8 @@ export const STRINGS = {
   email: 'support@gasbooking.com',
   phone: '+919876543210',
 
-  API_BASE_URL: 'https://3cf3ef7cd54a.ngrok-free.app',
-  SOCKET_URL: 'https://3cf3ef7cd54a.ngrok-free.app',
+  API_BASE_URL: 'https://846c6c4ffd4e.ngrok-free.app',
+  SOCKET_URL: 'https://846c6c4ffd4e.ngrok-free.app',
 };
 
 // #00ADEF blue #008ED8

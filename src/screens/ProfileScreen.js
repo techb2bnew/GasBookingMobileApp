@@ -605,284 +605,294 @@ const ProfileScreen = ({navigation}) => {
           <Icon name="logout" size={24} color={COLORS.white} />
         </TouchableOpacity>
       </View>
-
-      {/* Profile Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Profile Details</Text>
-          <View style={styles.sectionActions}>
-            {/* Always show Edit/Save button */}
-            <TouchableOpacity
-              onPress={() => {
-                if (
-                  isEditingProfile ||
-                  !profile ||
-                  !profile.name ||
-                  !profile.name.trim()
-                ) {
-                  handleUpdateProfile();
-                } else {
-                  setIsEditingProfile(true);
-                  if (profile) {
-                    setProfileForm({
-                      name: profile.name || '',
-                      email: profile.email || '',
-                      phone: profile.phone || '',
-                      profileImage: profile.profileImage || null,
-                    });
-                  }
-                }
-              }}>
-              <Text style={styles.editButton}>
-                {isEditingProfile ||
-                !profile ||
-                !profile.name ||
-                !profile.name.trim()
-                  ? STRINGS.save
-                  : STRINGS.edit}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {isLoadingProfile ? (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Loading profile...</Text>
-          </View>
-        ) : profile ? (
-          <>
-            {/* Profile Image Section */}
-            <View style={styles.profileImageSection}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 20,
+        }}>
+        {/* Profile Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Profile Details</Text>
+            <View style={styles.sectionActions}>
+              {/* Always show Edit/Save button */}
               <TouchableOpacity
-                style={styles.profileImageContainer}
-                onPress={showImagePicker}>
-                {profile && profile.profileImage ? (
-                  <Image
-                    source={{uri: profile.profileImage}}
-                    style={styles.profileImage}
-                  />
-                ) : (
-                  <View style={styles.profileImagePlaceholder}>
-                    <Text style={styles.profileImagePlaceholderText}>
-                      {profile && profile.name
-                        ? profile.name.charAt(0).toUpperCase()
-                        : 'U'}
-                    </Text>
-                  </View>
-                )}
-                <View style={styles.imageEditOverlay}>
-                  <Text style={styles.imageEditText}>📷</Text>
-                </View>
-              </TouchableOpacity>
-              <Text style={styles.imageEditHint}>Tap to upload photo</Text>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{STRINGS.name}</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  !isEditingProfile &&
-                    profile &&
-                    profile.name &&
-                    profile.name.trim() &&
-                    styles.inputDisabled,
-                  fieldErrors.name && styles.inputError,
-                ]}
-                value={profileForm.name}
-                onChangeText={text => {
-                  setProfileForm({...profileForm, name: text});
-                  // Clear name error when user starts typing
-                  if (fieldErrors.name) {
-                    setFieldErrors({...fieldErrors, name: null});
-                  }
-                }}
-                editable={
-                  isEditingProfile ||
-                  !profile ||
-                  !profile.name ||
-                  !profile.name.trim()
-                }
-                placeholder="Enter your name"
-              />
-              {fieldErrors.name && (
-                <Text style={styles.validationError}>{fieldErrors.name}</Text>
-              )}
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{'Phone Number'}</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  !isEditingProfile &&
-                    profile &&
-                    profile.name &&
-                    profile.name.trim() &&
-                    styles.inputDisabled,
-                  fieldErrors.phone && styles.inputError,
-                ]}
-                value={profileForm.phone}
-                onChangeText={text => {
-                  // Only allow 10 digits
-                  const cleanedText = text.replace(/[^0-9]/g, '');
-                  if (cleanedText.length <= 10) {
-                    setProfileForm({...profileForm, phone: cleanedText});
-                    // Clear phone error when user starts typing
-                    if (fieldErrors.phone) {
-                      setFieldErrors({...fieldErrors, phone: null});
+                onPress={() => {
+                  if (
+                    isEditingProfile ||
+                    !profile ||
+                    !profile.name ||
+                    !profile.name.trim()
+                  ) {
+                    handleUpdateProfile();
+                  } else {
+                    setIsEditingProfile(true);
+                    if (profile) {
+                      setProfileForm({
+                        name: profile.name || '',
+                        email: profile.email || '',
+                        phone: profile.phone || '',
+                        profileImage: profile.profileImage || null,
+                      });
                     }
                   }
-                }}
-                editable={
-                  isEditingProfile ||
+                }}>
+                <Text style={styles.editButton}>
+                  {isEditingProfile ||
                   !profile ||
                   !profile.name ||
                   !profile.name.trim()
-                }
-                placeholder="Enter your phone number"
-                keyboardType="phone-pad"
-                maxLength={10}
-              />
-              {fieldErrors.phone && (
-                <Text style={styles.validationError}>{fieldErrors.phone}</Text>
-              )}
+                    ? STRINGS.save
+                    : STRINGS.edit}
+                </Text>
+              </TouchableOpacity>
             </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>E-mail</Text>
-              <TextInput
-                style={[styles.input, styles.inputDisabled]}
-                value={
-                  profile && profile.email ? profile.email : 'Not provided'
-                }
-                editable={false}
-                placeholder="Enter your email"
-                keyboardType="email-address"
-              />
-            </View>
-          </>
-        ) : (
-          <View style={styles.emptyProfileContainer}>
-            <Text style={styles.emptyProfileText}>
-              No profile data available
-            </Text>
-            <TouchableOpacity
-              style={styles.refreshProfileButton}
-              onPress={fetchUserProfile}>
-              <Text style={styles.refreshProfileButtonText}>
-                Refresh Profile
-              </Text>
-            </TouchableOpacity>
           </View>
-        )}
 
-        {/* Buttons Row */}
-        <View style={styles.buttonsRow}>
-          {/* Show Save button for new users when they start typing */}
+          {isLoadingProfile ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Loading profile...</Text>
+            </View>
+          ) : profile ? (
+            <>
+              {/* Profile Image Section */}
+              <View style={styles.profileImageSection}>
+                <TouchableOpacity
+                  style={styles.profileImageContainer}
+                  onPress={showImagePicker}>
+                  {profile && profile.profileImage ? (
+                    <Image
+                      source={{uri: profile.profileImage}}
+                      style={styles.profileImage}
+                    />
+                  ) : (
+                    <View style={styles.profileImagePlaceholder}>
+                      <Text style={styles.profileImagePlaceholderText}>
+                        {profile && profile.name
+                          ? profile.name.charAt(0).toUpperCase()
+                          : 'U'}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={styles.imageEditOverlay}>
+                    <Text style={styles.imageEditText}>📷</Text>
+                  </View>
+                </TouchableOpacity>
+                <Text style={styles.imageEditHint}>Tap to upload photo</Text>
+              </View>
 
-          {isEditingProfile && (
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => {
-                setIsEditingProfile(false);
-                setImageChanged(false); // Reset image changed flag on cancel
-              }}>
-              <Text style={[styles.cancelButtonText, {color: COLORS.primary}]}>
-                {STRINGS.cancel}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{STRINGS.name}</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    !isEditingProfile &&
+                      profile &&
+                      profile.name &&
+                      profile.name.trim() &&
+                      styles.inputDisabled,
+                    fieldErrors.name && styles.inputError,
+                  ]}
+                  value={profileForm.name}
+                  onChangeText={text => {
+                    setProfileForm({...profileForm, name: text});
+                    // Clear name error when user starts typing
+                    if (fieldErrors.name) {
+                      setFieldErrors({...fieldErrors, name: null});
+                    }
+                  }}
+                  editable={
+                    isEditingProfile ||
+                    !profile ||
+                    !profile.name ||
+                    !profile.name.trim()
+                  }
+                  placeholder="Enter your name"
+                />
+                {fieldErrors.name && (
+                  <Text style={styles.validationError}>{fieldErrors.name}</Text>
+                )}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>{'Phone Number'}</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    !isEditingProfile &&
+                      profile &&
+                      profile.name &&
+                      profile.name.trim() &&
+                      styles.inputDisabled,
+                    fieldErrors.phone && styles.inputError,
+                  ]}
+                  value={profileForm.phone}
+                  onChangeText={text => {
+                    // Only allow 10 digits
+                    const cleanedText = text.replace(/[^0-9]/g, '');
+                    if (cleanedText.length <= 10) {
+                      setProfileForm({...profileForm, phone: cleanedText});
+                      // Clear phone error when user starts typing
+                      if (fieldErrors.phone) {
+                        setFieldErrors({...fieldErrors, phone: null});
+                      }
+                    }
+                  }}
+                  editable={
+                    isEditingProfile ||
+                    !profile ||
+                    !profile.name ||
+                    !profile.name.trim()
+                  }
+                  placeholder="Enter your phone number"
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                />
+                {fieldErrors.phone && (
+                  <Text style={styles.validationError}>
+                    {fieldErrors.phone}
+                  </Text>
+                )}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>E-mail</Text>
+                <TextInput
+                  style={[styles.input, styles.inputDisabled]}
+                  value={
+                    profile && profile.email ? profile.email : 'Not provided'
+                  }
+                  editable={false}
+                  placeholder="Enter your email"
+                  keyboardType="email-address"
+                />
+              </View>
+            </>
+          ) : (
+            <View style={styles.emptyProfileContainer}>
+              <Text style={styles.emptyProfileText}>
+                No profile data available
               </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.refreshProfileButton}
+                onPress={fetchUserProfile}>
+                <Text style={styles.refreshProfileButtonText}>
+                  Refresh Profile
+                </Text>
+              </TouchableOpacity>
+            </View>
           )}
 
-          <TouchableOpacity
-            style={styles.deleteAccountButton}
-            onPress={handleDeleteAccount}>
-            <Text style={styles.deleteAccountText}>Delete Account</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+          {/* Buttons Row */}
+          <View style={styles.buttonsRow}>
+            {/* Show Save button for new users when they start typing */}
 
-      {/* Address Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Addresses</Text>
-          <TouchableOpacity
-            onPress={openAddAddressModal}
-            disabled={addressLoading}>
-            <Text
-              style={[
-                styles.editButton,
-                addressLoading && styles.disabledButton,
-              ]}>
-              Add Address
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {addressLoading ? (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Loading addresses...</Text>
-          </View>
-        ) : addressError ? (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{addressError}</Text>
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={() => dispatch(fetchAddresses())}>
-              <Text style={styles.retryButtonText}>Retry</Text>
-            </TouchableOpacity>
-          </View>
-        ) : addresses.length > 0 ? (
-          <>
-            {/* Show first address */}
-            <View style={styles.addressCard}>
-              <View style={styles.addressHeader}>
-                <Text style={styles.addressTitle}>
-                  {addresses[0].title?.charAt(0).toUpperCase() +
-                    addresses[0].title?.slice(1).toLowerCase()}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => openEditAddressModal(addresses[0])}
-                  style={styles.editAddressButton}>
-                  <Icon name="edit" size={18} color={COLORS.primary} />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.addressText}>{addresses[0].address}</Text>
-              {addresses[0].landmark && (
-                <Text style={styles.landmarkText}>
-                  Landmark: {addresses[0].landmark}
-                </Text>
-              )}
-              <Text style={styles.pincodeText}>
-                {addresses[0].city} - {addresses[0].pincode}
-              </Text>
-            </View>
-
-            {/* View All Addresses Button */}
-            {addresses.length > 1 && (
+            {isEditingProfile && (
               <TouchableOpacity
-                style={styles.viewAllAddressesButton}
-                onPress={() => setIsViewAllAddressesModalVisible(true)}>
-                <Text style={styles.viewAllAddressesText}>
-                  View All Addresses ({addresses.length})
+                style={styles.cancelButton}
+                onPress={() => {
+                  setIsEditingProfile(false);
+                  setImageChanged(false); // Reset image changed flag on cancel
+                }}>
+                <Text
+                  style={[styles.cancelButtonText, {color: COLORS.primary}]}>
+                  {STRINGS.cancel}
                 </Text>
               </TouchableOpacity>
             )}
-          </>
-        ) : (
-          <View style={styles.emptyAddressContainer}>
-            <Text style={styles.emptyAddressText}>No addresses added yet</Text>
+
             <TouchableOpacity
-              style={styles.addFirstAddressButton}
-              onPress={openAddAddressModal}>
-              <Text style={styles.addFirstAddressText}>
-                Add Your First Address
+              style={styles.deleteAccountButton}
+              onPress={handleDeleteAccount}>
+              <Text style={styles.deleteAccountText}>Delete Account</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Address Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Addresses</Text>
+            <TouchableOpacity
+              onPress={openAddAddressModal}
+              disabled={addressLoading}>
+              <Text
+                style={[
+                  styles.editButton,
+                  addressLoading && styles.disabledButton,
+                ]}>
+                Add Address
               </Text>
             </TouchableOpacity>
           </View>
-        )}
-      </View>
 
+          {addressLoading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Loading addresses...</Text>
+            </View>
+          ) : addressError ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{addressError}</Text>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={() => dispatch(fetchAddresses())}>
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : addresses.length > 0 ? (
+            <>
+              {/* Show first address */}
+              <View style={styles.addressCard}>
+                <View style={styles.addressHeader}>
+                  <Text style={styles.addressTitle}>
+                    {addresses[0].title?.charAt(0).toUpperCase() +
+                      addresses[0].title?.slice(1).toLowerCase()}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => openEditAddressModal(addresses[0])}
+                    style={styles.editAddressButton}>
+                    <Icon name="edit" size={18} color={COLORS.primary} />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.addressText}>{addresses[0].address}</Text>
+                {addresses[0].landmark && (
+                  <Text style={styles.landmarkText}>
+                    Landmark: {addresses[0].landmark}
+                  </Text>
+                )}
+                <Text style={styles.pincodeText}>
+                  {addresses[0].city} - {addresses[0].pincode}
+                </Text>
+              </View>
+
+              {/* View All Addresses Button */}
+              {addresses.length > 1 && (
+                <TouchableOpacity
+                  style={styles.viewAllAddressesButton}
+                  onPress={() => setIsViewAllAddressesModalVisible(true)}>
+                  <Text style={styles.viewAllAddressesText}>
+                    View All Addresses ({addresses.length})
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </>
+          ) : (
+            <View style={styles.emptyAddressContainer}>
+              <Text style={styles.emptyAddressText}>
+                No addresses added yet
+              </Text>
+              <TouchableOpacity
+                style={styles.addFirstAddressButton}
+                onPress={openAddAddressModal}>
+                <Text style={styles.addFirstAddressText}>
+                  Add Your First Address
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </ScrollView>
       <Modal
         visible={isLogoutModalVisible}
         transparent
