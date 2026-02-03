@@ -43,7 +43,7 @@ const AddAddressScreen = ({navigation}) => {
     title: '',
     address: '',
     city: '',
-    pincode: '',
+    // pincode: '',
     landmark: '',
   });
   const [isMapModalVisible, setIsMapModalVisible] = useState(false);
@@ -88,9 +88,9 @@ const AddAddressScreen = ({navigation}) => {
     if (!addressForm.title.trim()) newErrors.title = 'Title is required';
     if (!addressForm.address.trim()) newErrors.address = 'Address is required';
     if (!addressForm.city.trim()) newErrors.city = 'City is required';
-    if (!addressForm.pincode.trim()) newErrors.pincode = 'Pincode is required';
-    else if (!/^\d{6}$/.test(addressForm.pincode))
-      newErrors.pincode = 'Pincode must be 6 digits';
+    // if (!addressForm.pincode.trim()) newErrors.pincode = 'Pincode is required';
+    // else if (!/^\d{6}$/.test(addressForm.pincode))
+    //   newErrors.pincode = 'Pincode must be 6 digits';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -133,7 +133,7 @@ const AddAddressScreen = ({navigation}) => {
         title: '',
         address: '',
         city: '',
-        pincode: '',
+        // pincode: '',
         landmark: '',
       });
       setEditingAddress(null);
@@ -207,7 +207,7 @@ const AddAddressScreen = ({navigation}) => {
       title: '',
       address: '',
       city: '',
-      pincode: '',
+      // pincode: '',
       landmark: '',
     });
     setEditingAddress(null);
@@ -222,7 +222,7 @@ const AddAddressScreen = ({navigation}) => {
       title: location.title || 'Home',
       address: location.address,
       city: location.city || '',
-      pincode: location.pincode || '',
+      // pincode: location.pincode || '',
       landmark: location.landmark || '',
     });
     setIsMapModalVisible(false);
@@ -267,7 +267,8 @@ const AddAddressScreen = ({navigation}) => {
           </View>
           <Text style={styles.addressText}>{address.address}</Text>
           <Text style={styles.addressText}>
-            {address.city}, {address.pincode}
+            {address.city}, 
+            {/* {address.pincode} */}
           </Text>
           {address.landmark && (
             <Text style={styles.addressText}>Landmark: {address.landmark}</Text>
@@ -366,7 +367,7 @@ const AddAddressScreen = ({navigation}) => {
             {errors.city && <Text style={styles.errorText}>{errors.city}</Text>}
           </View>
 
-          <View style={styles.inputGroup}>
+          {/* <View style={styles.inputGroup}>
             <Text style={styles.label}>Pincode *</Text>
             <TextInput
               style={styles.input}
@@ -381,7 +382,7 @@ const AddAddressScreen = ({navigation}) => {
             {errors.pincode && (
               <Text style={styles.errorText}>{errors.pincode}</Text>
             )}
-          </View>
+          </View> */}
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Landmark</Text>

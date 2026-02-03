@@ -1361,7 +1361,7 @@ const CheckoutScreen = ({navigation}) => {
 
   const paymentOptions = [
     {id: 'Cash on Delivery', label: 'Cash on Delivery'},
-    {id: 'Pay Online', label: 'Pay Online (PesaPal)'},
+    {id: 'Pay Online', label: 'Pay Online'},
   ];
   // const startOnlinePayment = async (orderId) => {
   //   console.log("orderIdorderId>>",orderId);
@@ -1428,8 +1428,8 @@ const CheckoutScreen = ({navigation}) => {
       // Check if address has all required fields
       if (
         !selectedAddress.address ||
-        !selectedAddress.city ||
-        !selectedAddress.pincode
+        !selectedAddress.city 
+        // !selectedAddress.pincode
       ) {
         Alert.alert('Error', 'Please complete your address details');
         return;
