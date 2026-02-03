@@ -2340,9 +2340,10 @@ const fetchBanners = async () => {
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 alignItems: 'center',
+                padding:4
               }}
               onPress={() => navigation.navigate('Products')}>
-              <View>
+              <View style={{height:70}}>
                 <Text style={styles.primaryTitle}>Place new order</Text>
                 <Text style={styles.primarySubtitle}>
                   Few clicks away from delivery
@@ -2995,7 +2996,7 @@ const styles = StyleSheet.create({
   },
   primaryCard: {
     // backgroundColor: COLORS.primary,
-    padding: 16,
+    padding: 4,
     borderRadius: 10,
     marginBottom: 12,
     // flexDirection: 'row',

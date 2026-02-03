@@ -91,8 +91,8 @@ export const STRINGS = {
   email: 'support@gasbooking.com',
   phone: '+919876543210',
 
-  API_BASE_URL: 'https://846c6c4ffd4e.ngrok-free.app',
-  SOCKET_URL: 'https://846c6c4ffd4e.ngrok-free.app',
+  API_BASE_URL: 'https://gasbookingbackend.base2brand.com',
+  SOCKET_URL: 'https://gasbookingbackend.base2brand.com',
 };
 
 // #00ADEF blue #008ED8
