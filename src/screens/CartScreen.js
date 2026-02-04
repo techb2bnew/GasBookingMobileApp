@@ -181,7 +181,7 @@ const CartScreen = ({navigation}) => {
           {/* Price and Quantity Controls */}
           <View style={styles.controlsContainer}>
             <View style={styles.priceContainer}>
-              <Text style={styles.unitPrice}>${item.price}</Text>
+              <Text style={styles.unitPrice}>KSh {item.price}</Text>
               <Text style={styles.perUnit}>per unit</Text>
             </View>
 
@@ -217,7 +217,7 @@ const CartScreen = ({navigation}) => {
             <View style={styles.totalContainer}>
               <Text style={styles.totalLabel}>Item Total</Text>
               <Text style={styles.itemTotal}>
-                ${item.price * item.quantity}
+                KSh {item.price * item.quantity}
               </Text>
             </View>
             <View style={styles.savingsContainer}>
@@ -291,7 +291,7 @@ const CartScreen = ({navigation}) => {
               <Text style={[styles.totalLabel, {color: COLORS.blue}]}>
                 Total Amount
               </Text>
-              <Text style={styles.totalAmount}>${totalAmount}</Text>
+              <Text style={styles.totalAmount}>KSh {totalAmount}</Text>
               <Text style={styles.itemsCount}>{totalItems} items</Text>
             </View>
 

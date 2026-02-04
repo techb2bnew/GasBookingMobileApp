@@ -470,7 +470,7 @@ const CheckoutScreen = ({navigation}) => {
         setIsCouponModalVisible(false);
         Alert.alert(
           'Success',
-          `Coupon applied! You saved $${Math.round(safeDiscountAmount)}`,
+          `Coupon applied! You saved KSh${Math.round(safeDiscountAmount)}`,
         );
       } else {
         // Handle API error response
@@ -665,9 +665,9 @@ const CheckoutScreen = ({navigation}) => {
 
           Alert.alert(
             'Tax Updated',
-            `Tax: $${Math.round(
+            `Tax: KSH${Math.round(
               parseFloat(taxInfo.taxAmount) || 0,
-            )} | Total: $${Math.round(finalAmount)}`,
+            )} | Total: KSH${Math.round(finalAmount)}`,
             [{text: 'OK'}],
           );
         } else {
@@ -714,7 +714,7 @@ const CheckoutScreen = ({navigation}) => {
 
       Alert.alert(
         'Tax Removed',
-        `Tax removed. New total: $${Math.round(finalAmount)}`,
+        `Tax removed. New total: KSH${Math.round(finalAmount)}`,
         [{text: 'OK'}],
       );
     },
@@ -752,9 +752,9 @@ const CheckoutScreen = ({navigation}) => {
 
           Alert.alert(
             'Platform Charge Updated',
-            `Platform charge is now $${
+            `Platform charge is now KSH${
               chargeData.amount
-            }. New total: $${Math.round(finalAmount)}`,
+            }. New total: KSH${Math.round(finalAmount)}`,
             [{text: 'OK'}],
           );
         }
@@ -800,7 +800,7 @@ const CheckoutScreen = ({navigation}) => {
 
           Alert.alert(
             'Platform Charge Removed',
-            `Platform charge removed. New total: $${Math.round(finalAmount)}`,
+            `Platform charge removed. New total: KSH${Math.round(finalAmount)}`,
             [{text: 'OK'}],
           );
         }
@@ -864,7 +864,7 @@ const CheckoutScreen = ({navigation}) => {
 
               Alert.alert(
                 'Delivery Charges Now Available',
-                `Delivery charge: $${roundedCharge}`,
+                `Delivery charge: KSH${roundedCharge}`,
                 [{text: 'OK'}],
               );
             }
@@ -944,7 +944,7 @@ const CheckoutScreen = ({navigation}) => {
 
               Alert.alert(
                 'Delivery Charge Updated',
-                `New delivery charge: $${roundedCharge}`,
+                `New delivery charge: KSH${roundedCharge}`,
                 [{text: 'OK'}],
               );
             }
@@ -1007,7 +1007,7 @@ const CheckoutScreen = ({navigation}) => {
         const discount =
           couponData.discountType === 'percentage'
             ? `${couponData.discountValue}%`
-            : `$${couponData.discountValue}`;
+            : `KSH${couponData.discountValue}`;
 
         Alert.alert(
           '🎉 New Coupon Available!',
@@ -1104,7 +1104,7 @@ const CheckoutScreen = ({navigation}) => {
 
             Alert.alert(
               'Coupon Updated',
-              `Coupon ${couponData.code} updated. New discount: $${Math.round(
+              `Coupon ${couponData.code} updated. New discount: KSH${Math.round(
                 safeDiscountAmount,
               )}`,
               [{text: 'OK'}],
@@ -1274,7 +1274,7 @@ const CheckoutScreen = ({navigation}) => {
 
         Alert.alert(
           'Coupon Removed',
-          `The coupon ${couponData.code} has been removed and $${Math.round(
+          `The coupon ${couponData.code} has been removed and KSH${Math.round(
             oldDiscount,
           )} discount has been reversed.`,
           [{text: 'OK'}],
@@ -1639,7 +1639,7 @@ const CheckoutScreen = ({navigation}) => {
           {option.label}
         </Text>
         {option.price > 0 && (
-          <Text style={styles.optionPrice}>${option.price}</Text>
+          <Text style={styles.optionPrice}>KSH{option.price}</Text>
         )}
       </View>
       <View
@@ -1884,7 +1884,7 @@ const CheckoutScreen = ({navigation}) => {
                 <View style={styles.orderItemDetailsContainer}>
                   <Text style={styles.orderItemName}>{item.productName}</Text>
                   <Text style={styles.orderItemDetails}>
-                    Qty: {item.quantity} × ${item.price} = $
+                    Qty: {item.quantity} × KSh {item.price} = KSh
                     {item.quantity * item.price}
                   </Text>
                   {item.weight && (
@@ -1954,7 +1954,7 @@ const CheckoutScreen = ({navigation}) => {
                       {appliedCoupon.couponCode}
                     </Text>
                     <Text style={styles.appliedCouponSavings}>
-                      You saved ${appliedCoupon.discountAmount}!
+                      You saved KSh{appliedCoupon.discountAmount}!
                     </Text>
                   </View>
                 </View>
@@ -2005,7 +2005,7 @@ const CheckoutScreen = ({navigation}) => {
                   Subtotal ({totalItems} items)
                 </Text>
                 <Text style={styles.summaryValue}>
-                  $
+                  KSh 
                   {Math.round(
                     parseFloat(taxData?.baseAmount || totalAmount) || 0,
                   )}
@@ -2027,7 +2027,7 @@ const CheckoutScreen = ({navigation}) => {
                 {deliveryMode === 'home_delivery' ? (
                   deliveryCharge > 0 ? (
                     <Text style={styles.summaryValue}>
-                      ${Math.round(parseFloat(deliveryCharge) || 0)}
+                      KSh {Math.round(parseFloat(deliveryCharge) || 0)}
                     </Text>
                   ) : (
                     <Text style={styles.freeDelivery}>Free</Text>
@@ -2048,7 +2048,7 @@ const CheckoutScreen = ({navigation}) => {
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Tax Charge</Text>
                 <Text style={styles.summaryValue}>
-                  ${Math.round(parseFloat(taxData?.taxAmount) || 0)}
+                  KSh {Math.round(parseFloat(taxData?.taxAmount) || 0)}
                 </Text>
               </View>
 
@@ -2057,7 +2057,7 @@ const CheckoutScreen = ({navigation}) => {
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryLabel}>Platform Charge</Text>
                   <Text style={styles.summaryValue}>
-                    ${Math.round(parseFloat(taxData.platformCharge) || 0)}
+                    KSh{Math.round(parseFloat(taxData.platformCharge) || 0)}
                   </Text>
                 </View>
               )}
@@ -2068,7 +2068,7 @@ const CheckoutScreen = ({navigation}) => {
                     Coupon Discount ({appliedCoupon.couponCode})
                   </Text>
                   <Text style={styles.discountValue}>
-                    -${Math.round(parseFloat(couponDiscount) || 0)}
+                    -KSh{Math.round(parseFloat(couponDiscount) || 0)}
                   </Text>
                 </View>
               )}
@@ -2080,7 +2080,7 @@ const CheckoutScreen = ({navigation}) => {
                   <Text style={styles.summaryTotalLabel}>Total Amount</Text>
                   <Text style={styles.summaryTotalSubtext}>
                     {appliedCoupon && couponDiscount > 0
-                      ? `After discount of $${Math.round(
+                      ? `After discount of KSH${Math.round(
                           parseFloat(couponDiscount) || 0,
                         )}`
                       : `Including ${
@@ -2096,7 +2096,7 @@ const CheckoutScreen = ({navigation}) => {
                   </Text>
                 </View>
                 <Text style={styles.summaryTotalAmount}>
-                  $
+                  KSh
                   {(() => {
                     const taxTotal =
                       parseFloat(taxData?.totalAmount) ||
@@ -2121,7 +2121,7 @@ const CheckoutScreen = ({navigation}) => {
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total Amount:</Text>
               <Text style={styles.totalAmount}>
-                $
+                KSh
                 {(() => {
                   const safeTotal = parseFloat(totalAmount) || 0;
                   const safeDeliveryCharge = parseFloat(deliveryCharge) || 0;
@@ -2266,7 +2266,7 @@ const CheckoutScreen = ({navigation}) => {
       <View style={styles.footer}>
         <View style={styles.footerTotal}>
           <Text style={styles.footerTotalLabel}>
-            Total: $
+            Total: KSh
             {(() => {
               const taxTotal =
                 parseFloat(taxData?.totalAmount) ||
@@ -2286,7 +2286,7 @@ const CheckoutScreen = ({navigation}) => {
           {/* {taxData && (
             <Text style={styles.footerTotalSubtext}>
               Including ${taxData.taxAmount} tax
-              {taxData.platformCharge > 0 ? ` + $${taxData.platformCharge} platform charge` : ''}
+              {taxData.platformCharge > 0 ? ` + KSH${taxData.platformCharge} platform charge` : ''}
             </Text>
           )} */}
         </View>
@@ -2569,7 +2569,7 @@ const CheckoutScreen = ({navigation}) => {
                         <View style={styles.couponDiscountBadge}>
                           <Text style={styles.couponDiscountText}>
                             {coupon.discountType === 'fixed'
-                              ? `$${coupon.discountValue}`
+                              ? `KSh ${coupon.discountValue}`
                               : `${coupon.discountValue}%`}
                           </Text>
                           <Text style={styles.couponDiscountSubtext}>OFF</Text>
@@ -2579,8 +2579,8 @@ const CheckoutScreen = ({navigation}) => {
                       <View style={styles.couponRight}>
                         <Text style={styles.couponCode}>{coupon.code}</Text>
                         <Text style={styles.couponMinAmount}>
-                          Min order: ${coupon.minAmount}
-                          {coupon.maxAmount && ` | Max: $${coupon.maxAmount}`}
+                          Min order: KSh{coupon.minAmount}
+                          {coupon.maxAmount && ` | Max: KSH${coupon.maxAmount}`}
                         </Text>
                         <Text
                           style={[

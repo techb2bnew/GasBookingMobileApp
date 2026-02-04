@@ -605,7 +605,7 @@ const ProductsScreen = ({navigation}) => {
           <Text style={styles.weightText}>
             Starting at{' '}
             <Text style={styles.priceText}>
-              ${item?.variants?.[0]?.price || 'N/A'}
+              KSh {item?.variants?.[0]?.price || 'N/A'}
             </Text>
           </Text>
 

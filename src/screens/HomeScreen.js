@@ -2139,7 +2139,7 @@ const fetchBanners = async () => {
           <Text style={styles.weightText}>
             Starting at{' '}
             <Text style={styles.priceText}>
-              ${item?.variants?.[0]?.price || 'N/A'}
+              KSh {item?.variants?.[0]?.price || 'N/A'}
             </Text>
           </Text>
 
@@ -2343,7 +2343,7 @@ const fetchBanners = async () => {
                 padding:4
               }}
               onPress={() => navigation.navigate('Products')}>
-              <View style={{height:70}}>
+              <View style={{height:50}}>
                 <Text style={styles.primaryTitle}>Place new order</Text>
                 <Text style={styles.primarySubtitle}>
                   Few clicks away from delivery

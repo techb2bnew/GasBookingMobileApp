@@ -22,7 +22,7 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
   const order = useSelector(state =>
     state.orders.orders.find(order => order.id === orderId)
   );
-console.log("orderIdorderId",orderId);
+console.log("orderIdorderId",orderId,order);
 
   // Handle all types of back navigation to redirect to home page
   useFocusEffect(
@@ -248,8 +248,8 @@ console.log("orderIdorderId",orderId);
                   </Text>
                 </View>
                 <View style={styles.itemPrice}>
-                  <Text style={styles.itemPriceText}>${item.quantity * item.price}</Text>
-                  <Text style={styles.itemUnitPrice}>${item.price} each</Text>
+                  <Text style={styles.itemPriceText}>KSh{item.quantity * item.price}</Text>
+                  <Text style={styles.itemUnitPrice}>KSh {item.price} each</Text>
                 </View>
               </View>
             ))}
@@ -260,7 +260,7 @@ console.log("orderIdorderId",orderId);
               <Ionicons name="wallet" size={20} color={COLORS.primary} />
               <Text style={styles.totalLabel}>Total Amount</Text>
             </View>
-            <Text style={styles.totalAmount}>${order.totalAmount}</Text>
+            <Text style={styles.totalAmount}>KSh {order.totalAmount}</Text>
           </View>
         </View>
 

@@ -385,7 +385,7 @@ const TrackingScreen = ({ navigation, route }) => {
           <Text style={styles.itemsCount}>
             {order.items.length} item{order.items.length !== 1 ? 's' : ''}
           </Text>
-          <Text style={styles.orderTotal}>${order.totalAmount}</Text>
+          <Text style={styles.orderTotal}>KSH{order.totalAmount}</Text>
         </View>
 
         {isSelected && (

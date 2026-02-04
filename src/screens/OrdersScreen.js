@@ -578,7 +578,7 @@ const OrdersScreen = ({navigation}) => {
             <Text style={styles.summaryLabel}>{item.items.length} Items</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.totalAmount}>${item.totalAmount}</Text>
+            <Text style={styles.totalAmount}>KSH{item.totalAmount}</Text>
           </View>
         </View>
 
@@ -638,7 +638,7 @@ const OrdersScreen = ({navigation}) => {
                         Qty: {orderItem.quantity}
                       </Text>
                     </View>
-                    <Text style={styles.productPrice}>${orderItem.total}</Text>
+                    <Text style={styles.productPrice}>KSH{orderItem.total}</Text>
                   </View>
                 </View>
               );
