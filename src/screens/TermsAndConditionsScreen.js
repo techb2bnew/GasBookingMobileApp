@@ -138,7 +138,7 @@ const TermsAndConditionsScreen = ({ navigation }) => {
   );
 
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
+    <SafeAreaView style={[styles.container, {paddingTop: -40, paddingBottom: insets.bottom}]}>
       {renderHeader()}
       {loading ? renderLoading() : renderContent()}
     </SafeAreaView>

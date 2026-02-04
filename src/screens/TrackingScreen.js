@@ -9,6 +9,7 @@ import {
   Dimensions,
   Pressable,
   Linking,
+  SafeAreaView,
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
@@ -505,7 +506,7 @@ const TrackingScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
+    <SafeAreaView style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       <View style={styles.header}>
         <Text style={styles.title}>Order Tracking</Text>
         <TouchableOpacity style={styles.refreshButton}>
@@ -534,7 +535,7 @@ const TrackingScreen = ({ navigation, route }) => {
           </View>
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

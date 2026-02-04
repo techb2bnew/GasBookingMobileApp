@@ -9,6 +9,7 @@ import {
   Alert,
   Linking,
   Clipboard,
+  SafeAreaView,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -519,7 +520,7 @@ const OrderDetailsScreen = ({navigation, route}) => {
   );
 
   return (
-    <View
+    <SafeAreaView
       style={[
         styles.container,
         {paddingTop: insets.top, paddingBottom: insets.bottom},
@@ -543,7 +544,7 @@ const OrderDetailsScreen = ({navigation, route}) => {
         {renderAgentInfo()}
         {renderTimeline()}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

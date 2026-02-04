@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
   Linking,
+  SafeAreaView,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {COLORS, STRINGS} from '../constants';
@@ -82,7 +83,7 @@ const SupportScreen = ({navigation}) => {
   };
 
   return (
-    <ScrollView
+    <SafeAreaView
       style={[
         styles.container,
         {paddingTop: insets.top, paddingBottom: insets.bottom},
@@ -173,7 +174,7 @@ const SupportScreen = ({navigation}) => {
           <Icon name="launch" size={16} color={COLORS.primary} />
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </SafeAreaView>
   );
 };
 

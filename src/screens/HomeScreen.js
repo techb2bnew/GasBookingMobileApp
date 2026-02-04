@@ -1508,6 +1508,7 @@ import {
   Text,
   AppState,
   RefreshControl,
+  SafeAreaView,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
@@ -2191,7 +2192,7 @@ const fetchBanners = async () => {
   };
 
   return (
-    <View style={[styles.container, {paddingTop: insets.top}]}>
+    <SafeAreaView style={[styles.container, {paddingTop: insets.top}]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerGradient}>
@@ -2340,7 +2341,10 @@ const fetchBanners = async () => {
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding:4
+                paddingLeft:16,
+                paddingRight:16,
+                paddingTop:10,
+                paddingBottom:10,
               }}
               onPress={() => navigation.navigate('Products')}>
               <View style={{height:50}}>
@@ -2437,7 +2441,7 @@ const fetchBanners = async () => {
         onClose={() => setMenuVisible(false)}
         navigation={navigation}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

@@ -11,6 +11,7 @@ import {
   PermissionsAndroid,
   Platform,
   Alert,
+  SafeAreaView,
 } from 'react-native';
 import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
@@ -460,7 +461,7 @@ const AgencySelectionScreen = ({navigation, route}) => {
   );
 
   return (
-    <View style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
+    <SafeAreaView style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
@@ -661,7 +662,7 @@ const AgencySelectionScreen = ({navigation, route}) => {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 

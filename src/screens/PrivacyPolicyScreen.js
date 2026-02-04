@@ -174,7 +174,7 @@ const PrivacyPolicyScreen = ({navigation}) => {
     <SafeAreaView
       style={[
         styles.container,
-        {paddingTop: insets.top, paddingBottom: insets.bottom},
+        {paddingTop: -40, paddingBottom: insets.bottom},
       ]}>
       {renderHeader()}
       {loading ? renderLoading() : renderContent()}

@@ -420,7 +420,7 @@ const AddAddressScreen = ({navigation}) => {
     <View
       style={[
         styles.container,
-        {paddingTop: insets.top, paddingBottom: insets.bottom},
+        {paddingTop: 0, paddingBottom: insets.bottom},
       ]}>
       {/* Header */}
       <View style={[styles.header]}>

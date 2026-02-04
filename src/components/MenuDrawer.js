@@ -484,6 +484,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.blue,
+    marginTop:40
   },
   headerTitle: {
     fontSize: 20,

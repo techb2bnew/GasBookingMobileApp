@@ -9,6 +9,7 @@ import {
   Alert,
   Modal,
   Image,
+  SafeAreaView,
 } from 'react-native';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import {useDispatch, useSelector} from 'react-redux';
@@ -587,7 +588,7 @@ const ProfileScreen = ({navigation}) => {
   };
 
   return (
-    <ScrollView
+    <SafeAreaView
       showsVerticalScrollIndicator={false}
       style={[
         styles.container,
@@ -1296,7 +1297,7 @@ const ProfileScreen = ({navigation}) => {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </SafeAreaView>
   );
 };
 

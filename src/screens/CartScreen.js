@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   Modal,
+  SafeAreaView,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -259,7 +260,7 @@ const CartScreen = ({navigation}) => {
   );
 
   return (
-    <View
+    <SafeAreaView
       style={[
         styles.container,
         {paddingTop: insets.top, paddingBottom: insets.bottom},
@@ -325,7 +326,7 @@ const CartScreen = ({navigation}) => {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 

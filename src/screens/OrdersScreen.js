@@ -11,6 +11,7 @@ import {
   FlatList,
   RefreshControl,
   Linking,
+  SafeAreaView,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
@@ -777,7 +778,7 @@ const OrdersScreen = ({navigation}) => {
 console.log("ordersssss",orders);
 
   return (
-    <View
+    <SafeAreaView
       style={[
         styles.container,
         {paddingTop: insets.top, paddingBottom: insets.bottom},
@@ -993,7 +994,7 @@ console.log("ordersssss",orders);
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 
