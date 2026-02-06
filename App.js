@@ -36,55 +36,79 @@ const App = () => {
   // Handle notification taps (background / quit state)
   useEffect(() => {
     const handleNotificationNavigation = (remoteMessage) => {
-      if (!remoteMessage) return;
+      if (!remoteMessage) {
+        console.log('Customer app: No remote message received');
+        return;
+      }
 
-      const data = remoteMessage.data || {};
-      const orderId = data.orderId || data.order_id;
+      const data = remoteMessage.data || remoteMessage.notification?.data || {};
+      let orderId = data.orderId || data.order_id;
       const notificationType = data.type || '';
+      
+      // Fallback: Extract order ID from notification text if not in data
+      if (!orderId) {
+        const notificationBody = remoteMessage.notification?.body || remoteMessage.data?.body || '';
+        const orderMatch = notificationBody.match(/#ORD-[\w-]+/);
+        if (orderMatch) {
+          // Extract order number format (e.g., "ORD-195617-WFWG1N")
+          const orderNumber = orderMatch[0].replace('#', '');
+          console.log('Extracted order number from notification text:', orderNumber);
+          // Try to find orderId from orderNumber (will be handled by screen)
+          orderId = orderNumber;
+        }
+      }
 
       console.log('Customer app: notification opened:', {
         orderId,
         notificationType,
         data,
+        fullMessage: remoteMessage,
       });
 
-      // Wait for navigation to be ready
-      setTimeout(() => {
+      // Function to attempt navigation
+      const attemptNavigation = (retryCount = 0) => {
         if (navigationRef.current?.isReady()) {
-          // Check for order-related notifications (ORDER_STATUS, ORDER_CANCELLED, ORDER_ASSIGNED, etc.)
-          if (orderId || notificationType?.includes('ORDER')) {
-            // Navigate to order details screen
-            navigationRef.current.navigate('OrderDetails', {
-              orderId: orderId,
-              orderNumber: data.orderNumber || data.order_number,
-            });
-          } else if (notificationType === 'PROMOTION') {
-            // Navigate to promotions or home
-            navigationRef.current.navigate('Main', {
-              screen: 'Home',
-            });
-          } else {
-            // Default: navigate to orders list
-            navigationRef.current.navigate('Orders');
-          }
-        } else {
-          console.warn('Navigation not ready yet, retrying...');
-          // Retry after another second if navigation not ready
-          setTimeout(() => {
-            if (navigationRef.current?.isReady() && orderId) {
+          try {
+            // Check for order-related notifications (ORDER_STATUS, ORDER_CANCELLED, ORDER_ASSIGNED, etc.)
+            if (orderId || notificationType?.includes('ORDER')) {
+              console.log('Navigating to OrderDetails with orderId:', orderId);
               navigationRef.current.navigate('OrderDetails', {
                 orderId: orderId,
                 orderNumber: data.orderNumber || data.order_number,
               });
+            } else if (notificationType === 'PROMOTION') {
+              console.log('Navigating to Home for promotion');
+              navigationRef.current.navigate('Main', {
+                screen: 'Home',
+              });
+            } else {
+              console.log('Navigating to Orders list');
+              navigationRef.current.navigate('Orders');
             }
+          } catch (error) {
+            console.error('Navigation error:', error);
+          }
+        } else if (retryCount < 5) {
+          // Retry up to 5 times (5 seconds total)
+          console.warn(`Navigation not ready yet, retrying... (${retryCount + 1}/5)`);
+          setTimeout(() => {
+            attemptNavigation(retryCount + 1);
           }, 1000);
+        } else {
+          console.error('Navigation failed after 5 retries');
         }
-      }, 1000); // Wait 1 second for navigation to initialize
+      };
+
+      // Start navigation attempt after a short delay
+      setTimeout(() => {
+        attemptNavigation();
+      }, 500);
     };
 
     // App background me tha, notification tap se open hua
     const unsubscribeFromOpened = messaging().onNotificationOpenedApp(
       remoteMessage => {
+        console.log('Customer app: Notification opened from background');
         handleNotificationNavigation(remoteMessage);
       },
     );
@@ -94,8 +118,12 @@ const App = () => {
       .getInitialNotification()
       .then(remoteMessage => {
         if (remoteMessage) {
+          console.log('Customer app: Notification opened from quit state');
           handleNotificationNavigation(remoteMessage);
         }
+      })
+      .catch(error => {
+        console.error('Error getting initial notification:', error);
       });
 
     return unsubscribeFromOpened;

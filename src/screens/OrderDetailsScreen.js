@@ -11,6 +11,7 @@ import {
   Clipboard,
   Platform,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -21,14 +22,86 @@ import {addOrder} from '../redux/slices/orderSlice';
 import {clearCart} from '../redux/slices/cartSlice';
 
 const OrderDetailsScreen = ({navigation, route}) => {
-  const {order} = route.params;
-  console.log('orderorder', order);
+  const routeParams = route?.params || {};
+  const {order: routeOrder, orderId, orderNumber} = routeParams;
+  const [order, setOrder] = useState(routeOrder);
+  console.log('OrderDetailsScreen - route params:', routeParams);
+  console.log('OrderDetailsScreen - order:', order);
   const dispatch = useDispatch();
 
   const {products} = useSelector(state => state.products);
+  const {token} = useSelector(state => state.auth);
   const [currentAgent, setCurrentAgent] = useState(null);
   const [agentModalVisible, setAgentModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Fetch order by orderId if passed via route params (from notification)
+  useEffect(() => {
+    const fetchOrderFromParams = async (retryCount = 0) => {
+      // If orderId is provided but order object is not, fetch it
+      if (orderId && !order) {
+        console.log('Fetching order from notification orderId:', orderId, 'Retry:', retryCount);
+        setLoading(true);
+        try {
+          if (!token) {
+            console.error('No auth token found');
+            // Retry after delay in case token is being set
+            if (retryCount < 2) {
+              setTimeout(() => {
+                fetchOrderFromParams(retryCount + 1);
+              }, 1000);
+            } else {
+              setLoading(false);
+            }
+            return;
+          }
+
+          const response = await apiClient.get(`/api/orders/${orderId}`);
+          if (response.data?.success && response.data?.data?.order) {
+            setOrder(response.data.data.order);
+            console.log('Order fetched successfully:', response.data.data.order.orderNumber);
+            setLoading(false);
+          } else {
+            console.error('Failed to fetch order');
+            // Retry up to 3 times with delay
+            if (retryCount < 3) {
+              setTimeout(() => {
+                fetchOrderFromParams(retryCount + 1);
+              }, 1000 * (retryCount + 1)); // 1s, 2s, 3s delays
+            } else {
+              console.error('Max retries reached, order fetch failed');
+              setLoading(false);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching order from params:', error);
+          // Retry up to 3 times with delay
+          if (retryCount < 3) {
+            setTimeout(() => {
+              fetchOrderFromParams(retryCount + 1);
+            }, 1000 * (retryCount + 1));
+          } else {
+            console.error('Max retries reached, order fetch failed');
+            setLoading(false);
+          }
+        }
+      } else if (!orderId && !order) {
+        // No orderId in params and no order - don't show anything
+        setLoading(false);
+      } else {
+        setLoading(false);
+      }
+    };
+
+    fetchOrderFromParams();
+  }, [orderId, order, navigation, token]);
+
+  // Don't render screen if order is not available (no empty/default values)
+  // Only render when order is successfully fetched
+  if (!order) {
+    // Return empty view - no error, no loading, no empty values
+    return <View style={{ flex: 1, backgroundColor: COLORS.background || '#ffffff' }} />;
+  }
 
   // Get product image from Redux products state
   const getProductImage = productId => {
@@ -206,78 +279,97 @@ const OrderDetailsScreen = ({navigation, route}) => {
     setCurrentAgent(null);
   };
 
-  const renderOrderInfo = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Order Information</Text>
-      <View style={styles.infoRow}>
-        <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>Order Number</Text>
-          <Text style={styles.infoValue}>#{order.orderNumber}</Text>
-        </View>
-        <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>Order Date</Text>
-          <Text style={styles.infoValue}>{formatDate(order.createdAt)}</Text>
-        </View>
-      </View>
-      <View style={styles.infoRow}>
-        <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>Status</Text>
-          <View style={[styles.statusBadge, getStatusStyle(order.status)]}>
-            <View style={styles.statusDot} />
-            <Text style={styles.statusText}>{getStatusText(order.status)}</Text>
+  const renderOrderInfo = () => {
+    if (!order) return null;
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Order Information</Text>
+        <View style={styles.infoRow}>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Order Number</Text>
+            <Text style={styles.infoValue}>#{order?.orderNumber || 'N/A'}</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Order Date</Text>
+            <Text style={styles.infoValue}>{formatDate(order?.createdAt)}</Text>
           </View>
         </View>
-        <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>Payment Status</Text>
-          <Text
-            style={[
-              styles.infoValue,
-              {color: order.paymentReceived ? COLORS.success : COLORS.warning},
-            ]}>
-            {order.paymentReceived ? 'Paid' : 'Pending'}
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderCustomerInfo = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Customer Information</Text>
-      <View style={styles.infoRow}>
-        <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>Name</Text>
-          <Text style={styles.infoValue}>{order.customerName}</Text>
-        </View>
-        <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>Phone</Text>
-          <TouchableOpacity
-            onPress={() => handleCallAgent(order.customerPhone)}>
-            <Text style={[styles.infoValue, styles.phoneNumber]}>
-              {order.customerPhone}
+        <View style={styles.infoRow}>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Status</Text>
+            <View style={[styles.statusBadge, getStatusStyle(order?.status)]}>
+              <View style={styles.statusDot} />
+              <Text style={styles.statusText}>{getStatusText(order?.status)}</Text>
+            </View>
+          </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Payment Status</Text>
+            <Text
+              style={[
+                styles.infoValue,
+                {color: order?.paymentReceived ? COLORS.success : COLORS.warning},
+              ]}>
+              {order?.paymentReceived ? 'Paid' : 'Pending'}
             </Text>
-          </TouchableOpacity>
+          </View>
         </View>
       </View>
-      <View style={styles.infoRow}>
-        <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>Email</Text>
-          <Text style={styles.infoValue}>{order.customerEmail}</Text>
-        </View>
-      </View>
-      <View style={styles.infoRow}>
-        <View style={[styles.infoItem, {flex: 1}]}>
-          <Text style={styles.infoLabel}>Delivery Address</Text>
-          <Text style={styles.infoValue}>{order.customerAddress}</Text>
-        </View>
-      </View>
-    </View>
-  );
+    );
+  };
 
-  const renderProducts = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Products ({order.items.length})</Text>
-      {order.items.map((item, index) => {
+  const renderCustomerInfo = () => {
+    if (!order) return null;
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Customer Information</Text>
+        <View style={styles.infoRow}>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Name</Text>
+            <Text style={styles.infoValue}>{order?.customerName || 'N/A'}</Text>
+          </View>
+          {order?.customerPhone && (
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Phone</Text>
+              <TouchableOpacity
+                onPress={() => handleCallAgent(order?.customerPhone)}>
+                <Text style={[styles.infoValue, styles.phoneNumber]}>
+                  {order?.customerPhone || 'N/A'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+        {order?.customerEmail && (
+          <View style={styles.infoRow}>
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Email</Text>
+              <Text style={styles.infoValue}>{order?.customerEmail || 'N/A'}</Text>
+            </View>
+          </View>
+        )}
+        {order?.customerAddress && (
+          <View style={styles.infoRow}>
+            <View style={[styles.infoItem, {flex: 1}]}>
+              <Text style={styles.infoLabel}>Delivery Address</Text>
+              <Text style={styles.infoValue}>{order?.customerAddress || 'N/A'}</Text>
+            </View>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const renderProducts = () => {
+    if (!order || !order?.items || !Array.isArray(order.items) || order.items.length === 0) {
+      return null;
+    }
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Products ({order.items.length})</Text>
+        {order.items.map((item, index) => {
         const productImage = getProductImage(item.productId);
         const productName = getProductName(item.productId) || item.productName;
         return (
@@ -310,46 +402,60 @@ const OrderDetailsScreen = ({navigation, route}) => {
           </View>
         );
       })}
-    </View>
-  );
+      </View>
+    );
+  };
 
-  const renderPricing = () => (
+  const renderPricing = () => {
+    if (!order) return null;
+
+    return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Pricing Details</Text>
       <View style={styles.pricingRow}>
         <Text style={styles.pricingLabel}>Subtotal</Text>
-        <Text style={styles.pricingValue}>KSH{order.subtotal}</Text>
+        <Text style={styles.pricingValue}>KSH{order?.subtotal || '0'}</Text>
       </View>
-      <View style={styles.pricingRow}>
-        <Text style={styles.pricingLabel}>Tax ({order.taxValue}%)</Text>
-        <Text style={styles.pricingValue}>KSH{order.taxAmount}</Text>
-      </View>
-      <View style={styles.pricingRow}>
-        <Text style={styles.pricingLabel}>Platform Charge</Text>
-        <Text style={styles.pricingValue}>KSH{order.platformCharge}</Text>
-      </View>
-      <View style={styles.pricingRow}>
-        <Text style={styles.pricingLabel}>Delivery Charge</Text>
-        <Text style={styles.pricingValue}>KSH{order.deliveryCharge}</Text>
-      </View>
-      {order.couponCode && (
+      {order?.taxValue && (
+        <View style={styles.pricingRow}>
+          <Text style={styles.pricingLabel}>Tax ({order.taxValue}%)</Text>
+          <Text style={styles.pricingValue}>KSH{order?.taxAmount || '0'}</Text>
+        </View>
+      )}
+      {order?.platformCharge && (
+        <View style={styles.pricingRow}>
+          <Text style={styles.pricingLabel}>Platform Charge</Text>
+          <Text style={styles.pricingValue}>KSH{order.platformCharge}</Text>
+        </View>
+      )}
+      {order?.deliveryCharge && (
+        <View style={styles.pricingRow}>
+          <Text style={styles.pricingLabel}>Delivery Charge</Text>
+          <Text style={styles.pricingValue}>KSH{order.deliveryCharge}</Text>
+        </View>
+      )}
+      {order?.couponCode && (
         <View style={styles.pricingRow}>
           <Text style={styles.pricingLabel}>
             Coupon Discount ({order.couponCode})
           </Text>
           <Text style={[styles.pricingValue, {color: COLORS.success}]}>
-            -KSH{order.couponDiscount}
+            -KSH{order?.couponDiscount || '0'}
           </Text>
         </View>
       )}
       <View style={[styles.pricingRow, styles.totalRow]}>
         <Text style={styles.totalLabel}>Total Amount</Text>
-        <Text style={styles.totalValue}>KSH{order.totalAmount}</Text>
+        <Text style={styles.totalValue}>KSH{order?.totalAmount || '0'}</Text>
       </View>
     </View>
-  );
+    );
+  };
 
-  const renderAgencyInfo = () => (
+  const renderAgencyInfo = () => {
+    if (!order || !order?.agency) return null;
+
+    return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Agency Information</Text>
       <View style={styles.infoRow}>
@@ -378,10 +484,11 @@ const OrderDetailsScreen = ({navigation, route}) => {
         </View>
       </View>
     </View>
-  );
+    );
+  };
 
   const renderAgentInfo = () => {
-    if (!order.assignedAgent) return null;
+    if (!order || !order?.assignedAgent) return null;
 
     return (
       <View style={styles.section}>
@@ -395,128 +502,140 @@ const OrderDetailsScreen = ({navigation, route}) => {
               <View style={styles.agentDetailInfo}>
                 <Text style={styles.agentDetailLabel}>Agent Name</Text>
                 <Text style={styles.agentDetailValue}>
-                  {order.assignedAgent.name}
+                  {order?.assignedAgent?.name || 'N/A'}
                 </Text>
               </View>
             </View>
 
-            <View style={styles.agentDetailItem}>
-              <View style={styles.agentDetailIcon}>
-                <Ionicons name="call" size={20} color={COLORS.primary} />
+            {order?.assignedAgent?.phone && (
+              <View style={styles.agentDetailItem}>
+                <View style={styles.agentDetailIcon}>
+                  <Ionicons name="call" size={20} color={COLORS.primary} />
+                </View>
+                <View style={styles.agentDetailInfo}>
+                  <Text style={styles.agentDetailLabel}>Phone Number</Text>
+                  <TouchableOpacity
+                    onPress={() => handleCallAgent(order.assignedAgent.phone)}>
+                    <Text style={styles.agentPhoneNumber}>
+                      {order.assignedAgent.phone}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <View style={styles.agentDetailInfo}>
-                <Text style={styles.agentDetailLabel}>Phone Number</Text>
-                <TouchableOpacity
-                  onPress={() => handleCallAgent(order.assignedAgent.phone)}>
-                  <Text style={styles.agentPhoneNumber}>
-                    {order.assignedAgent.phone}
+            )}
+
+            {order?.assignedAgent?.vehicleNumber && (
+              <View style={styles.agentDetailItem}>
+                <View style={styles.agentDetailIcon}>
+                  <Ionicons name="car" size={20} color={COLORS.primary} />
+                </View>
+                <View style={styles.agentDetailInfo}>
+                  <Text style={styles.agentDetailLabel}>Vehicle Number</Text>
+                  <Text style={styles.agentDetailValue}>
+                    {order.assignedAgent.vehicleNumber}
                   </Text>
-                </TouchableOpacity>
+                </View>
               </View>
-            </View>
-
-            <View style={styles.agentDetailItem}>
-              <View style={styles.agentDetailIcon}>
-                <Ionicons name="car" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.agentDetailInfo}>
-                <Text style={styles.agentDetailLabel}>Vehicle Number</Text>
-                <Text style={styles.agentDetailValue}>
-                  {order.assignedAgent.vehicleNumber}
-                </Text>
-              </View>
-            </View>
+            )}
           </View>
 
-          <TouchableOpacity
-            style={styles.callAgentButton}
-            onPress={() => handleCallAgent(order.assignedAgent.phone)}>
-            <Ionicons name="call" size={16} color={COLORS.white} />
-            <Text style={styles.callAgentButtonText}>Call Agent</Text>
-          </TouchableOpacity>
+          {order?.assignedAgent?.phone && (
+            <TouchableOpacity
+              style={styles.callAgentButton}
+              onPress={() => handleCallAgent(order.assignedAgent.phone)}>
+              <Ionicons name="call" size={16} color={COLORS.white} />
+              <Text style={styles.callAgentButtonText}>Call Agent</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     );
   };
 
-  const renderTimeline = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Order Timeline</Text>
-      <View style={styles.timeline}>
-        <View style={styles.timelineItem}>
-          <View style={styles.timelineDot} />
-          <View style={styles.timelineContent}>
-            <View>
-              <Text style={styles.timelineLabel}>Order Created</Text>
-              <Text style={styles.timelineDate}>
-                {formatDate(order.createdAt)}
-              </Text>
+  const renderTimeline = () => {
+    if (!order) return null;
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Order Timeline</Text>
+        <View style={styles.timeline}>
+          {order?.createdAt && (
+            <View style={styles.timelineItem}>
+              <View style={styles.timelineDot} />
+              <View style={styles.timelineContent}>
+                <View>
+                  <Text style={styles.timelineLabel}>Order Created</Text>
+                  <Text style={styles.timelineDate}>
+                    {formatDate(order.createdAt)}
+                  </Text>
+                </View>
+              </View>
             </View>
-          </View>
+          )}
+
+          {order?.confirmedAt && (
+            <View style={styles.timelineItem}>
+              <View style={styles.timelineDot} />
+              <View style={styles.timelineContent}>
+                <Text style={styles.timelineLabel}>Order Confirmed</Text>
+                <Text style={styles.timelineDate}>
+                  {formatDate(order.confirmedAt)}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {order?.assignedAt && (
+            <View style={styles.timelineItem}>
+              <View style={styles.timelineDot} />
+              <View style={styles.timelineContent}>
+                <Text style={styles.timelineLabel}>Order Assigned</Text>
+                <Text style={styles.timelineDate}>
+                  {formatDate(order.assignedAt)}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {order?.outForDeliveryAt && (
+            <View style={styles.timelineItem}>
+              <View style={styles.timelineDot} />
+              <View style={styles.timelineContent}>
+                <Text style={styles.timelineLabel}>Out for Delivery</Text>
+                <Text style={styles.timelineDate}>
+                  {formatDate(order.outForDeliveryAt)}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {order?.deliveredAt && (
+            <View style={styles.timelineItem}>
+              <View style={styles.timelineDot} />
+              <View style={styles.timelineContent}>
+                <Text style={styles.timelineLabel}>Order Delivered</Text>
+                <Text style={styles.timelineDate}>
+                  {formatDate(order.deliveredAt)}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {order?.cancelledAt && (
+            <View style={styles.timelineItem}>
+              <View style={styles.timelineDot} />
+              <View style={styles.timelineContent}>
+                <Text style={styles.timelineLabel}>Order Cancelled</Text>
+                <Text style={styles.timelineDate}>
+                  {formatDate(order.cancelledAt)}
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
-
-        {order.confirmedAt && (
-          <View style={styles.timelineItem}>
-            <View style={styles.timelineDot} />
-            <View style={styles.timelineContent}>
-              <Text style={styles.timelineLabel}>Order Confirmed</Text>
-              <Text style={styles.timelineDate}>
-                {formatDate(order.confirmedAt)}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {order.assignedAt && (
-          <View style={styles.timelineItem}>
-            <View style={styles.timelineDot} />
-            <View style={styles.timelineContent}>
-              <Text style={styles.timelineLabel}>Order Assigned</Text>
-              <Text style={styles.timelineDate}>
-                {formatDate(order.assignedAt)}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {order.outForDeliveryAt && (
-          <View style={styles.timelineItem}>
-            <View style={styles.timelineDot} />
-            <View style={styles.timelineContent}>
-              <Text style={styles.timelineLabel}>Out for Delivery</Text>
-              <Text style={styles.timelineDate}>
-                {formatDate(order.outForDeliveryAt)}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {order.deliveredAt && (
-          <View style={styles.timelineItem}>
-            <View style={styles.timelineDot} />
-            <View style={styles.timelineContent}>
-              <Text style={styles.timelineLabel}>Order Delivered</Text>
-              <Text style={styles.timelineDate}>
-                {formatDate(order.deliveredAt)}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {order.cancelledAt && (
-          <View style={styles.timelineItem}>
-            <View style={styles.timelineDot} />
-            <View style={styles.timelineContent}>
-              <Text style={styles.timelineLabel}>Order Cancelled</Text>
-              <Text style={styles.timelineDate}>
-                {formatDate(order.cancelledAt)}
-              </Text>
-            </View>
-          </View>
-        )}
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
