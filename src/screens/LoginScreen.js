@@ -32,6 +32,7 @@ import {updateProfile} from '../redux/slices/profileSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../utils/apiConfig';
 import {hp, wp, fontSize, spacing, borderRadius} from '../utils/dimensions';
+import messaging from '@react-native-firebase/messaging';
 
 const LoginScreen = ({navigation}) => {
   const dispatch = useDispatch();
@@ -132,12 +133,27 @@ const LoginScreen = ({navigation}) => {
   useEffect(() => {
     const fetchFcmToken = async () => {
       try {
-        const token = await AsyncStorage.getItem('fcmToken');
+        // Pehle AsyncStorage se check karo
+        let token = await AsyncStorage.getItem('fcmToken');
+        
         if (token) {
           console.log('FCM token (from storage):', token);
           setFcmToken(token);
         } else {
-          console.log('No FCM token found in storage');
+          // Agar storage mein nahi hai, to fresh token fetch karo
+          console.log('No FCM token found in storage, fetching fresh token...');
+          try {
+            const freshToken = await messaging().getToken();
+            if (freshToken) {
+              console.log('Fresh FCM token fetched:', freshToken);
+              await AsyncStorage.setItem('fcmToken', freshToken);
+              setFcmToken(freshToken);
+            } else {
+              console.log('Failed to get FCM token');
+            }
+          } catch (tokenError) {
+            console.log('Error getting fresh FCM token:', tokenError);
+          }
         }
       } catch (error) {
         console.log('Error fetching FCM token:', error);
