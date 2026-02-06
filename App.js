@@ -2,17 +2,17 @@ import React, { useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Text, View, StyleSheet, SafeAreaView, Platform, PermissionsAndroid, Alert } from 'react-native';
+import { Text, View, StyleSheet, Platform, PermissionsAndroid, Alert } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 import { store, persistor } from './src/redux/store';
 import { AppNavigator } from './src/navigation';
 import { COLORS } from './src/constants';
 import { requestLocationPermission } from './src/utils/locationPermissions';
-import { hp, wp } from './src/utils/dimensions';
 import { SocketProvider } from './src/contexts/SocketContext';
 import messaging from '@react-native-firebase/messaging';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { navigationRef } from './src/navigation/AppNavigator';
 
 
 const LoadingScreen = () => (
@@ -32,6 +32,75 @@ const App = () => {
     };
     requestPermissions();
   }, []);
+
+  // Handle notification taps (background / quit state)
+  useEffect(() => {
+    const handleNotificationNavigation = (remoteMessage) => {
+      if (!remoteMessage) return;
+
+      const data = remoteMessage.data || {};
+      const orderId = data.orderId || data.order_id;
+      const notificationType = data.type || '';
+
+      console.log('Customer app: notification opened:', {
+        orderId,
+        notificationType,
+        data,
+      });
+
+      // Wait for navigation to be ready
+      setTimeout(() => {
+        if (navigationRef.current?.isReady()) {
+          // Check for order-related notifications (ORDER_STATUS, ORDER_CANCELLED, ORDER_ASSIGNED, etc.)
+          if (orderId || notificationType?.includes('ORDER')) {
+            // Navigate to order details screen
+            navigationRef.current.navigate('OrderDetails', {
+              orderId: orderId,
+              orderNumber: data.orderNumber || data.order_number,
+            });
+          } else if (notificationType === 'PROMOTION') {
+            // Navigate to promotions or home
+            navigationRef.current.navigate('Main', {
+              screen: 'Home',
+            });
+          } else {
+            // Default: navigate to orders list
+            navigationRef.current.navigate('Orders');
+          }
+        } else {
+          console.warn('Navigation not ready yet, retrying...');
+          // Retry after another second if navigation not ready
+          setTimeout(() => {
+            if (navigationRef.current?.isReady() && orderId) {
+              navigationRef.current.navigate('OrderDetails', {
+                orderId: orderId,
+                orderNumber: data.orderNumber || data.order_number,
+              });
+            }
+          }, 1000);
+        }
+      }, 1000); // Wait 1 second for navigation to initialize
+    };
+
+    // App background me tha, notification tap se open hua
+    const unsubscribeFromOpened = messaging().onNotificationOpenedApp(
+      remoteMessage => {
+        handleNotificationNavigation(remoteMessage);
+      },
+    );
+
+    // App quit state se notification se open hua
+    messaging()
+      .getInitialNotification()
+      .then(remoteMessage => {
+        if (remoteMessage) {
+          handleNotificationNavigation(remoteMessage);
+        }
+      });
+
+    return unsubscribeFromOpened;
+  }, []);
+
   useEffect(() => {
     // Request location permission when app starts
     // requestLocationPermission();

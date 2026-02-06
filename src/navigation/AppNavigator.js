@@ -6,6 +6,9 @@ import SplashScreen from '../screens/SplashScreen';
 import AuthNavigator from './AuthNavigator';
 import StackNavigator from './StackNavigator';
 
+// Export navigation ref so it can be used in App.js for notification handling
+export const navigationRef = React.createRef();
+
 const AppNavigator = () => {
   const { isAuthenticated } = useSelector(state => state.auth);
   const [showSplash, setShowSplash] = useState(true);
@@ -24,7 +27,7 @@ const AppNavigator = () => {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       {isAuthenticated ? <StackNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
