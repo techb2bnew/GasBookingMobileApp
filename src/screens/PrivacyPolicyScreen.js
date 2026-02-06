@@ -8,14 +8,15 @@ import {
   Alert,
   TouchableOpacity,
   RefreshControl,
+  Platform,
+  StatusBar,
 } from 'react-native';
-import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {COLORS} from '../constants/colors';
 import apiClient from '../utils/apiConfig';
+import { fontSize, spacing, wp } from '../utils/dimensions';
 
 const PrivacyPolicyScreen = ({navigation}) => {
-  const insets = useSafeAreaInsets();
   const [privacyData, setPrivacyData] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -171,14 +172,10 @@ const PrivacyPolicyScreen = ({navigation}) => {
   );
 
   return (
-    <SafeAreaView
-      style={[
-        styles.container,
-        {paddingTop: -40, paddingBottom: insets.bottom},
-      ]}>
+    <View style={styles.container}>
       {renderHeader()}
       {loading ? renderLoading() : renderContent()}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -189,25 +186,25 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.lg,
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    shadowColor: COLORS.shadow,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  backButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
+  // backButton: {
+  //   padding: 8,
+  //   borderRadius: 20,
+  //   backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  // },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -215,10 +212,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.white,
-    marginLeft: 10,
+     fontSize: fontSize.lg,
+          fontWeight: '600',
+          color: COLORS.white,
+          marginLeft: 10,
+          letterSpacing: -0.5,
+          marginBottom: wp('0.5%'),
   },
   placeholder: {
     width: 40,

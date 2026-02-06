@@ -8,10 +8,10 @@ import {
   Image,
   Alert,
   Modal,
-  SafeAreaView,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {COLORS, STRINGS} from '../constants';
 import {removeFromCart, updateQuantity} from '../redux/slices/cartSlice';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
@@ -21,7 +21,6 @@ import {wp, hp, fontSize, spacing, borderRadius} from '../utils/dimensions';
 
 const CartScreen = ({navigation}) => {
   const dispatch = useDispatch();
-  const insets = useSafeAreaInsets();
   const {items, totalAmount, totalItems} = useSelector(state => state.cart);
   const [isStockModalVisible, setIsStockModalVisible] = useState(false);
   const [stockModalMessage, setStockModalMessage] = useState('');
@@ -260,11 +259,7 @@ const CartScreen = ({navigation}) => {
   );
 
   return (
-    <SafeAreaView
-      style={[
-        styles.container,
-        {paddingTop: insets.top, paddingBottom: insets.bottom},
-      ]}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -326,7 +321,7 @@ const CartScreen = ({navigation}) => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -337,11 +332,14 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.lg,
     backgroundColor: COLORS.primary,
+    marginBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
@@ -351,13 +349,15 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   backButton: {
-    paddingVertical: 5,
+    width: 40,
   },
   title: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.white,
+    marginLeft: 10,
     letterSpacing: -0.5,
+    marginBottom: wp('0.5%'),
   },
   placeholder: {
     width: wp('15%'),

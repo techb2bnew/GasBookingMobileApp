@@ -1508,11 +1508,11 @@ import {
   Text,
   AppState,
   RefreshControl,
-  SafeAreaView,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {COLORS, STRINGS} from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {
@@ -1539,7 +1539,6 @@ const {width: screenWidth} = Dimensions.get('window');
 
 const HomeScreen = ({navigation}) => {
   const dispatch = useDispatch();
-  const insets = useSafeAreaInsets();
   const {
     totalItems,
     totalAmount,
@@ -2192,7 +2191,7 @@ const fetchBanners = async () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: insets.top}]}>
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerGradient}>
@@ -2341,13 +2340,10 @@ const fetchBanners = async () => {
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                paddingLeft:16,
-                paddingRight:16,
-                paddingTop:10,
-                paddingBottom:10,
+                padding: 16,
               }}
               onPress={() => navigation.navigate('Products')}>
-              <View style={{height:50}}>
+              <View>
                 <Text style={styles.primaryTitle}>Place new order</Text>
                 <Text style={styles.primarySubtitle}>
                   Few clicks away from delivery
@@ -2441,7 +2437,7 @@ const fetchBanners = async () => {
         onClose={() => setMenuVisible(false)}
         navigation={navigation}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -2461,7 +2457,7 @@ const styles = StyleSheet.create({
   },
   headerGradient: {
     // backgroundColor: COLORS.primary,
-    paddingTop: spacing.sm,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.sm,
     // paddingBottom: spacing.md,
     borderBottomLeftRadius: wp('5%'),
     borderBottomRightRadius: wp('5%'),
@@ -3000,7 +2996,6 @@ const styles = StyleSheet.create({
   },
   primaryCard: {
     // backgroundColor: COLORS.primary,
-    padding: 4,
     borderRadius: 10,
     marginBottom: 12,
     // flexDirection: 'row',
@@ -3009,8 +3004,8 @@ const styles = StyleSheet.create({
   },
   primaryTitle: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '500',
   },
   primarySubtitle: {
     color: '#fff',

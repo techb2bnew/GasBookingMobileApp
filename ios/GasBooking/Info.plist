@@ -2,28 +2,42 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+
 	<key>CFBundleDisplayName</key>
-	<string>Leadway</string>
+	<string>Leadway Gas</string>
+
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
+
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
+
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
+
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+
 	<key>CFBundleSignature</key>
 	<string>????</string>
+
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+
+	<!-- ================= ATS ================= -->
+
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -31,14 +45,44 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+
+	<!-- ================= CAMERA / GALLERY ================= -->
+
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to take profile photo</string>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to select photos</string>
+
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app saves photos to your library</string>
+
+	<!-- ================= LOCATION ================= -->
+
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs access to your location to show nearby gas stations and provide accurate delivery tracking even when the app is in background.</string>
+
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>This app needs access to your location to show nearby gas stations and provide accurate delivery tracking even when the app is in background.</string>
+
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs access to your location to show nearby gas stations and provide accurate delivery tracking.</string>
+
+	<!-- ================= LINKING (mail / phone for Support) ================= -->
+
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>mailto</string>
+		<string>tel</string>
+	</array>
+
+	<!-- ================= REACT NATIVE ================= -->
+
 	<key>RCTNewArchEnabled</key>
 	<true/>
+
+	<!-- ================= FONTS ================= -->
+
 	<key>UIAppFonts</key>
 	<array>
 		<string>AntDesign.ttf</string>
@@ -60,25 +104,35 @@
 		<string>Montserrat-BoldItalic.ttf</string>
 		<string>arialnarrow.ttf</string>
 	</array>
+
+	<!-- ================= BACKGROUND MODES ================= -->
+
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
 		<string>processing</string>
 		<string>remote-notification</string>
 	</array>
+
+	<!-- ================= UI ================= -->
+
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
+
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>
 	</array>
+
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+
 </dict>
 </plist>

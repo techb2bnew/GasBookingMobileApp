@@ -11,11 +11,11 @@ import {
   FlatList,
   RefreshControl,
   Linking,
-  SafeAreaView,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {COLORS, STRINGS} from '../constants';
 import {clearCart} from '../redux/slices/cartSlice';
@@ -37,7 +37,6 @@ import apiClient from '../utils/apiConfig';
 
 const OrdersScreen = ({navigation}) => {
   const dispatch = useDispatch();
-  const insets = useSafeAreaInsets();
   const {orders, isLoading, error} = useSelector(state => state.orders);
   const {products} = useSelector(state => state.products);
   const [modalVisible, setModalVisible] = useState(false);
@@ -58,21 +57,20 @@ const OrdersScreen = ({navigation}) => {
   const [loadingPage, setLoadingPage] = useState(false);
 
   const cancelReasons = [
-    'Customer requested cancellation',
-    'Incorrect order details',
-    'Item out of stock',
-    'Delivery address not serviceable',
+    'Placed order by mistake',
+    'Wrong delivery address',
+    'Need to change quantity or items',
+    'Duplicate order',
+    'No longer required',
     'Other',
   ];
 
   const returnReasons = [
-    'Delay in delivery',
-    'Change of mind',
-    'Wrong item selected',
-    'Found cheaper option',
-    'Damaged item',
-    'Wrong item delivered',
-    'Not satisfied',
+    'Cylinder damaged or defective',
+    'Wrong cylinder or size delivered',
+    'Delivery was too late',
+    'Not satisfied with product',
+    'Changed my mind',
     'Other',
   ];
 
@@ -444,8 +442,7 @@ const OrdersScreen = ({navigation}) => {
 
   const handleTrackOrder = order => {
     dispatch(setCurrentOrder(order));
-    // navigation.navigate('OrderTracking', { orderId: order.id });
-    navigation.navigate('Main', {screen: 'Tracking', orderId: order.id});
+    navigation.navigate('OrderTracking', { orderId: order.id || order.orderId });
   };
 
   // Handle order card click to view details
@@ -778,17 +775,15 @@ const OrdersScreen = ({navigation}) => {
 console.log("ordersssss",orders);
 
   return (
-    <SafeAreaView
-      style={[
-        styles.container,
-        {paddingTop: insets.top, paddingBottom: insets.bottom},
-      ]}>
+    <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={COLORS.white} />
         </TouchableOpacity>
         <Text style={styles.title}>{STRINGS.orders}</Text>
-        <Text style={styles.title}>{}</Text>
+        <View style={styles.placeholder} />
       </View>
       <View style={{paddingHorizontal: 6, paddingBottom:66}}>
         {orders?.length == 0 ? (
@@ -893,11 +888,17 @@ console.log("ordersssss",orders);
 
       <Modal
         visible={reorderModalVisible}
-        transparent={true}
+        transparent
         animationType="fade"
         onRequestClose={handleReorderCancel}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.modalOverlay}
+          onPress={handleReorderCancel}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.modalContainer}
+            onPress={e => e.stopPropagation()}>
             <Text style={styles.modalTitle}>Confirm Reorder</Text>
             <Text style={styles.reorderModalText}>
               Are you sure you want to reorder this order?
@@ -917,18 +918,24 @@ console.log("ordersssss",orders);
                 <Text style={styles.submitButtonText}>Reorder</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
       {/* Agent Details Modal */}
       <Modal
         visible={agentModalVisible}
-        transparent={true}
+        transparent
         animationType="fade"
         onRequestClose={handleCloseAgentModal}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.agentModalContainer}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.modalOverlay}
+          onPress={handleCloseAgentModal}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.agentModalContainer}
+            onPress={e => e.stopPropagation()}>
             <View style={styles.agentModalHeader}>
               <Text style={styles.agentModalTitle}>Delivery Agent Details</Text>
               <TouchableOpacity
@@ -991,10 +998,10 @@ console.log("ordersssss",orders);
                 <Text style={styles.callAgentButtonText}>Call Agent</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -1010,6 +1017,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.lg,
     backgroundColor: COLORS.primary,
     marginBottom: 14,
     borderBottomWidth: 1,
@@ -1019,12 +1027,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+    paddingTop: 60,
   },
+  // backButton: {
+  //   width: 40,
+  // },
   title: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.white,
+    marginLeft: 10,
     letterSpacing: -0.5,
+    marginBottom: wp('0.5%'),
+  },
+  placeholder: {
+    width: 40,
   },
   ordersList: {
     padding: spacing.sm,

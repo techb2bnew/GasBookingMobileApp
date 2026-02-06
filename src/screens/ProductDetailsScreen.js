@@ -7,11 +7,11 @@ import {
   StyleSheet,
   Image,
   Dimensions,
-  SafeAreaView,
+  Platform,
+  StatusBar,
   Modal,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { addToCart, updateQuantity } from '../redux/slices/cartSlice';
 import { COLORS, STRINGS } from '../constants';
@@ -25,7 +25,6 @@ const WEIGHTS = ['2kg', '5kg', '14.2kg', '19kg'];
 
 const ProductDetailsScreen = ({ route, navigation }) => {
   const dispatch = useDispatch();
-  const insets = useSafeAreaInsets();
   const { totalItems, items } = useSelector(state => state.cart);
   const { product: routeProduct = {} } = route.params || {};
 
@@ -284,14 +283,14 @@ const ProductDetailsScreen = ({ route, navigation }) => {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
+    <View style={styles.safe}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={22} color={COLORS.white} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>
+        <Text style={styles.title}>
           {STRINGS?.productDetails || 'Product Details'}
         </Text>
 
@@ -389,7 +388,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
                   <Icon name="add" size={18} color={COLORS.white} />
                 </TouchableOpacity>
               </View>
-              {(() => {
+              {/* {(() => {
                 const availableStock = getAvailableStock();
                 const cartQuantity = getCartQuantity();
                 const maxQuantity = isProductInCart 
@@ -405,7 +404,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
                   );
                 }
                 return null;
-              })()}
+              })()} */}
             </View>
 
             {/* Card: Features */}
@@ -498,7 +497,7 @@ const ProductDetailsScreen = ({ route, navigation }) => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -512,20 +511,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
     backgroundColor: COLORS.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    elevation: 6,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.lg,
+    marginBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  backButton: {
+    width: 40,
   },
   headerBtn: {
-    width: wp('9%'),
-    height: wp('9%'),
-    borderRadius: wp('4.5%'),
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    width: 40,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -658,6 +662,14 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: wp('2%'),
   },
+    title: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+    color: COLORS.white,
+    marginLeft: 10,
+    letterSpacing: -0.5,
+    marginBottom: wp('0.5%'),
+  },
   chip: {
     paddingVertical: wp('2%'),
     paddingHorizontal: spacing.sm,
@@ -757,6 +769,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    paddingBottom: Platform.OS === 'ios' ? spacing.md + 20 : spacing.md + 10,
     borderTopWidth: 1,
     borderTopColor: COLORS.verylightGrayColor || COLORS.border,
   },

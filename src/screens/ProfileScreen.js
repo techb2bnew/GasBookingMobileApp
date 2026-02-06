@@ -9,15 +9,16 @@ import {
   Alert,
   Modal,
   Image,
-  SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import {useDispatch, useSelector} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {COLORS, STRINGS} from '../constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../utils/apiConfig';
+import {PermissionsAndroid, Platform} from 'react-native';
+
 import {
   updateProfile,
   setProfileImage,
@@ -36,10 +37,10 @@ import {logout} from '../redux/slices/authSlice';
 import {clearCart} from '../redux/slices/cartSlice';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
+import {fontSize, wp, spacing} from '../utils/dimensions';
 
 const ProfileScreen = ({navigation}) => {
   const dispatch = useDispatch();
-  const insets = useSafeAreaInsets();
   const {profile, addresses, addressLoading, addressError} = useSelector(
     state => state.profile,
   );
@@ -73,6 +74,27 @@ const ProfileScreen = ({navigation}) => {
     landmark: '',
   });
   const [addressErrors, setAddressErrors] = useState({});
+
+  const requestCameraPermission = async () => {
+  if (Platform.OS !== 'android') return true;
+
+  try {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.CAMERA,
+      {
+        title: 'Camera Permission',
+        message: 'App needs camera access to take profile photo',
+        buttonPositive: 'OK',
+      },
+    );
+
+    return granted === PermissionsAndroid.RESULTS.GRANTED;
+  } catch (err) {
+    console.warn(err);
+    return false;
+  }
+};
+
 
   // Fetch user profile from API
   const fetchUserProfile = async () => {
@@ -394,23 +416,36 @@ const ProfileScreen = ({navigation}) => {
     ]);
   };
 
-  const openCamera = () => {
-    const options = {
-      mediaType: 'photo',
-      quality: 0.8,
-      maxWidth: 500,
-      maxHeight: 500,
-    };
+const openCamera = async () => {
+  const hasPermission = await requestCameraPermission();
 
-    launchCamera(options, response => {
-      if (response.assets && response.assets[0]) {
-        handleImageSelection(response.assets[0]);
-      } else if (response.error) {
-        console.log('Camera Error:', response.error);
-        Alert.alert('Error', 'Failed to take photo. Please try again.');
-      }
-    });
+  if (!hasPermission) {
+    Alert.alert('Permission denied', 'Camera access is required');
+    return;
+  }
+
+  const options = {
+    mediaType: 'photo',
+    quality: 0.8,
+    maxWidth: 500,
+    maxHeight: 500,
+    saveToPhotos: true,
   };
+
+  launchCamera(options, response => {
+    if (response.didCancel) return;
+
+    if (response.errorCode) {
+      console.log('Camera error:', response.errorMessage);
+      Alert.alert('Camera Error', response.errorMessage);
+      return;
+    }
+
+    if (response.assets && response.assets.length > 0) {
+      handleImageSelection(response.assets[0]);
+    }
+  });
+};
 
   const openImageLibrary = () => {
     const options = {
@@ -588,20 +623,15 @@ const ProfileScreen = ({navigation}) => {
   };
 
   return (
-    <SafeAreaView
-      showsVerticalScrollIndicator={false}
-      style={[
-        styles.container,
-        {paddingTop: insets.top, paddingBottom: insets.bottom},
-      ]}>
+    <View style={styles.container}>
       <View style={styles.header}>
-        <Ionicons
-          name="arrow-back"
-          size={24}
-          color={COLORS.white}
-          onPress={() => navigation.goBack()}
-        />
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color={COLORS.white} />
+        </TouchableOpacity>
         <Text style={styles.title}>{STRINGS.profile}</Text>
+        <View style={styles.placeholder} />
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Icon name="logout" size={24} color={COLORS.white} />
         </TouchableOpacity>
@@ -610,7 +640,7 @@ const ProfileScreen = ({navigation}) => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 20,
+          paddingBottom: 20,
         }}>
         {/* Profile Section */}
         <View style={styles.section}>
@@ -899,8 +929,14 @@ const ProfileScreen = ({navigation}) => {
         transparent
         animationType="fade"
         onRequestClose={() => setIsLogoutModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.confirmModal}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.modalOverlay}
+          onPress={() => setIsLogoutModalVisible(false)}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.confirmModal}
+            onPress={e => e.stopPropagation()}>
             <Text style={styles.confirmTitle}>Logout</Text>
             <Text style={styles.confirmMessage}>
               Are you sure you want to logout?
@@ -919,8 +955,8 @@ const ProfileScreen = ({navigation}) => {
                 <Text style={styles.logoutConfirmText}>Logout</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
       {/* Delete Account Modal */}
@@ -929,8 +965,14 @@ const ProfileScreen = ({navigation}) => {
         transparent
         animationType="fade"
         onRequestClose={() => setIsDeleteAccountModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.confirmModal}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.modalOverlay}
+          onPress={() => setIsDeleteAccountModalVisible(false)}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.confirmModal}
+            onPress={e => e.stopPropagation()}>
             <Text style={styles.confirmTitle}>Delete Account</Text>
             <Text style={styles.confirmMessage}>
               Are you sure you want to delete your account? This action cannot
@@ -957,8 +999,8 @@ const ProfileScreen = ({navigation}) => {
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
       {/* Add Address Modal */}
@@ -967,8 +1009,14 @@ const ProfileScreen = ({navigation}) => {
         transparent
         animationType="slide"
         onRequestClose={() => setIsAddAddressModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.addressModal}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.modalOverlay}
+          onPress={() => setIsAddAddressModalVisible(false)}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.addressModal}
+            onPress={e => e.stopPropagation()}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add New Address</Text>
               <TouchableOpacity
@@ -1099,8 +1147,8 @@ const ProfileScreen = ({navigation}) => {
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
 
       {/* View All Addresses Modal */}
@@ -1297,7 +1345,7 @@ const ProfileScreen = ({navigation}) => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -1308,24 +1356,32 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    justifyContent: 'space-between',
+    gap: 10,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.lg,
     backgroundColor: COLORS.primary,
+    marginBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  backButton: {
+    width: 40,
   },
   title: {
-    fontSize: 20,
+    fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.white,
-    letterSpacing: -0.3,
+    marginLeft: 10,
+    letterSpacing: -0.5,
+    marginBottom: wp('0.5%'),
   },
   buttonsRow: {
     flexDirection: 'row',
@@ -1348,7 +1404,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   logoutButton: {
-    padding: 6,
+    // No padding or width - natural size like NotificationScreen's right button
   },
   section: {
     backgroundColor: COLORS.cardBackground,

@@ -39,9 +39,19 @@ const ReasonModal = ({ visible, onClose, onSubmit, title,reasonsList }) => {
     };
 
     return (
-        <Modal visible={visible} animationType="slide" transparent>
-            <View style={styles.overlay}>
-                <View style={styles.modalBox}>
+        <Modal
+            visible={visible}
+            animationType="slide"
+            transparent
+            onRequestClose={onClose}>
+            <TouchableOpacity
+                activeOpacity={1}
+                style={styles.overlay}
+                onPress={onClose}>
+                <TouchableOpacity
+                    activeOpacity={1}
+                    style={styles.modalBox}
+                    onPress={e => e.stopPropagation()}>
                     <View style={styles.topBar}>
                         <View style={styles.handle} />
                     </View>
@@ -107,8 +117,8 @@ const ReasonModal = ({ visible, onClose, onSubmit, title,reasonsList }) => {
                             <Text style={styles.confirmText}>Confirm</Text>
                         </TouchableOpacity>
                     </View>
-                </View>
-            </View>
+                </TouchableOpacity>
+            </TouchableOpacity>
         </Modal>
     );
 };

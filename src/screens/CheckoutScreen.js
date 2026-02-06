@@ -10,9 +10,10 @@ import {
   TextInput,
   Image,
   Linking,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../utils/apiConfig';
 import {COLORS, STRINGS} from '../constants';
@@ -34,7 +35,6 @@ const CheckoutScreen = ({navigation}) => {
   console.log('CheckoutScreen rendering...');
 
   const dispatch = useDispatch();
-  const insets = useSafeAreaInsets();
 
   // Defensive selectors with fallbacks
   const cartState = useSelector(state => state.cart) || {};
@@ -1519,7 +1519,7 @@ const CheckoutScreen = ({navigation}) => {
         }
         // Order created successfully
         const order = {
-          id: response?.data.data?.orderId || Date.now().toString(),
+          id: response?.data?.data?.order?.id || response?.data?.data?.orderId || Date.now().toString(),
           items: items,
           totalAmount: totalAmount,
           deliveryMode: deliveryMode,
@@ -1548,11 +1548,8 @@ const CheckoutScreen = ({navigation}) => {
         dispatch(clearCart());
         setLoading(false);
 
-        // Alert.alert('Success', 'Order placed successfully!', [
-        //   {
-        //     text: 'OK',
-        //     onPress: () =>
-        navigation.navigate('OrderConfirmation', {orderId: order.id});
+        // Pass full order so confirmation screen shows info immediately (no Redux timing issue)
+        navigation.navigate('OrderConfirmation', { orderId: order.id, order });
         //   }
         // ]);
       } else {
@@ -1738,18 +1735,15 @@ const CheckoutScreen = ({navigation}) => {
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        {paddingTop: insets.top, paddingBottom: insets.bottom},
-      ]}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backButton}
+          // style={styles.backButton}
           onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={28} color={COLORS.white} />
+          <Ionicons name="arrow-back" size={24} color={COLORS.white} />
         </TouchableOpacity>
         <Text style={styles.title}>{STRINGS.checkout}</Text>
+        <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.content}>
@@ -2618,23 +2612,23 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    justifyContent: 'space-between',
+    gap: 10,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.lg,
     backgroundColor: COLORS.primary,
-    borderBottomLeftRadius: borderRadius.md,
-    borderBottomRightRadius: borderRadius.md,
+    marginBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: {width: 0, height: 3},
-    shadowOpacity: 0.2,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
   },
   backButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: borderRadius.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    marginRight: spacing.sm,
+    width: 40,
   },
   backButtonText: {
     color: COLORS.white,
@@ -2645,8 +2639,9 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.white,
-    letterSpacing: -0.3,
-    flex: 1,
+    marginLeft: 10,
+    letterSpacing: -0.5,
+    marginBottom: wp('0.5%'),
   },
   placeholder: {
     width: wp('15%'),
@@ -3023,6 +3018,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
+    paddingBottom: Platform.OS === 'ios' ? spacing.lg + 20 : spacing.lg + 10,
     borderTopLeftRadius: borderRadius.md,
     borderTopRightRadius: borderRadius.md,
     borderTopWidth: 1,

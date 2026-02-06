@@ -95,11 +95,10 @@ export const getCurrentLocation = () => {
 
     console.log('Requesting location with Geolocation...');
     
-    // Add a timeout wrapper
     const timeoutId = setTimeout(() => {
-      console.log('Location request timed out after 15 seconds');
+      console.log('Location request timed out after 25 seconds');
       reject(new Error('Location request timed out. Please check your GPS and try again.'));
-    }, 15000);
+    }, 25000);
     
     Geolocation.getCurrentPosition(
       (position) => {
@@ -133,9 +132,9 @@ export const getCurrentLocation = () => {
         reject(new Error(errorMessage));
       },
       {
-        enableHighAccuracy: false, // Changed to false for faster response
-        timeout: 10000, // Reduced timeout to 10 seconds
-        maximumAge: 300000, // 5 minutes cache
+        enableHighAccuracy: true, // Use GPS for actual device location
+        timeout: 20000, // 20 seconds for GPS to get fix
+        maximumAge: 60000, // Prefer fix not older than 1 minute
       }
     );
   });

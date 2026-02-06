@@ -10,8 +10,9 @@ import {
   Modal,
   Platform,
   KeyboardAvoidingView,
+  StatusBar,
 } from 'react-native';
-import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {useDispatch, useSelector} from 'react-redux';
 import {COLORS, STRINGS} from '../constants';
 import {
@@ -34,7 +35,6 @@ const AddAddressScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const {addresses, defaultAddressId, addressLoading, addressError} =
     useSelector(state => state.profile);
-  const insets = useSafeAreaInsets();
   const [errors, setErrors] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -346,7 +346,8 @@ const AddAddressScreen = ({navigation}) => {
               <TouchableOpacity
                 style={styles.mapButton}
                 onPress={openMapPicker}>
-                <Ionicons name="map" size={20} color={COLORS.blue} />
+                <Ionicons name="location" size={22} color={COLORS.primary} />
+                <Text style={styles.mapButtonLabel}>Map</Text>
               </TouchableOpacity>
             </View>
             {errors.address && (
@@ -417,11 +418,7 @@ const AddAddressScreen = ({navigation}) => {
   );
 
   return (
-    <View
-      style={[
-        styles.container,
-        {paddingTop: 0, paddingBottom: insets.bottom},
-      ]}>
+    <View style={styles.container}>
       {/* Header */}
       <View style={[styles.header]}>
         <TouchableOpacity
@@ -520,17 +517,33 @@ const styles = StyleSheet.create({
   mapModalContainer: {flex: 1},
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.lg,
     backgroundColor: COLORS.primary,
+    marginBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    shadowColor: COLORS.shadow,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
     elevation: 5,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.lg,
   },
-  backButton: {paddingVertical: wp('1.25%')},
-  title: {fontSize: fontSize.xl, fontWeight: '600', color: COLORS.white},
+  backButton: {
+    width: 40,
+  },
+   title: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+    color: COLORS.white,
+    marginLeft: 10,
+    letterSpacing: -0.5,
+    marginBottom: wp('0.5%'),
+  },
   placeholder: {width: wp('10%')},
   content: {flex: 1},
   emptyContainer: {alignItems: 'center', paddingVertical: wp('10%')},
@@ -730,11 +743,20 @@ const styles = StyleSheet.create({
     marginRight: wp('2%'),
   },
   mapButton: {
-    padding: spacing.md,
-    backgroundColor: COLORS.lightGray,
-    borderRadius: borderRadius.md,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: COLORS.primary + '12',
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  mapButtonLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.primary,
   },
   closeMapButton: {
     position: 'absolute',

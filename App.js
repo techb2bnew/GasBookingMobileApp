@@ -109,10 +109,10 @@ const App = () => {
       <PersistGate loading={<LoadingScreen />} persistor={persistor}>
         <SafeAreaProvider>
           <SocketProvider>
-            <SafeAreaView style={{ height:hp(100),width:wp(100) }}>
+            {/* <SafeAreaView style={{ height:hp(100),width:wp(100) }}> */}
               <AppNavigator />
               <Toast />
-            </SafeAreaView>
+            {/* </SafeAreaView> */}
           </SocketProvider>
         </SafeAreaProvider>
       </PersistGate>

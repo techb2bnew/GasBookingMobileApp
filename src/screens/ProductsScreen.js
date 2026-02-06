@@ -10,10 +10,11 @@ import {
   Text,
   AppState,
   RefreshControl,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {COLORS, STRINGS} from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -41,7 +42,6 @@ const {width: screenWidth} = Dimensions.get('window');
 
 const ProductsScreen = ({navigation}) => {
   const dispatch = useDispatch();
-  const insets = useSafeAreaInsets();
   const {
     totalItems,
     totalAmount,
@@ -657,31 +657,27 @@ const ProductsScreen = ({navigation}) => {
   };
 
   return (
-    <View style={[styles.container, {paddingTop: insets.top}]}>
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerGradient}>
           <View style={styles.headerContent}>
-            <View style={styles.headerLeft}>
-              <TouchableOpacity onPress={() => navigation.goBack()}>
-                 <Ionicons name="arrow-back" size={28} color={COLORS.white} />
-              </TouchableOpacity>
-            </View>
-              <View style={styles.titleContainer}>
-                <Text style={styles.title}>{'Choose Products'}</Text>
-                {/* <Text style={styles.subtitle}>Fast & Safe Delivery</Text> */}
-              </View>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={24} color={COLORS.white} />
+            </TouchableOpacity>
 
-            <View style={styles.agencySelectorContainer}>
-              <TouchableOpacity
-                style={styles.agencySelector}
-                onPress={() => {
-                  navigation.navigate('Cart');
-                }}
-                disabled={isLoadingAgencies}>
-                <Icon name="shopping-cart" size={26} color={COLORS.white} />
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.title}>{'Choose Products'}</Text>
+
+            <TouchableOpacity
+              style={styles.cartButton}
+              onPress={() => {
+                navigation.navigate('Cart');
+              }}
+              disabled={isLoadingAgencies}>
+              <Icon name="shopping-cart" size={20} color={COLORS.white} />
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -828,29 +824,34 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
-    backgroundColor: 'transparent',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    marginBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: {width: 0, height: 3},
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   headerGradient: {
-    backgroundColor:COLORS.primary,
-    paddingVertical: spacing.lg,
-    // borderBottomLeftRadius: wp('5%'),
-    // borderBottomRightRadius: wp('5%'),
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.sm,
+    flex: 1,
+    backgroundColor: COLORS.primary,
   },
   headerContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
+    justifyContent: 'space-between',
   },
   headerLeft: {
-    // flexDirection: 'row',
     alignItems: 'center',
-    // flex: 1,
   },
 
   titleContainer: {
@@ -879,20 +880,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   agencySelector: {
-    // backgroundColor: COLORS.white,
-    // paddingHorizontal: spacing.md,
-    // paddingVertical: wp('2%'),
-    // borderRadius: wp('5%'),
-    // flexDirection: 'row',
-    // alignItems: 'center',
-    // gap: wp('1%'),
-    // minWidth: wp('40%'),
-    // maxWidth: wp('50%'),
-    // shadowColor: COLORS.shadow,
-    // shadowOffset: {width: 0, height: 2},
-    // shadowOpacity: 0.15,
-    // shadowRadius: 4,
-    // elevation: 3,
   },
   agencySelectorText: {
     color: COLORS.primary,
@@ -901,15 +888,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cartButton: {
-    backgroundColor: COLORS.secondary,
-    padding: spacing.sm,
-    borderRadius: wp('6.25%'),
-    position: 'relative',
-    shadowColor: COLORS.shadow,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cartButtonText: {
     color: COLORS.white,

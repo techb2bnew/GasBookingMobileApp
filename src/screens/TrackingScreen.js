@@ -9,12 +9,12 @@ import {
   Dimensions,
   Pressable,
   Linking,
-  SafeAreaView,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import { useSelector, useDispatch } from 'react-redux';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, STRINGS } from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Geocoder from 'react-native-geocoding';
@@ -43,7 +43,6 @@ const getCoordinatesFromAddress = async (address) => {
 
 const TrackingScreen = ({ navigation, route }) => {
   const dispatch = useDispatch();
-  const insets = useSafeAreaInsets();
   const { orders } = useSelector(state => state.orders);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -506,7 +505,7 @@ const TrackingScreen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Order Tracking</Text>
         <TouchableOpacity style={styles.refreshButton}>
@@ -535,7 +534,7 @@ const TrackingScreen = ({ navigation, route }) => {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -546,24 +545,32 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.lg,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.lg,
     backgroundColor: COLORS.primary,
+    marginBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
   },
+  backButton: {
+    width: 40,
+  },
   title: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.white,
-    letterSpacing: -0.3,
+    marginLeft: 10,
+    letterSpacing: -0.5,
+    marginBottom: wp('0.5%'),
   },
   refreshButton: {
     padding: wp('2%'),

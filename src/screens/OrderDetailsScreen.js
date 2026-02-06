@@ -9,10 +9,10 @@ import {
   Alert,
   Linking,
   Clipboard,
-  SafeAreaView,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {COLORS, STRINGS} from '../constants';
 import {wp, hp, fontSize, spacing, borderRadius} from '../utils/dimensions';
@@ -21,7 +21,6 @@ import {addOrder} from '../redux/slices/orderSlice';
 import {clearCart} from '../redux/slices/cartSlice';
 
 const OrderDetailsScreen = ({navigation, route}) => {
-  const insets = useSafeAreaInsets();
   const {order} = route.params;
   console.log('orderorder', order);
   const dispatch = useDispatch();
@@ -520,11 +519,7 @@ const OrderDetailsScreen = ({navigation, route}) => {
   );
 
   return (
-    <SafeAreaView
-      style={[
-        styles.container,
-        {paddingTop: insets.top, paddingBottom: insets.bottom},
-      ]}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -544,7 +539,7 @@ const OrderDetailsScreen = ({navigation, route}) => {
         {renderAgentInfo()}
         {renderTimeline()}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -555,11 +550,14 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.lg,
     backgroundColor: COLORS.primary,
+    marginBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
@@ -569,13 +567,15 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   backButton: {
-    padding: spacing.xs,
+    width: 40,
   },
   title: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.lg,
     fontWeight: '600',
     color: COLORS.white,
+    marginLeft: 10,
     letterSpacing: -0.5,
+    marginBottom: wp('0.5%'),
   },
   placeholder: {
     width: 40,

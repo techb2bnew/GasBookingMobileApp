@@ -5,13 +5,14 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  SafeAreaView,
+  Platform,
+  StatusBar,
   ActivityIndicator,
 } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {COLORS} from '../constants';
 import apiClient from '../utils/apiConfig';
+import { fontSize, spacing, wp } from '../utils/dimensions';
 
 const NotificationItem = ({item, onPress}) => {
   return (
@@ -38,7 +39,6 @@ const NotificationItem = ({item, onPress}) => {
 };
 
 const NotificationScreen = ({navigation}) => {
-  const insets = useSafeAreaInsets();
 
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -121,7 +121,7 @@ const NotificationScreen = ({navigation}) => {
     );
   };
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: insets.top}]}>
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -160,7 +160,7 @@ const NotificationScreen = ({navigation}) => {
            ListEmptyComponent={!loading ? <EmptyNotification /> : null}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -172,20 +172,33 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.lg,
     backgroundColor: COLORS.primary,
+    marginBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    shadowColor: COLORS.shadow,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   backButton: {
     width: 40,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.white,
+    fontSize: fontSize.lg,
+      fontWeight: '600',
+      color: COLORS.white,
+      marginLeft: 10,
+      letterSpacing: -0.5,
+      marginBottom: wp('0.5%'),
   },
   clearText: {
     fontSize: 14,

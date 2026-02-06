@@ -271,10 +271,15 @@ const MenuDrawer = ({visible, onClose, navigation}) => {
       {/* Safety Modal */}
       <Modal
         visible={safetyModalVisible}
-        transparent={true}
+        transparent
         animationType="fade"
         onRequestClose={() => setSafetyModalVisible(false)}>
         <SafeAreaView style={styles.modalOverlay}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={StyleSheet.absoluteFill}
+            onPress={() => setSafetyModalVisible(false)}
+          />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>My Safety</Text>
@@ -329,10 +334,15 @@ const MenuDrawer = ({visible, onClose, navigation}) => {
       {/* Price Modal */}
       <Modal
         visible={priceModalVisible}
-        transparent={true}
+        transparent
         animationType="fade"
         onRequestClose={() => setPriceModalVisible(false)}>
         <SafeAreaView style={styles.modalOverlay}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={StyleSheet.absoluteFill}
+            onPress={() => setPriceModalVisible(false)}
+          />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Know Your Price</Text>
@@ -416,10 +426,15 @@ const MenuDrawer = ({visible, onClose, navigation}) => {
       {/* Logout Confirmation Modal */}
       <Modal
         visible={logoutModalVisible}
-        transparent={true}
+        transparent
         animationType="fade"
         onRequestClose={() => setLogoutModalVisible(false)}>
         <SafeAreaView style={styles.modalOverlay}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={StyleSheet.absoluteFill}
+            onPress={() => setLogoutModalVisible(false)}
+          />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Confirm Logout</Text>
@@ -470,7 +485,7 @@ const styles = StyleSheet.create({
     height: '100%',
     position: 'absolute',
     left: 0,
-    top: 0,
+    top: 60,
     // iOS specific styling to handle status bar
     ...(Platform.OS === 'ios' && {
       paddingTop: 0,
@@ -484,7 +499,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.blue,
-    marginTop:40
+    // marginTop:30
   },
   headerTitle: {
     fontSize: 20,
@@ -497,6 +512,7 @@ const styles = StyleSheet.create({
   menuContainer: {
     flex: 1,
     flexDirection: 'column',
+    // backgroundColor: 'red',
   },
   menuItems: {
     flex: 1,
@@ -505,6 +521,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: COLORS.lightGray,
+    marginBottom: 60,
   },
   logoutButton: {
     flexDirection: 'row',

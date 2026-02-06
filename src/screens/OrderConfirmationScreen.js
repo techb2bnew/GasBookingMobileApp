@@ -1,28 +1,28 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Dimensions,
   BackHandler,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
 import { useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CommonActions } from '@react-navigation/native';
 import { COLORS, STRINGS } from '../constants';
 import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 
 const OrderConfirmationScreen = ({ route, navigation }) => {
-  const insets = useSafeAreaInsets();
-  const { orderId } = route.params;
-  const order = useSelector(state =>
-    state.orders.orders.find(order => order.id === orderId)
+  const { orderId, order: orderFromParams } = route.params || {};
+  const orderFromRedux = useSelector(state =>
+    orderId ? state.orders.orders.find(o => o.id === orderId || o.orderId === orderId) : null
   );
-console.log("orderIdorderId",orderId,order);
+  // Use order from params first (just placed), else from Redux (e.g. reopened screen)
+  const order = orderFromParams ?? orderFromRedux;
 
   // Handle all types of back navigation to redirect to home page
   useFocusEffect(
@@ -92,13 +92,13 @@ console.log("orderIdorderId",orderId,order);
     });
   };
 
-  // Handle case when order is not found
+  // Handle case when order is not found (e.g. API failed, or screen opened without order)
   if (!order) {
     return (
       <View style={styles.container}>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle" size={48} color={COLORS.error} />
-          <Text style={styles.errorTitle}>Order Not Found</Text>
+          <Text style={styles.errorTitle}>Order Not Foundddd</Text>
           <Text style={styles.errorMessage}>
             The order you're looking for doesn't exist or has been removed.
           </Text>
@@ -113,7 +113,7 @@ console.log("orderIdorderId",orderId,order);
   }
 
   return (
-    <ScrollView style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         {/* Header Section */}
         <View style={styles.headerSection}>
@@ -326,7 +326,7 @@ console.log("orderIdorderId",orderId,order);
           {order.deliveryMode !== 'pickup' &&
           <TouchableOpacity
             style={styles.trackButton}
-            onPress={() => navigation.navigate("Main", { screen: "Tracking", orderId: orderId })}>
+            onPress={() => navigation.navigate('OrderTracking', { orderId: order.id })}>
             <Ionicons name="eye" size={20} color={COLORS.white} />
             <Text style={styles.trackButtonText}>{STRINGS.trackOrder}</Text>
           </TouchableOpacity>
@@ -351,6 +351,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight,
   },
   content: {
     padding: spacing.lg,
@@ -421,7 +422,7 @@ const styles = StyleSheet.create({
     marginLeft: spacing.xs,
   },
   orderIdValue: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.sm,
     fontWeight: 'bold',
     color: COLORS.primary,
   },

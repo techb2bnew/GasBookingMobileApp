@@ -8,9 +8,10 @@ import {
   TextInput,
   Alert,
   Linking,
-  SafeAreaView,
+  Share,
+  Clipboard,
+  StatusBar,
 } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {COLORS, STRINGS} from '../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
@@ -50,7 +51,6 @@ const FAQ_DATA = [
 ];
 
 const SupportScreen = ({navigation}) => {
-  const insets = useSafeAreaInsets();
   const [expandedFAQ, setExpandedFAQ] = useState(null);
   const [refundText, setRefundText] = useState('');
 
@@ -58,16 +58,98 @@ const SupportScreen = ({navigation}) => {
     setExpandedFAQ(expandedFAQ === index ? null : index);
   };
 
-  const handleEmailPress = () => {
-    Linking.openURL('mailto:support@gasbooking.com');
+  const handleEmailPress = async () => {
+    const mailtoUrl = 'mailto:support@gasbooking.com';
+    try {
+      const canOpen = await Linking.canOpenURL(mailtoUrl);
+      if (canOpen) {
+        await Linking.openURL(mailtoUrl);
+      } else {
+        throw new Error('Mail app not available');
+      }
+    } catch (e) {
+      try {
+        await Share.share({
+          title: 'Support email',
+          message: 'support@gasbooking.com',
+        });
+      } catch (shareErr) {
+        Alert.alert('Email', 'support@gasbooking.com', [{ text: 'OK' }]);
+      }
+    }
   };
 
-  const handlePhonePress = () => {
-    Linking.openURL('tel:+919876543210');
+  const handlePhonePress = async () => {
+    const phoneNumber = '+919876543210';
+    const telUrl = `tel:${phoneNumber}`;
+
+    try {
+      const canOpen = await Linking.canOpenURL(telUrl);
+      if (canOpen) {
+        await Linking.openURL(telUrl);
+      } else {
+        throw new Error('Phone app not available');
+      }
+    } catch (e) {
+      Alert.alert(
+        'Call Support',
+        `Dial this number to contact support:\n${phoneNumber.replace(/(\d{2})(\d{5})(\d{5})/, '$1 $2 $3')}`,
+        [
+          { text: 'Copy', onPress: () => copyToClipboard(phoneNumber) },
+          { text: 'OK' },
+        ]
+      );
+    }
   };
 
-  const handleRaiseComplaint = () => {
-    Linking.openURL('mailto:support@gasbooking.com?subject=Complaint');
+  const copyToClipboard = async (text) => {
+    try {
+      if (typeof Clipboard !== 'undefined' && Clipboard?.setString) {
+        Clipboard.setString(text);
+        Alert.alert('Copied', 'Number copied to clipboard.');
+      } else {
+        await Share.share({ message: text, title: 'Support number' });
+      }
+    } catch (err) {
+      Alert.alert('Support number', text, [{ text: 'OK' }]);
+    }
+  };
+
+  const handleRaiseComplaint = async () => {
+    const email = 'support@gasbooking.com';
+    const subject = 'Complaint';
+    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+
+    try {
+      const canOpen = await Linking.canOpenURL(mailtoUrl);
+      if (canOpen) {
+        await Linking.openURL(mailtoUrl);
+      } else {
+        throw new Error('Mail app not available');
+      }
+    } catch (e) {
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        try {
+          await Share.share({
+            title: 'Email complaint to Support',
+            message: `Send your complaint to ${email}\nSubject: ${subject}`,
+            subject,
+          });
+        } catch (shareErr) {
+          Alert.alert(
+            'Open email app',
+            `Please open your email app and send to:\n${email}\nSubject: ${subject}`,
+            [{ text: 'OK' }]
+          );
+        }
+      } else {
+        Alert.alert(
+          'Open email app',
+          `Please open your email app and send to:\n${email}\nSubject: ${subject}`,
+          [{ text: 'OK' }]
+        );
+      }
+    }
   };
 
   const handleSubmitRefund = () => {
@@ -83,20 +165,15 @@ const SupportScreen = ({navigation}) => {
   };
 
   return (
-    <SafeAreaView
-      style={[
-        styles.container,
-        {paddingTop: insets.top, paddingBottom: insets.bottom},
-      ]}>
+    <View style={styles.container}>
       <View style={styles.header}>
-        <Ionicons
-          name="arrow-back"
-          size={24}
-          color={COLORS.white}
-          onPress={() => navigation.goBack()}
-        />
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color={COLORS.white} />
+        </TouchableOpacity>
         <Text style={styles.title}>{STRINGS.support}</Text>
-        <Text style={styles.title}>{}</Text>
+        <View style={styles.placeholder} />
       </View>
 
       {/* Raise Complaint Button */}
@@ -174,7 +251,7 @@ const SupportScreen = ({navigation}) => {
           <Icon name="launch" size={16} color={COLORS.primary} />
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -185,24 +262,35 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.lg,
     backgroundColor: COLORS.primary,
+    marginBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  backButton: {
+    width: 40,
   },
   title: {
-    fontSize: fontSize.xl,
-    fontWeight: '600',
-    color: COLORS.white,
-    letterSpacing: -0.3,
+    fontSize: fontSize.lg,
+      fontWeight: '600',
+      color: COLORS.white,
+      marginLeft: 10,
+      letterSpacing: -0.5,
+      marginBottom: wp('0.5%'),
+  },
+  placeholder: {
+    width: 40,
   },
   section: {
     backgroundColor: COLORS.cardBackground,

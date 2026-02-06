@@ -11,7 +11,7 @@ import {
   PermissionsAndroid,
   Platform,
   Alert,
-  SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
@@ -21,13 +21,11 @@ import {wp, hp, fontSize, spacing, borderRadius} from '../utils/dimensions';
 import {useAgencies} from '../hooks/useAgencies';
 import {useDispatch, useSelector} from 'react-redux';
 import {clearCart} from '../redux/slices/cartSlice';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const {width: screenWidth} = Dimensions.get('window');
 
 const AgencySelectionScreen = ({navigation, route}) => {
   const dispatch = useDispatch();
-  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState('list'); // 'list' or 'map'
   const [customerLocation, setCustomerLocation] = useState(null);
   const [agencyCoordinates, setAgencyCoordinates] = useState([]);
@@ -461,9 +459,9 @@ const AgencySelectionScreen = ({navigation, route}) => {
   );
 
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: insets.top, paddingBottom: insets.bottom}]}>
+    <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity
             style={styles.backButton}
@@ -471,9 +469,18 @@ const AgencySelectionScreen = ({navigation, route}) => {
             <Icon name="arrow-back" size={24} color={COLORS.white} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Select Agency</Text>
-          <View style={styles.headerRight} />
+          <View style={styles.placeholder} />
         </View>
-      </View>
+      </View> */}
+       <View style={[styles.header]}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}>
+                <Icon name="arrow-back" size={24} color={COLORS.white} />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Select Agency</Text>
+              <View style={styles.placeholder} />
+            </View>
 
       {/* Agency Tabs */}
       {renderAgencyTabs()}
@@ -662,7 +669,7 @@ const AgencySelectionScreen = ({navigation, route}) => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -672,16 +679,22 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.lg,
     backgroundColor: COLORS.primary,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.md,
-    borderBottomLeftRadius: wp('5%'),
-    borderBottomRightRadius: wp('5%'),
+    marginBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
     shadowColor: COLORS.shadow,
-    shadowOffset: {width: 0, height: 3},
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   headerContent: {
     flexDirection: 'row',
@@ -689,16 +702,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
   },
-  backButton: {
-    padding: wp('2%'),
-    borderRadius: borderRadius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-  },
+  // backButton: {
+  //   padding: wp('2%'),
+  //   borderRadius: borderRadius.md,
+  //   backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  // },
   headerTitle: {
-    fontSize: fontSize.xl,
-    fontWeight: 'bold',
+   fontSize: fontSize.lg,
+    fontWeight: '600',
     color: COLORS.white,
+    marginLeft: 10,
     letterSpacing: -0.5,
+    marginBottom: wp('0.5%'),
   },
   headerRight: {
     width: 40, // To balance the back button
@@ -937,6 +952,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     elevation: 10,
   },
+    placeholder: {width: wp('10%')},
   agencyDetailsModalContent: {
     backgroundColor: COLORS.white,
     width: wp('90%'),
