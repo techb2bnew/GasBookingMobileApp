@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
@@ -21,40 +21,36 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
   const orderFromRedux = useSelector(state =>
     orderId ? state.orders.orders.find(o => o.id === orderId || o.orderId === orderId) : null
   );
-  // Use order from params first (just placed), else from Redux (e.g. reopened screen)
   const order = orderFromParams ?? orderFromRedux;
 
-  // Handle all types of back navigation to redirect to home page
+  const isNavigatingRef = useRef(false);
+
+  const goToHome = () => {
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Main', params: { screen: 'Products' } }],
+      })
+    );
+  };
+
   useFocusEffect(
     React.useCallback(() => {
-      // Handle Hardware back button (Android physical back button)
+      isNavigatingRef.current = false;
+
       const onBackPress = () => {
-        navigation.dispatch(
-          CommonActions.navigate({
-            name: 'Main',
-            params: {
-              screen: 'Products',
-            },
-          })
-        );
+        goToHome();
         return true;
       };
 
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
-      // Also handle any other navigation events that might indicate back behavior
       const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-        // Prevent default behavior
+        if (isNavigatingRef.current) return;
         e.preventDefault();
-        // Navigate to home instead
-        navigation.dispatch(
-          CommonActions.navigate({
-            name: 'Main',
-            params: {
-              screen: 'Products',
-            },
-          })
-        );
+        goToHome();
       });
 
       return () => {
@@ -104,7 +100,7 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
           </Text>
           <TouchableOpacity
             style={styles.homeButton}
-            onPress={() => navigation.navigate('Main')}>
+            onPress={goToHome}>
             <Text style={styles.homeButtonText}>Go to Home</Text>
           </TouchableOpacity>
         </View>
@@ -133,7 +129,7 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
               <Ionicons name="receipt" size={20} color={COLORS.primary} />
               <Text style={styles.orderIdLabel}>Order ID</Text>
             </View>
-            <Text style={styles.orderIdValue}>#{order.id}</Text>
+            <Text style={styles.orderIdValue}>#{order.orderNumber || order.id}</Text>
           </View>
 
           <View style={styles.detailsContainer}>
@@ -239,20 +235,24 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
           </View>
           
           <View style={styles.itemsList}>
-            {order.items.map((item, index) => (
-              <View key={item.id} style={[styles.orderItem, index === order.items.length - 1 && styles.lastOrderItem]}>
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>{item.name || item.productName}</Text>
-                  <Text style={styles.itemVariant}>
-                    {item.weight || item.variantLabel} • Qty: {item.quantity}
-                  </Text>
+            {order.items.map((item, index) => {
+              const itemPrice = item.variantPrice ?? item.price;
+              const itemTotal = item.total ?? (itemPrice * (item.quantity || 1));
+              return (
+                <View key={item.id || index} style={[styles.orderItem, index === order.items.length - 1 && styles.lastOrderItem]}>
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.itemName}>{item.name || item.productName}</Text>
+                    <Text style={styles.itemVariant}>
+                      {item.weight || item.variantLabel} • Qty: {item.quantity}
+                    </Text>
+                  </View>
+                  <View style={styles.itemPrice}>
+                    <Text style={styles.itemPriceText}>KSh {itemPrice}</Text>
+                    <Text style={styles.itemUnitPrice}>KSh {itemPrice} each</Text>
+                  </View>
                 </View>
-                <View style={styles.itemPrice}>
-                  <Text style={styles.itemPriceText}>KSh{item.quantity * item.price}</Text>
-                  <Text style={styles.itemUnitPrice}>KSh {item.price} each</Text>
-                </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
 
           <View style={styles.totalRow}>
@@ -260,7 +260,7 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
               <Ionicons name="wallet" size={20} color={COLORS.primary} />
               <Text style={styles.totalLabel}>Total Amount</Text>
             </View>
-            <Text style={styles.totalAmount}>KSh {order.totalAmount}</Text>
+            <Text style={styles.totalAmount}>KSh {order.totalAmount ?? order.subtotal ?? 0}</Text>
           </View>
         </View>
 
@@ -333,7 +333,7 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
           }
           <TouchableOpacity
             style={styles.continueButton}
-            onPress={() => navigation.navigate('Main')}>
+            onPress={goToHome}>
             <Ionicons name="storefront" size={20} color={COLORS.primary} />
             <Text style={styles.continueButtonText}>Continue Shopping</Text>
           </TouchableOpacity>

@@ -64,39 +64,7 @@ const TermsAndConditionsScreen = ({ navigation }) => {
     </View>
   );
 
-  const renderTermsItem = (term, index) => (
-    <View key={term.id} style={styles.termsItem}>
-      <View style={styles.termsHeader}>
-        <View style={styles.termsNumberContainer}>
-          <Text style={styles.termsNumber}>{index + 1}</Text>
-        </View>
-        <View style={styles.termsTitleContainer}>
-          <Text style={styles.termsTitle}>{term.title ? term.title.charAt(0).toUpperCase() + term.title.slice(1) : term.title}</Text>
-        </View>
-      </View>
-      
-      <View style={styles.termsContent}>
-        <Text style={styles.termsDescription}>{term.description ? term.description.charAt(0).toUpperCase() + term.description.slice(1) : term.description}</Text>
-      </View>
-      
-      <View style={styles.termsFooter}>
-        <View style={styles.versionContainer}>
-          <Icon name="info" size={16} color={COLORS.primary} />
-          <Text style={styles.versionText}>Version {term.version}</Text>
-        </View>
-        <View style={styles.dateContainer}>
-          <Icon name="schedule" size={16} color={COLORS.textSecondary} />
-          <Text style={styles.dateText}>
-            {new Date(term.updatedAt).toLocaleDateString('en-IN', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
+  const formatText = (str) => (str ? str.charAt(0).toUpperCase() + str.slice(1) : str || '');
 
   const renderLoading = () => (
     <View style={styles.loadingContainer}>
@@ -117,23 +85,29 @@ const TermsAndConditionsScreen = ({ navigation }) => {
           tintColor={COLORS.primary}
         />
       }>
-      <View style={styles.contentHeader}>
+      <View style={styles.contentCard}>
         <Text style={styles.contentTitle}>LEADWAY GAS Terms & Conditions</Text>
         <Text style={styles.contentSubtitle}>
           Please read these terms carefully before using our services
         </Text>
-      </View>
 
-      <View style={styles.termsList}>
-        {termsData.map((term, index) => renderTermsItem(term, index))}
-      </View>
+        <View style={styles.termsContent}>
+          {termsData.map((term) => (
+            <View key={term.id} style={styles.termsSection}>
+              {term.title ? (
+                <Text style={styles.termsTitle}>{formatText(term.title)}</Text>
+              ) : null}
+              <Text style={styles.termsDescription}>{formatText(term.description)}</Text>
+            </View>
+          ))}
+        </View>
 
-      <View style={styles.footerNote}>
-        <Icon name="warning" size={20} color={COLORS.warning} />
-        <Text style={styles.footerText}>
-          By using LEADWAY GAS app, you agree to these terms and conditions.
-          Last updated: {termsData.length > 0 ? new Date(termsData[0]?.updatedAt).toLocaleDateString('en-IN') : 'N/A'}
-        </Text>
+        <View style={styles.footerNote}>
+          <Icon name="warning" size={20} color={COLORS.warning} />
+          <Text style={styles.footerText}>
+            By using LEADWAY GAS app, you agree to these terms and conditions.
+          </Text>
+        </View>
       </View>
     </ScrollView>
   );
@@ -193,7 +167,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 30,
+    paddingBottom: 16,
   },
   loadingContainer: {
     flex: 1,
@@ -206,144 +180,64 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textSecondary,
   },
-  contentHeader: {
+  contentCard: {
     backgroundColor: COLORS.white,
-    padding: 25,
-    margin: 20,
-    borderRadius: 15,
-    alignItems: 'center',
-    elevation: 3,
+    margin: 12,
+    padding: 16,
+    borderRadius: 12,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
   },
   contentTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   contentSubtitle: {
     fontSize: 14,
     color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
-  },
-  termsList: {
-    paddingHorizontal: 20,
-  },
-  termsItem: {
-    backgroundColor: COLORS.white,
-    borderRadius: 15,
-    marginBottom: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    borderLeftWidth: 5,
-    borderLeftColor: COLORS.primary,
-  },
-  termsHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 20,
-    paddingBottom: 15,
-  },
-  termsNumberContainer: {
-    backgroundColor: COLORS.primary,
-    width: 35,
-    height: 35,
-    borderRadius: 17.5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  termsNumber: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  termsTitleContainer: {
-    flex: 1,
-  },
-  termsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
-    lineHeight: 24,
+    marginBottom: 12,
   },
   termsContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 15,
+    marginTop: 2,
+  },
+  termsSection: {
+    marginBottom: 12,
+  },
+  termsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    marginBottom: 4,
+    lineHeight: 22,
   },
   termsDescription: {
     fontSize: 15,
     color: COLORS.textSecondary,
-    lineHeight: 22,
+    lineHeight: 24,
     textAlign: 'justify',
-  },
-  termsFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.lightGray,
-    backgroundColor: COLORS.lightBackground,
-    borderBottomLeftRadius: 15,
-    borderBottomRightRadius: 15,
-  },
-  versionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  versionText: {
-    fontSize: 13,
-    color: COLORS.primary,
-    fontWeight: '600',
-    marginLeft: 5,
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dateText: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    marginLeft: 5,
   },
   footerNote: {
     flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    margin: 20,
-    padding: 20,
-    borderRadius: 15,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.lightGray,
     alignItems: 'flex-start',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
   },
   footerText: {
     flex: 1,
     fontSize: 14,
     color: COLORS.textSecondary,
     lineHeight: 20,
-    marginLeft: 10,
+    marginLeft: 8,
   },
 });
 

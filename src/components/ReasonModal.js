@@ -7,6 +7,9 @@ import {
     TextInput,
     StyleSheet,
     FlatList,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../constants';
@@ -44,86 +47,101 @@ const ReasonModal = ({ visible, onClose, onSubmit, title,reasonsList }) => {
             animationType="slide"
             transparent
             onRequestClose={onClose}>
-            <TouchableOpacity
-                activeOpacity={1}
-                style={styles.overlay}
-                onPress={onClose}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.keyboardAvoidingView}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
                 <TouchableOpacity
                     activeOpacity={1}
-                    style={styles.modalBox}
-                    onPress={e => e.stopPropagation()}>
-                    <View style={styles.topBar}>
-                        <View style={styles.handle} />
-                    </View>
-                    
-                    <Text style={styles.heading}>{title}</Text>
-                    
-                    <View style={styles.reasonsList}>
-                        {reasonsList.map((item, index) => {
-                            const isSelected = selectedReason === item;
-                            return (
-                                <TouchableOpacity
-                                    key={index}
-                                    style={[
-                                        styles.reasonOption,
-                                        isSelected && styles.reasonOptionSelected,
-                                    ]}
-                                    onPress={() => {
-                                        setSelectedReason(item);
-                                        setError('');
-                                    }}>
-                                    <Text style={[
-                                        styles.reasonText,
-                                        isSelected && styles.reasonTextSelected
-                                    ]}>
-                                        {item}
-                                    </Text>
-                                    {isSelected && (
-                                        <Icon name="check-circle" size={20} color={COLORS.primary} />
-                                    )}
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-
-                    {selectedReason === 'Other' && (
-                        <View style={styles.otherSection}>
-                            <Text style={styles.otherLabel}>Tell us more:</Text>
-                            <TextInput
-                                style={styles.otherInput}
-                                placeholder="Write your reason here..."
-                                placeholderTextColor={COLORS.textSecondary}
-                                value={customReason}
-                                onChangeText={text => {
-                                    setCustomReason(text);
-                                    setError('');
-                                }}
-                                multiline
-                                numberOfLines={2}
-                            />
+                    style={styles.overlay}
+                    onPress={onClose}>
+                    <TouchableOpacity
+                        activeOpacity={1}
+                        style={styles.modalBox}
+                        onPress={e => e.stopPropagation()}>
+                        <View style={styles.topBar}>
+                            <View style={styles.handle} />
                         </View>
-                    )}
-                    
-                    {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                        
+                        <Text style={styles.heading}>{title}</Text>
+                        
+                        <ScrollView 
+                            style={styles.scrollView}
+                            contentContainerStyle={styles.scrollContent}
+                            keyboardShouldPersistTaps="handled"
+                            showsVerticalScrollIndicator={false}>
+                            <View style={styles.reasonsList}>
+                                {reasonsList.map((item, index) => {
+                                    const isSelected = selectedReason === item;
+                                    return (
+                                        <TouchableOpacity
+                                            key={index}
+                                            style={[
+                                                styles.reasonOption,
+                                                isSelected && styles.reasonOptionSelected,
+                                            ]}
+                                            onPress={() => {
+                                                setSelectedReason(item);
+                                                setError('');
+                                            }}>
+                                            <Text style={[
+                                                styles.reasonText,
+                                                isSelected && styles.reasonTextSelected
+                                            ]}>
+                                                {item}
+                                            </Text>
+                                            {isSelected && (
+                                                <Icon name="check-circle" size={20} color={COLORS.primary} />
+                                            )}
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
 
-                    <View style={styles.buttonRow}>
-                        <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-                            <Text style={styles.cancelText}>Cancel</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity 
-                            style={[styles.confirmButton, !selectedReason && styles.confirmButtonDisabled]} 
-                            onPress={handleSubmit}
-                            disabled={!selectedReason}>
-                            <Text style={styles.confirmText}>Confirm</Text>
-                        </TouchableOpacity>
-                    </View>
+                            {selectedReason === 'Other' && (
+                                <View style={styles.otherSection}>
+                                    <Text style={styles.otherLabel}>Tell us more:</Text>
+                                    <TextInput
+                                        style={styles.otherInput}
+                                        placeholder="Write your reason here..."
+                                        placeholderTextColor={COLORS.textSecondary}
+                                        value={customReason}
+                                        onChangeText={text => {
+                                            setCustomReason(text);
+                                            setError('');
+                                        }}
+                                        multiline
+                                        numberOfLines={2}
+                                    />
+                                </View>
+                            )}
+                            
+                            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                        </ScrollView>
+
+                        <View style={styles.buttonRow}>
+                            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+                                <Text style={styles.cancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                style={[styles.confirmButton, !selectedReason && styles.confirmButtonDisabled]} 
+                                onPress={handleSubmit}
+                                disabled={!selectedReason}>
+                                <Text style={styles.confirmText}>Confirm</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </TouchableOpacity>
                 </TouchableOpacity>
-            </TouchableOpacity>
+            </KeyboardAvoidingView>
         </Modal>
     );
 };
 
 const styles = StyleSheet.create({
+    keyboardAvoidingView: {
+        flex: 1,
+        justifyContent: 'flex-end',
+    },
     overlay: { 
         flex: 1, 
         justifyContent: 'flex-end', 
@@ -135,12 +153,20 @@ const styles = StyleSheet.create({
         borderTopRightRadius: wp('5%'),
         paddingHorizontal: spacing.lg,
         paddingTop: spacing.sm,
-        paddingBottom: spacing.xl,
+        paddingBottom: Platform.OS === 'ios' ? spacing.xl : spacing.xl,
+        maxHeight: Platform.OS === 'ios' ? '90%' : '100%',
         shadowColor: COLORS.shadow,
         shadowOffset: { width: 0, height: -4 },
         shadowOpacity: 0.25,
         shadowRadius: 12,
         elevation: 8,
+    },
+    scrollView: {
+        flexGrow: 0,
+        maxHeight: hp('50%'),
+    },
+    scrollContent: {
+        paddingBottom: spacing.sm,
     },
     topBar: {
         alignItems: 'center',
@@ -216,6 +242,10 @@ const styles = StyleSheet.create({
     buttonRow: {
         flexDirection: 'row',
         gap: wp('3%'),
+        marginTop: spacing.md,
+        paddingTop: spacing.md,
+        borderTopWidth: Platform.OS === 'ios' ? 1 : 0,
+        borderTopColor: COLORS.border,
     },
     cancelButton: {
         flex: 1,

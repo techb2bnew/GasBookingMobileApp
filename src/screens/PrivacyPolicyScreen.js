@@ -64,48 +64,7 @@ const PrivacyPolicyScreen = ({navigation}) => {
     </View>
   );
 
-  const renderPrivacyItem = (policy, index) => (
-    <View key={policy.id} style={styles.privacyItem}>
-      <View style={styles.privacyHeader}>
-        <View style={styles.iconContainer}>
-          <Icon name="security" size={24} color={COLORS.white} />
-        </View>
-        <View style={styles.privacyTitleContainer}>
-          <Text style={styles.privacyTitle}>
-            {policy.title
-              ? policy.title.charAt(0).toUpperCase() + policy.title.slice(1)
-              : policy.title}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.privacyContent}>
-        <Text style={styles.privacyDescription}>
-          {policy.description
-            ? policy.description.charAt(0).toUpperCase() +
-              policy.description.slice(1)
-            : policy.description}
-        </Text>
-      </View>
-
-      <View style={styles.privacyFooter}>
-        <View style={styles.versionContainer}>
-          <Icon name="info" size={16} color={COLORS.blue} />
-          <Text style={styles.versionText}>Version {policy.version}</Text>
-        </View>
-        <View style={styles.dateContainer}>
-          <Icon name="schedule" size={16} color={COLORS.textSecondary} />
-          <Text style={styles.dateText}>
-            {new Date(policy.updatedAt).toLocaleDateString('en-IN', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
+  const formatText = (str) => (str ? str.charAt(0).toUpperCase() + str.slice(1) : str || '');
 
   const renderLoading = () => (
     <View style={styles.loadingContainer}>
@@ -126,7 +85,7 @@ const PrivacyPolicyScreen = ({navigation}) => {
           tintcolor={COLORS.blue}
         />
       }>
-      <View style={styles.contentHeader}>
+      <View style={styles.contentCard}>
         <View style={styles.headerIconContainer}>
           <Icon name="shield" size={40} color={COLORS.blue} />
         </View>
@@ -134,21 +93,25 @@ const PrivacyPolicyScreen = ({navigation}) => {
         <Text style={styles.contentSubtitle}>
           Your privacy and data security are our top priorities
         </Text>
-      </View>
 
-      <View style={styles.privacyList}>
-        {privacyData.map((policy, index) => renderPrivacyItem(policy, index))}
-      </View>
+        <View style={styles.privacyContent}>
+          {privacyData.map((policy) => (
+            <View key={policy.id} style={styles.privacySection}>
+              {policy.title ? (
+                <Text style={styles.privacyTitle}>{formatText(policy.title)}</Text>
+              ) : null}
+              <Text style={styles.privacyDescription}>{formatText(policy.description)}</Text>
+            </View>
+          ))}
+        </View>
 
-      <View style={styles.footerNote}>
-        <Icon name="verified-user" size={20} color={COLORS.blue} />
-        <Text style={styles.footerText}>
-          We are committed to protecting your privacy and ensuring the security
-          of your personal information. Last updated:{' '}
-          {privacyData.length > 0
-            ? new Date(privacyData[0]?.updatedAt).toLocaleDateString('en-IN')
-            : 'N/A'}
-        </Text>
+        <View style={styles.footerNote}>
+          <Icon name="verified-user" size={20} color={COLORS.blue} />
+          <Text style={styles.footerText}>
+            We are committed to protecting your privacy and ensuring the security
+            of your personal information.
+          </Text>
+        </View>
       </View>
 
       <View style={styles.contactInfo}>
@@ -226,7 +189,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 30,
+    paddingBottom: 16,
   },
   loadingContainer: {
     flex: 1,
@@ -239,150 +202,78 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textSecondary,
   },
-  contentHeader: {
+  contentCard: {
     backgroundColor: COLORS.white,
-    padding: 25,
-    margin: 20,
-    borderRadius: 15,
+    margin: 12,
+    padding: 16,
+    borderRadius: 12,
     alignItems: 'center',
-    elevation: 3,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
   },
   headerIconContainer: {
     backgroundColor: COLORS.lightBackground,
-    padding: 15,
+    padding: 12,
     borderRadius: 25,
-    marginBottom: 15,
+    marginBottom: 10,
   },
   contentTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   contentSubtitle: {
     fontSize: 14,
     color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
-  },
-  privacyList: {
-    paddingHorizontal: 20,
-  },
-  privacyItem: {
-    backgroundColor: COLORS.white,
-    borderRadius: 15,
-    marginBottom: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    borderLeftWidth: 5,
-    borderLeftColor: COLORS.success,
-  },
-  privacyHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 20,
-    paddingBottom: 15,
-  },
-  iconContainer: {
-    backgroundColor: COLORS.success,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  privacyTitleContainer: {
-    flex: 1,
-  },
-  privacyTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
-    lineHeight: 24,
+    marginBottom: 12,
   },
   privacyContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 15,
+    width: '100%',
+    marginTop: 2,
+  },
+  privacySection: {
+    marginBottom: 12,
+  },
+  privacyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    marginBottom: 4,
+    lineHeight: 22,
   },
   privacyDescription: {
     fontSize: 15,
     color: COLORS.textSecondary,
-    lineHeight: 22,
+    lineHeight: 24,
     textAlign: 'justify',
-  },
-  privacyFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.lightGray,
-    backgroundColor: COLORS.lightBackground,
-    borderBottomLeftRadius: 15,
-    borderBottomRightRadius: 15,
-  },
-  versionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  versionText: {
-    fontSize: 13,
-    color: COLORS.success,
-    fontWeight: '600',
-    marginLeft: 5,
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dateText: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    marginLeft: 5,
   },
   footerNote: {
     flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    margin: 20,
-    padding: 20,
-    borderRadius: 15,
+    width: '100%',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.lightGray,
     alignItems: 'flex-start',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
   },
   footerText: {
     flex: 1,
     fontSize: 14,
     color: COLORS.textSecondary,
     lineHeight: 20,
-    marginLeft: 10,
+    marginLeft: 8,
   },
   contactInfo: {
     backgroundColor: COLORS.white,
-    margin: 20,
-    padding: 20,
+    margin: 12,
+    padding: 16,
     borderRadius: 15,
     elevation: 2,
     shadowColor: '#000',
@@ -397,13 +288,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
-    marginBottom: 10,
+    marginBottom: 6,
   },
   contactText: {
     fontSize: 14,
     color: COLORS.textSecondary,
     lineHeight: 20,
-    marginBottom: 15,
+    marginBottom: 10,
   },
   contactDetails: {
     gap: 10,

@@ -19,14 +19,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         private const val CHANNEL_DESCRIPTION = "Notifications for order updates and promotions"
     }
 
-    override fun onCreate() {
-        super.onCreate()
-        createNotificationChannel()
-    }
-
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        super.onMessageReceived(remoteMessage)
-        
         // Handle data payload
         if (remoteMessage.data.isNotEmpty()) {
             sendNotification(remoteMessage)
@@ -39,7 +32,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onNewToken(token: String) {
-        super.onNewToken(token)
         // Send token to your server if needed
     }
 
@@ -57,6 +49,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
+    }
+    
+    override fun onCreate() {
+        super.onCreate()
+        createNotificationChannel()
     }
 
     private fun sendNotification(remoteMessage: RemoteMessage) {

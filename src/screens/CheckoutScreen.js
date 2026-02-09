@@ -1517,31 +1517,18 @@ const CheckoutScreen = ({navigation}) => {
           startOnlinePayment(createdOrderId);
           return;
         }
-        // Order created successfully
+        // Order created successfully - use API response for correct totals (coupon, tax, delivery)
+        const apiOrder = response?.data?.data?.order;
         const order = {
-          id: response?.data?.data?.order?.id || response?.data?.data?.orderId || Date.now().toString(),
-          items: items,
-          totalAmount: totalAmount,
-          deliveryMode: deliveryMode,
-          deliveryType:
-            deliveryMode === 'pickup' ? 'Pickup from Agency' : 'Home Delivery',
-          paymentMethod:
-            deliveryMode === 'pickup'
-              ? 'Cash on Pickup'
-              : paymentMethod === 'Cash on Delivery'
-              ? 'Cash on Delivery'
-              : 'Online Payment',
-
-          address: deliveryMode === 'home_delivery' ? selectedAddress : null,
-          agency:
-            selectedAgency ||
-            (deliveryMode === 'home_delivery' ? selectedAgency : null),
-          status: 'Pending',
-          orderDate: new Date().toISOString(),
+          ...apiOrder,
+          id: apiOrder?.id || response?.data?.data?.orderId || Date.now().toString(),
+          orderDate: apiOrder?.createdAt || new Date().toISOString(),
           estimatedDelivery:
             deliveryMode === 'pickup'
-              ? new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString() // 4 hours for pickup
-              : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours for delivery
+              ? new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString()
+              : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          address: deliveryMode === 'home_delivery' ? selectedAddress : null,
+          agency: selectedAgency || apiOrder?.agency || null,
         };
 
         dispatch(addOrder(order));

@@ -164,7 +164,7 @@ const AgencySelectionScreen = ({navigation, route}) => {
   // Function to get coordinates from address using Google Geocoding API
   const getCoordinatesFromAddress = async (address) => {
     try {
-      const GOOGLE_MAPS_APIKEY = 'AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI';
+      const GOOGLE_MAPS_APIKEY = 'AIzaSyDAGIK0_mpgKVF-qVgj882DIriSt3vwxqM';
       const encodedAddress = encodeURIComponent(address);
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${GOOGLE_MAPS_APIKEY}`

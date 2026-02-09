@@ -4,6 +4,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Text, View, StyleSheet, Platform, PermissionsAndroid, Alert } from 'react-native';
 import Toast from 'react-native-toast-message';
+import Orientation from 'react-native-orientation-locker';
 
 import { store, persistor } from './src/redux/store';
 import { AppNavigator } from './src/navigation';
@@ -22,6 +23,16 @@ const LoadingScreen = () => (
 );
 
 const App = () => {
+  useEffect(() => {
+    try {
+      if (Orientation && typeof Orientation.lockToPortrait === 'function') {
+        Orientation.lockToPortrait();
+      }
+    } catch (e) {
+      console.warn('Orientation lock skipped:', e?.message);
+    }
+  }, []);
+
   useEffect(() => {
     const requestPermissions = async () => {
       if (Platform.OS === 'ios') {

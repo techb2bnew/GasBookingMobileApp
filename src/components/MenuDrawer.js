@@ -151,6 +151,11 @@ const MenuDrawer = ({visible, onClose, navigation}) => {
               styles.drawer,
               {
                 transform: [{translateX: slideAnim}],
+                // Platform-specific top positioning
+                ...(Platform.OS === 'ios' 
+                  ? { top: 60 }
+                  : { top: 0, paddingTop: insets.top || 0 }
+                ),
               },
             ]}>
             <View style={[styles.header,]}>
@@ -203,7 +208,7 @@ const MenuDrawer = ({visible, onClose, navigation}) => {
                   style={styles.menuItem}
                   onPress={handleRateUs}>
                   <Icon name="star" size={24} color={COLORS.blue} />
-                  <Text style={styles.menuText}>Rate us on Play Store</Text>
+                  <Text style={styles.menuText}>Rating us</Text>
                   <Icon name="chevron-right" size={24} color={COLORS.blue} />
                 </TouchableOpacity>
 
@@ -215,13 +220,13 @@ const MenuDrawer = ({visible, onClose, navigation}) => {
                   <Icon name="chevron-right" size={24} color={COLORS.blue} />
                 </TouchableOpacity>
 
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   style={styles.menuItem}
                   onPress={handleKnowYourPrice}>
                   <Icon name="attach-money" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>Know Your Price</Text>
                   <Icon name="chevron-right" size={24} color={COLORS.blue} />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
                 <TouchableOpacity
                   style={styles.menuItem}
@@ -241,21 +246,27 @@ const MenuDrawer = ({visible, onClose, navigation}) => {
 
                 <TouchableOpacity
                   style={styles.menuItem}
-                  onPress={handleSupport}>
-                  <Icon name="help-outline" color={COLORS.blue} size={24} />
-                  <Text style={styles.menuText}>Support</Text>
-                  <Icon name="chevron-right" size={24} color={COLORS.blue} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
                   onPress={handlePrivacyPolicy}>
                   <Icon name="privacy-tip" size={24} color={COLORS.blue} />
                   <Text style={styles.menuText}>Privacy Policy</Text>
                   <Icon name="chevron-right" size={24} color={COLORS.blue} />
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleSupport}>
+                  <Icon name="help-outline" color={COLORS.blue} size={24} />
+                  <Text style={styles.menuText}>Support</Text>
+                  <Icon name="chevron-right" size={24} color={COLORS.blue} />
+                </TouchableOpacity>
               </ScrollView>
 
-              <View style={styles.logoutSection}>
+              <View style={[
+                styles.logoutSection,
+                Platform.OS === 'android' && {
+                  marginBottom: insets.bottom || 0,
+                }
+              ]}>
                 <TouchableOpacity
                   style={styles.logoutButton}
                   onPress={handleLogout}>
@@ -485,11 +496,7 @@ const styles = StyleSheet.create({
     height: '100%',
     position: 'absolute',
     left: 0,
-    top: 60,
-    // iOS specific styling to handle status bar
-    ...(Platform.OS === 'ios' && {
-      paddingTop: 0,
-    }),
+    // top and paddingTop will be set dynamically based on platform
   },
   header: {
     flexDirection: 'row',
@@ -521,7 +528,11 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: COLORS.lightGray,
-    marginBottom: 60,
+    // iOS: keep margin bottom for spacing
+    // Android: margin will be set dynamically based on safe area insets
+    ...(Platform.OS === 'ios' && {
+      marginBottom: 60,
+    }),
   },
   logoutButton: {
     flexDirection: 'row',

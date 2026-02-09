@@ -1364,7 +1364,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: COLORS.textSecondary,
     textAlign: 'center',
-    lineHeight: fontSize.xxl,
+    lineHeight: fontSize.xl,
     marginBottom: spacing.lg,
   },
   reasonInput: {

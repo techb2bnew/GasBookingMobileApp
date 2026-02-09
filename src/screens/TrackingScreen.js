@@ -25,7 +25,7 @@ import { wp, hp, fontSize, spacing, borderRadius } from '../utils/dimensions';
 const { width: screenWidth } = Dimensions.get('window');
 
 // Initialize Geocoder
-Geocoder.init("AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI");
+Geocoder.init("AIzaSyDAGIK0_mpgKVF-qVgj882DIriSt3vwxqM");
 
 const getCoordinatesFromAddress = async (address) => {
   try {
@@ -451,7 +451,7 @@ const TrackingScreen = ({ navigation, route }) => {
               <MapViewDirections
                 origin={trackingData.pickupLocation.address}
                 destination={trackingData.destinationLocation.address}
-                apikey="AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI"
+                apikey="AIzaSyDAGIK0_mpgKVF-qVgj882DIriSt3vwxqM"
                 strokeWidth={4}
                 strokeColor={COLORS.primary}
                 mode="DRIVING"

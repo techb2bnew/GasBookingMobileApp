@@ -201,7 +201,7 @@ const MapPicker = ({ onLocationSelect, initialLocation = null }) => {
   const getAddressFromCoordinates = async (latitude, longitude) => {
     try {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI`
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyDAGIK0_mpgKVF-qVgj882DIriSt3vwxqM`
       );
       const data = await response.json();
       

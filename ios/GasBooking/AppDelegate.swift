@@ -19,7 +19,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
    FirebaseApp.configure()
-   GMSServices.provideAPIKey("AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI")
+   GMSServices.provideAPIKey("AIzaSyDAGIK0_mpgKVF-qVgj882DIriSt3vwxqM")
    
     // Set up notification delegates
     UNUserNotificationCenter.current().delegate = self
