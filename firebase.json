@@ -1,0 +1,7 @@
+{
+  "$schema": "./node_modules/@react-native-firebase/app/firebase-schema.json",
+  "react-native": {
+    "messaging_ios_foreground_presentation_options": ["badge", "sound", "list", "banner"],
+    "messaging_android_notification_channel_id": "gas_booking_channel"
+  }
+}

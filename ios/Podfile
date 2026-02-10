@@ -21,15 +21,13 @@ setup_permissions([
 ])
 
 
-linkage = ENV['USE_FRAMEWORKS']
-if linkage != nil
-  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
-  use_frameworks! :linkage => linkage.to_sym
-end
+# Firebase requires static frameworks for proper module support
+use_frameworks! :linkage => :static
 
 target 'GasBooking' do
   config = use_native_modules!
-$RNFirebaseAsStaticFramework = true
+  $RNFirebaseAsStaticFramework = true
+  pod 'GoogleUtilities', :modular_headers => true
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.

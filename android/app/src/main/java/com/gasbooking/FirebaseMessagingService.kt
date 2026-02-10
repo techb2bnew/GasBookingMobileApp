@@ -20,15 +20,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        // Handle data payload
-        if (remoteMessage.data.isNotEmpty()) {
-            sendNotification(remoteMessage)
-        }
-
-        // Handle notification payload
-        remoteMessage.notification?.let {
-            sendNotification(remoteMessage)
-        }
+        // Show notification for both data-only and notification payloads
+        // (foreground + background - no notification should be missed)
+        sendNotification(remoteMessage)
     }
 
     override fun onNewToken(token: String) {
@@ -58,11 +52,13 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     private fun sendNotification(remoteMessage: RemoteMessage) {
         val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             // Add data from notification
             remoteMessage.data.forEach { (key, value) ->
                 putExtra(key, value)
             }
+            // Add message_id for RNFB getInitialNotification / onNotificationOpenedApp
+            remoteMessage.messageId?.let { putExtra("google.message_id", it) }
         }
 
         val pendingIntent = PendingIntent.getActivity(
