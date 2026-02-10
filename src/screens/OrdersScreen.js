@@ -13,6 +13,7 @@ import {
   Linking,
   Platform,
   StatusBar,
+  Clipboard,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
@@ -483,19 +484,99 @@ const OrdersScreen = ({navigation}) => {
 
   // Handle call agent
   const handleCallAgent = phoneNumber => {
-    const phoneUrl = `tel:${phoneNumber}`;
-    Linking.canOpenURL(phoneUrl)
-      .then(supported => {
-        if (supported) {
-          Linking.openURL(phoneUrl);
-        } else {
-          Alert.alert('Error', 'Unable to make phone calls on this device');
-        }
-      })
-      .catch(err => {
-        console.error('Error opening phone dialer:', err);
-        Alert.alert('Error', 'Unable to make phone calls');
-      });
+    // Validate phone number
+    if (!phoneNumber) {
+      Alert.alert('Error', 'Phone number not available');
+      return;
+    }
+
+    // Clean phone number - remove spaces, dashes, etc.
+    let cleanPhoneNumber = phoneNumber.toString().replace(/[\s\-\(\)]/g, '');
+
+    if (!cleanPhoneNumber || cleanPhoneNumber.length < 10) {
+      Alert.alert('Error', 'Invalid phone number format');
+      return;
+    }
+
+    console.log('Attempting to call:', cleanPhoneNumber);
+
+    // Show confirmation dialog first
+    Alert.alert('Call Agent', `Do you want to call ${cleanPhoneNumber}?`, [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Call',
+        onPress: () => {
+          // Simple direct approach - try to open phone dialer
+          const makePhoneCall = () => {
+            console.log('Making phone call to:', cleanPhoneNumber);
+
+            // Try different approaches
+            const approaches = [
+              () => Linking.openURL(`tel:${cleanPhoneNumber}`),
+              () => Linking.openURL(`tel://${cleanPhoneNumber}`),
+              () => Linking.openURL(`tel:+91${cleanPhoneNumber}`),
+              () =>
+                Linking.openURL(
+                  `tel:+91${cleanPhoneNumber.replace(/^91/, '')}`,
+                ),
+              () =>
+                Linking.openURL(
+                  `tel:+91${cleanPhoneNumber.replace(/^\+91/, '')}`,
+                ),
+            ];
+
+            let currentApproach = 0;
+
+            const tryNextApproach = () => {
+              if (currentApproach >= approaches.length) {
+                // All approaches failed, show manual option
+                Alert.alert(
+                  'Call Agent',
+                  `Unable to open phone dialer automatically.\n\nPlease manually call: ${cleanPhoneNumber}`,
+                  [
+                    {
+                      text: 'Copy Number',
+                      onPress: () => {
+                        Clipboard.setString(cleanPhoneNumber);
+                        Alert.alert(
+                          'Copied!',
+                          'Phone number copied to clipboard.',
+                        );
+                      },
+                    },
+                    {
+                      text: 'OK',
+                      style: 'default',
+                    },
+                  ],
+                );
+                return;
+              }
+
+              approaches[currentApproach]()
+                .then(() => {
+                  console.log(`Approach ${currentApproach + 1} succeeded`);
+                })
+                .catch(error => {
+                  console.log(
+                    `Approach ${currentApproach + 1} failed:`,
+                    error.message,
+                  );
+                  currentApproach++;
+                  tryNextApproach();
+                });
+            };
+
+            tryNextApproach();
+          };
+
+          makePhoneCall();
+        },
+      },
+    ]);
   };
 
   // Handle close agent modal
@@ -659,10 +740,11 @@ const OrdersScreen = ({navigation}) => {
                 <Text style={styles.primaryButtonText}>Track Order</Text>
               </TouchableOpacity>
 
-              {item.assignedAgent && (
+              {item.assignedAgent && item.assignedAgent.name && (
                 <TouchableOpacity
                   style={styles.secondaryButton}
-                  onPress={() => handleViewAgent(item.assignedAgent)}>
+                  onPress={() => handleViewAgent(item.assignedAgent)}
+                  activeOpacity={0.7}>
                   <Ionicons
                     name="person-outline"
                     size={14}
@@ -959,20 +1041,23 @@ console.log("ordersssss",orders);
                   </View>
                 </View>
 
-                <View style={styles.agentDetailItem}>
-                  <View style={styles.agentDetailIcon}>
-                    <Ionicons name="call" size={20} color={COLORS.primary} />
+                {currentAgent.phone && (
+                  <View style={styles.agentDetailItem}>
+                    <View style={styles.agentDetailIcon}>
+                      <Ionicons name="call" size={20} color={COLORS.primary} />
+                    </View>
+                    <View style={styles.agentDetailInfo}>
+                      <Text style={styles.agentDetailLabel}>Phone Number</Text>
+                      <TouchableOpacity
+                        onPress={() => handleCallAgent(currentAgent.phone)}
+                        activeOpacity={0.7}>
+                        <Text style={styles.agentPhoneNumber}>
+                          {currentAgent.phone}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <View style={styles.agentDetailInfo}>
-                    <Text style={styles.agentDetailLabel}>Phone Number</Text>
-                    <TouchableOpacity
-                      onPress={() => handleCallAgent(currentAgent.phone)}>
-                      <Text style={styles.agentPhoneNumber}>
-                        {currentAgent.phone}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                )}
 
                 <View style={styles.agentDetailItem}>
                   <View style={styles.agentDetailIcon}>
@@ -988,16 +1073,17 @@ console.log("ordersssss",orders);
               </View>
             )}
 
-            <View style={styles.agentModalActions}>
-              <TouchableOpacity
-                style={styles.callAgentButton}
-                onPress={() =>
-                  currentAgent && handleCallAgent(currentAgent.phone)
-                }>
-                <Ionicons name="call" size={16} color={COLORS.white} />
-                <Text style={styles.callAgentButtonText}>Call Agent</Text>
-              </TouchableOpacity>
-            </View>
+            {currentAgent?.phone && (
+              <View style={styles.agentModalActions}>
+                <TouchableOpacity
+                  style={styles.callAgentButton}
+                  onPress={() => handleCallAgent(currentAgent.phone)}
+                  activeOpacity={0.8}>
+                  <Ionicons name="call" size={16} color={COLORS.white} />
+                  <Text style={styles.callAgentButtonText}>Call Agent</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>

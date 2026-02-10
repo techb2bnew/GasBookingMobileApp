@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.md,
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
     backgroundColor: COLORS.primary,
     shadowColor: COLORS.shadow,
     shadowOffset: {width: 0, height: 2},
