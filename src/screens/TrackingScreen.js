@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
-    paddingTop: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
     backgroundColor: COLORS.primary,
     marginBottom: 14,
     borderBottomWidth: 1,

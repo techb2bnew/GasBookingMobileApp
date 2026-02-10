@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-    paddingTop: 20
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
   },
   backButton: {
     width: 40,

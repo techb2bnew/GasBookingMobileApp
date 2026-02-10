@@ -1361,7 +1361,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
-    paddingTop: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
     backgroundColor: COLORS.primary,
     marginBottom: 14,
     borderBottomWidth: 1,
@@ -1379,7 +1379,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xl,
     fontWeight: '700',
     color: COLORS.white,
-    // marginLeft: 10,
+    marginLeft: Platform.OS === 'ios' && 40,
     letterSpacing: -0.5,
     marginBottom: wp('0.5%'),
   },
@@ -1404,7 +1404,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   logoutButton: {
-    // No padding or width - natural size like NotificationScreen's right button
+    // Make right side symmetric with back button so title can be centered
+    width: 40,
+    alignItems: 'flex-end',
   },
   section: {
     backgroundColor: COLORS.cardBackground,

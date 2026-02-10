@@ -858,8 +858,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
+    fontSize: fontSize.xl,
+    fontWeight: '700',
     color: COLORS.white,
     marginLeft: 10,
     letterSpacing: -0.5,
