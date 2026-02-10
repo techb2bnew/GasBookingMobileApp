@@ -2457,7 +2457,7 @@ const styles = StyleSheet.create({
   },
   headerGradient: {
     // backgroundColor: COLORS.primary,
-    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.sm,
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
     // paddingBottom: spacing.md,
     borderBottomLeftRadius: wp('5%'),
     borderBottomRightRadius: wp('5%'),
