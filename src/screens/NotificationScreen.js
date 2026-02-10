@@ -39,7 +39,6 @@ const NotificationItem = ({item, onPress}) => {
 };
 
 const NotificationScreen = ({navigation}) => {
-
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -87,12 +86,33 @@ const NotificationScreen = ({navigation}) => {
       setNotifications(prev =>
         prev.map(n => (n.id === notification.id ? {...n, read: true} : n)),
       );
-
-      navigation.navigate('Orders');
-      console.log('changedfdf');
       setUnreadCount(prev => Math.max(prev - 1, 0));
     } catch (error) {
       console.log('markAsRead error', error);
+    }
+  };
+
+  const handleNotificationPress = notification => {
+    // Mark notification as read on the server and locally
+    markAsRead(notification);
+
+    // Try to extract order id from different possible keys
+    const orderId =
+      notification.orderId ||
+      notification.order_id ||
+      notification.orderNumber ||
+      notification.order_number ||
+      notification.metadata?.orderId ||
+      notification.metadata?.order_id ||
+      notification.data?.orderId ||
+      notification.data?.order_id;
+
+    if (orderId) {
+      // Navigate directly to the order details screen using the orderId
+      navigation.navigate('OrderDetails', {orderId});
+    } else {
+      // Fallback: open orders list if no order id is present
+      navigation.navigate('Orders');
     }
   };
 
@@ -153,7 +173,10 @@ const NotificationScreen = ({navigation}) => {
           data={notifications}
           keyExtractor={item => item.id.toString()}
           renderItem={({item}) => (
-            <NotificationItem item={item} onPress={() => markAsRead(item)} />
+            <NotificationItem
+              item={item}
+              onPress={() => handleNotificationPress(item)}
+            />
           )}
           contentContainerStyle={{paddingBottom: 20}}
           showsVerticalScrollIndicator={false}

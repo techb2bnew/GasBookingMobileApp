@@ -555,6 +555,12 @@ const OrderDetailsScreen = ({navigation, route}) => {
   const renderTimeline = () => {
     if (!order) return null;
 
+    // Safe fallbacks in case some timestamps are missing on older orders
+    const returnedAt =
+      order.returnedAt || order.cancelledAt || order.updatedAt || order.createdAt;
+    const reorderedAt =
+      order.reorderedAt || order.updatedAt || order.createdAt;
+
     return (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Order Timeline</Text>
@@ -616,6 +622,30 @@ const OrderDetailsScreen = ({navigation, route}) => {
                 <Text style={styles.timelineLabel}>Order Delivered</Text>
                 <Text style={styles.timelineDate}>
                   {formatDate(order.deliveredAt)}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {(order?.returnedAt || order?.status === 'returned') && (
+            <View style={styles.timelineItem}>
+              <View style={styles.timelineDot} />
+              <View style={styles.timelineContent}>
+                <Text style={styles.timelineLabel}>Order Returned</Text>
+                <Text style={styles.timelineDate}>
+                  {formatDate(returnedAt)}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {(order?.reorderedAt || order?.status === 'pending') && (
+            <View style={styles.timelineItem}>
+              <View style={styles.timelineDot} />
+              <View style={styles.timelineContent}>
+                <Text style={styles.timelineLabel}>Order Reordered</Text>
+                <Text style={styles.timelineDate}>
+                  {formatDate(reorderedAt)}
                 </Text>
               </View>
             </View>
