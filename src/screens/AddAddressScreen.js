@@ -531,16 +531,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.lg,
+    paddingTop: 20
   },
   backButton: {
     width: 40,
   },
    title: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
+    fontSize: fontSize.xl,
+    fontWeight: '700',
     color: COLORS.white,
-    marginLeft: 10,
+    // marginLeft: 10,
     letterSpacing: -0.5,
     marginBottom: wp('0.5%'),
   },

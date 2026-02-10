@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
-    paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight + spacing.lg,
+    paddingTop: 20,
     marginBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     color: COLORS.white,
-    fontSize: fontSize.md,
+    fontSize: fontSize.xl,
     fontWeight: '700',
   },
   badge: {
