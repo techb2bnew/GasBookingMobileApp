@@ -371,7 +371,48 @@ const CheckoutScreen = ({navigation}) => {
       console.log('Coupons API Response:', response.data);
 
       if (response.data && response.data.success) {
-        setCoupons(response.data.data.coupons || []);
+        const allCoupons = response.data.data.coupons || [];
+        
+        // Double-check: Filter out expired coupons on frontend as well (safety measure)
+        const now = new Date();
+        const validCoupons = allCoupons.filter(coupon => {
+          try {
+            // Handle different date formats
+            let expiryDateStr = coupon.expiryDate;
+            let expiryTimeStr = coupon.expiryTime;
+            
+            // If expiryDate is a Date object, convert to string
+            if (expiryDateStr instanceof Date) {
+              expiryDateStr = expiryDateStr.toISOString().split('T')[0];
+            } else if (typeof expiryDateStr === 'string') {
+              expiryDateStr = expiryDateStr.split('T')[0].split(' ')[0];
+            }
+            
+            // Normalize time format
+            if (typeof expiryTimeStr === 'string') {
+              expiryTimeStr = expiryTimeStr.trim();
+              if (expiryTimeStr.split(':').length === 2) {
+                expiryTimeStr = expiryTimeStr + ':00';
+              }
+            }
+            
+            const expiryDateTime = new Date(`${expiryDateStr}T${expiryTimeStr}`);
+            
+            // Check if date is valid and not expired
+            if (isNaN(expiryDateTime.getTime())) {
+              console.warn(`Invalid expiry date for coupon ${coupon.code}`);
+              return false; // Exclude invalid dates
+            }
+            
+            return expiryDateTime > now; // Only include non-expired coupons
+          } catch (error) {
+            console.error(`Error checking expiry for coupon ${coupon.code}:`, error);
+            return false; // Exclude on error
+          }
+        });
+        
+        console.log(`Filtered coupons: ${validCoupons.length} valid out of ${allCoupons.length} total`);
+        setCoupons(validCoupons);
       } else {
         console.log('Failed to fetch coupons:', response.data?.message);
         setCoupons([]);
@@ -2517,35 +2558,87 @@ const CheckoutScreen = ({navigation}) => {
               <View style={styles.couponLoadingContainer}>
                 <Text style={styles.couponLoadingText}>Loading coupons...</Text>
               </View>
-            ) : coupons.length === 0 ? (
-              <View style={styles.noCouponsContainer}>
-                <Ionicons
-                  name="pricetag-outline"
-                  size={60}
-                  color={COLORS.textSecondary}
-                />
-                <Text style={styles.noCouponsText}>No coupons available</Text>
-              </View>
-            ) : (
-              <ScrollView
-                style={styles.couponsList}
-                showsVerticalScrollIndicator={false}>
-                {coupons.map(coupon => {
+            ) : (() => {
+              // Filter out expired coupons first
+              const validCoupons = coupons.filter(coupon => {
+                try {
+                  let expiryDateStr = coupon.expiryDate;
+                  let expiryTimeStr = coupon.expiryTime;
+                  
+                  if (expiryDateStr instanceof Date) {
+                    expiryDateStr = expiryDateStr.toISOString().split('T')[0];
+                  } else if (typeof expiryDateStr === 'string') {
+                    expiryDateStr = expiryDateStr.split('T')[0].split(' ')[0];
+                  }
+                  
+                  if (typeof expiryTimeStr === 'string') {
+                    expiryTimeStr = expiryTimeStr.trim();
+                    if (expiryTimeStr.split(':').length === 2) {
+                      expiryTimeStr = expiryTimeStr + ':00';
+                    }
+                  }
+                  
+                  const expiryDateTime = new Date(`${expiryDateStr}T${expiryTimeStr}`);
                   const now = new Date();
-                  const expiryDateTime = new Date(
-                    `${coupon.expiryDate}T${coupon.expiryTime}`,
-                  );
-                  const isExpired = expiryDateTime < now;
+                  
+                  // Only include if not expired
+                  return !isNaN(expiryDateTime.getTime()) && expiryDateTime > now;
+                } catch (error) {
+                  console.error(`Error filtering coupon ${coupon.code}:`, error);
+                  return false; // Exclude on error
+                }
+              });
 
-                  return (
-                    <TouchableOpacity
-                      key={coupon.id}
-                      style={[
-                        styles.couponCard,
-                        isExpired && styles.couponCardExpired,
-                      ]}
-                      onPress={() => !isExpired && applyCoupon(coupon.code)}
-                      disabled={isExpired || isApplyingCoupon}>
+              // Show empty state if no valid coupons
+              if (validCoupons.length === 0) {
+                return (
+                  <View style={styles.noCouponsContainer}>
+                    <Ionicons
+                      name="pricetag-outline"
+                      size={60}
+                      color={COLORS.textSecondary}
+                    />
+                    <Text style={styles.noCouponsTitle}>No Coupons Found</Text>
+                    <Text style={styles.noCouponsText}>
+                      There are no available coupons at the moment.{'\n'}
+                      Check back later for exciting offers!
+                    </Text>
+                  </View>
+                );
+              }
+
+              // Render valid coupons
+              return (
+                <ScrollView
+                  style={styles.couponsList}
+                  showsVerticalScrollIndicator={false}>
+                  {validCoupons.map(coupon => {
+                    const now = new Date();
+                    let expiryDateStr = coupon.expiryDate;
+                    let expiryTimeStr = coupon.expiryTime;
+                    
+                    if (expiryDateStr instanceof Date) {
+                      expiryDateStr = expiryDateStr.toISOString().split('T')[0];
+                    } else if (typeof expiryDateStr === 'string') {
+                      expiryDateStr = expiryDateStr.split('T')[0].split(' ')[0];
+                    }
+                    
+                    if (typeof expiryTimeStr === 'string') {
+                      expiryTimeStr = expiryTimeStr.trim();
+                      if (expiryTimeStr.split(':').length === 2) {
+                        expiryTimeStr = expiryTimeStr + ':00';
+                      }
+                    }
+                    
+                    const expiryDateTime = new Date(`${expiryDateStr}T${expiryTimeStr}`);
+                    const isExpired = expiryDateTime < now;
+
+                    return (
+                      <TouchableOpacity
+                        key={coupon.id}
+                        style={styles.couponCard}
+                        onPress={() => applyCoupon(coupon.code)}
+                        disabled={isApplyingCoupon}>
                       <View style={styles.couponLeft}>
                         <View style={styles.couponDiscountBadge}>
                           <Text style={styles.couponDiscountText}>
@@ -2563,27 +2656,20 @@ const CheckoutScreen = ({navigation}) => {
                           Min order: KSh{coupon.minAmount}
                           {coupon.maxAmount && ` | Max: KSH${coupon.maxAmount}`}
                         </Text>
-                        <Text
-                          style={[
-                            styles.couponExpiry,
-                            isExpired && styles.couponExpired,
-                          ]}>
-                          {isExpired
-                            ? 'Expired'
-                            : `Valid till ${coupon.expiryDate}`}
+                        <Text style={styles.couponExpiry}>
+                          Valid till {coupon.expiryDate}
                         </Text>
                       </View>
 
-                      {!isExpired && (
-                        <View style={styles.couponApplyButton}>
-                          <Text style={styles.couponApplyText}>APPLY</Text>
-                        </View>
-                      )}
+                      <View style={styles.couponApplyButton}>
+                        <Text style={styles.couponApplyText}>APPLY</Text>
+                      </View>
                     </TouchableOpacity>
                   );
-                })}
-              </ScrollView>
-            )}
+                  })}
+                </ScrollView>
+              );
+            })()}
           </View>
         </View>
       </Modal>
@@ -3244,12 +3330,22 @@ const styles = StyleSheet.create({
   noCouponsContainer: {
     paddingVertical: spacing.xxl * 2,
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  noCouponsTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
   },
   noCouponsText: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.md,
     color: COLORS.textSecondary,
-    fontWeight: '500',
-    marginTop: spacing.md,
+    fontWeight: '400',
+    textAlign: 'center',
+    lineHeight: 22,
   },
   couponsList: {
     paddingHorizontal: spacing.md,
