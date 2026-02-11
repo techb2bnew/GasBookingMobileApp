@@ -19,7 +19,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {COLORS, STRINGS} from '../constants';
-import {clearCart} from '../redux/slices/cartSlice';
+import {clearCart, addToCart} from '../redux/slices/cartSlice';
 import {addOrder} from '../redux/slices/orderSlice';
 import {wp, hp, fontSize, spacing, borderRadius} from '../utils/dimensions';
 import {
@@ -55,10 +55,11 @@ const OrdersScreen = ({navigation, route}) => {
   const [refreshing, setRefreshing] = useState(false);
   const [expandedOrders, setExpandedOrders] = useState(new Set());
 
-  // Pagination states
+  // Infinite scroll states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [loadingPage, setLoadingPage] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [allOrders, setAllOrders] = useState([]);
 
   const cancelReasons = [
     'Placed order by mistake',
@@ -78,13 +79,14 @@ const OrdersScreen = ({navigation, route}) => {
     'Other',
   ];
 
-  // Fetch orders from API with pagination
-  const fetchOrders = async (page = 1) => {
+  // Fetch orders from API with infinite scroll support
+  const fetchOrders = async (page = 1, isLoadMore = false) => {
     try {
       if (page === 1) {
         dispatch(setLoading(true));
+        setAllOrders([]);
       } else {
-        setLoadingPage(true);
+        setLoadingMore(true);
       }
       dispatch(setError(null));
 
@@ -105,7 +107,19 @@ const OrdersScreen = ({navigation, route}) => {
         console.log(`Page ${page}: ${ordersData.length} orders`);
         console.log('Pagination data:', paginationData);
 
-        dispatch(setOrders(ordersData));
+        if (page === 1) {
+          // First page - replace all orders
+          setAllOrders(ordersData);
+          dispatch(setOrders(ordersData));
+        } else {
+          // Subsequent pages - append to existing orders
+          setAllOrders(prevOrders => {
+            const newOrders = [...prevOrders, ...ordersData];
+            dispatch(setOrders(newOrders));
+            return newOrders;
+          });
+        }
+        
         setCurrentPage(paginationData.currentPage || page);
         setTotalPages(paginationData.totalPages || 1);
       } else {
@@ -125,7 +139,7 @@ const OrdersScreen = ({navigation, route}) => {
       }
     } finally {
       dispatch(setLoading(false));
-      setLoadingPage(false);
+      setLoadingMore(false);
     }
   };
 
@@ -263,18 +277,11 @@ const OrdersScreen = ({navigation, route}) => {
     }
   };
 
-  // Pagination navigation functions
-  const goToNextPage = () => {
-    if (currentPage < totalPages && !loadingPage) {
-      console.log(`Going to next page: ${currentPage + 1}`);
-      fetchOrders(currentPage + 1);
-    }
-  };
-
-  const goToPreviousPage = () => {
-    if (currentPage > 1 && !loadingPage) {
-      console.log(`Going to previous page: ${currentPage - 1}`);
-      fetchOrders(currentPage - 1);
+  // Load more orders for infinite scroll
+  const loadMoreOrders = () => {
+    if (currentPage < totalPages && !loadingMore && !isLoading) {
+      console.log(`Loading more orders - Page: ${currentPage + 1}`);
+      fetchOrders(currentPage + 1, true);
     }
   };
 
@@ -482,6 +489,96 @@ const OrdersScreen = ({navigation, route}) => {
   const handleReorderCancel = () => {
     setReorderModalVisible(false);
     setCurrentReorderId(null);
+  };
+
+  // Handle reorder - add all items to cart and navigate to checkout
+  const handleReorderToCart = async (order) => {
+    if (!order || !order.items || order.items.length === 0) {
+      Alert.alert('Error', 'No items found in this order');
+      return;
+    }
+
+    try {
+      // Get selected agency ID from AsyncStorage
+      const selectedAgencyId = await AsyncStorage.getItem('selectedAgencyId');
+      
+      // Clear cart first
+      dispatch(clearCart());
+
+      // Add each item from the order to cart
+      for (const orderItem of order.items) {
+        // Find the product from Redux products state
+        const product = products.find(p => p.id === orderItem.productId);
+        
+        if (!product) {
+          console.warn(`Product not found for productId: ${orderItem.productId}`);
+          continue;
+        }
+
+        // Find matching variant from product's variants array
+        let matchedVariant = null;
+        let weight = '';
+        let itemPrice = orderItem.variantPrice || orderItem.price || product.price || 0;
+
+        if (product.variants && product.variants.length > 0) {
+          // Try to find exact match first
+          matchedVariant = product.variants.find(
+            v => v.label === orderItem.variantLabel || v.label === orderItem.weight
+          );
+
+          // If no exact match, try case-insensitive match
+          if (!matchedVariant && orderItem.variantLabel) {
+            const orderVariantLower = orderItem.variantLabel.toLowerCase().trim();
+            matchedVariant = product.variants.find(
+              v => v.label.toLowerCase().trim() === orderVariantLower
+            );
+          }
+
+          // Use matched variant if found
+          if (matchedVariant) {
+            weight = matchedVariant.label;
+            itemPrice = matchedVariant.price || itemPrice;
+          } else {
+            // Fallback: use order's variantLabel or weight
+            weight = orderItem.weight || orderItem.variantLabel || '';
+            console.warn(`Variant not found for ${orderItem.variantLabel}, using fallback: ${weight}`);
+          }
+        } else {
+          // Product has no variants, use order's weight/variantLabel
+          weight = orderItem.weight || orderItem.variantLabel || '';
+        }
+        
+        // Create cart product object with all necessary fields
+        const cartProduct = {
+          ...product,
+          weight: weight,
+          price: itemPrice,
+          quantity: orderItem.quantity || 1,
+        };
+
+        console.log('Adding to cart:', {
+          productId: product.id,
+          productName: product.name || product.productName,
+          originalVariantLabel: orderItem.variantLabel,
+          matchedWeight: weight,
+          quantity: orderItem.quantity || 1,
+          price: itemPrice,
+        });
+
+        // Add to cart
+        dispatch(addToCart({ 
+          product: cartProduct, 
+          quantity: orderItem.quantity || 1,
+          agencyId: selectedAgencyId 
+        }));
+      }
+
+      // Navigate to checkout screen
+      navigation.navigate('Checkout');
+    } catch (error) {
+      console.error('Error reordering:', error);
+      Alert.alert('Error', 'Failed to reorder. Please try again.');
+    }
   };
 
   // Handle view agent
@@ -735,35 +832,56 @@ const OrdersScreen = ({navigation, route}) => {
 
         {/* Action Buttons with Better Design */}
         <View style={styles.actionButtons}>
-          {item.status === 'assigned' && (
-            <>
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={() => handleTrackOrder(item)}>
-                <Ionicons
-                  name="location-outline"
-                  size={14}
-                  color={COLORS.white}
-                />
-                <Text style={styles.primaryButtonText}>Track Order</Text>
-              </TouchableOpacity>
-
-              {item.assignedAgent && item.assignedAgent.name && (
-                <TouchableOpacity
-                  style={styles.secondaryButton}
-                  onPress={() => handleViewAgent(item.assignedAgent)}
-                  activeOpacity={0.7}>
-                  <Ionicons
-                    name="person-outline"
-                    size={14}
-                    color={COLORS.primary}
-                  />
-                  <Text style={styles.secondaryButtonText}>View Agent</Text>
-                </TouchableOpacity>
-              )}
-            </>
+          {/* Track Order Button - Show for pending, assigned, out_for_delivery only */}
+          {/* Hide for confirmed, delivered, returned, cancelled */}
+          {(item.status === 'pending' || 
+            item.status === 'assigned' || 
+            item.status === 'out_for_delivery') && 
+            item.status !== 'delivered' && 
+            item.status !== 'returned' && 
+            item.status !== 'cancelled' && (
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => handleTrackOrder(item)}>
+              <Ionicons
+                name="location-outline"
+                size={14}
+                color={COLORS.white}
+              />
+              <Text style={styles.primaryButtonText}>Track Order</Text>
+            </TouchableOpacity>
           )}
 
+          {/* View Agent Button - Only for assigned status */}
+          {item.status === 'assigned' && item.assignedAgent && item.assignedAgent.name && (
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => handleViewAgent(item.assignedAgent)}
+              activeOpacity={0.7}>
+              <Ionicons
+                name="person-outline"
+                size={14}
+                color={COLORS.primary}
+              />
+              <Text style={styles.secondaryButtonText}>View Agent</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Cancel Button - Only for pending and confirmed */}
+          {(item.status === 'pending' || item.status === 'confirmed') && (
+            <TouchableOpacity
+              style={styles.outlineButton}
+              onPress={() => handleAction('cancel', item.id)}>
+              <Ionicons
+                name="close-circle-outline"
+                size={14}
+                color={COLORS.error}
+              />
+              <Text style={styles.outlineButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Reorder Button - For cancelled orders */}
           {item.status === 'cancelled' && (
             <TouchableOpacity
               style={styles.secondaryButton}
@@ -777,30 +895,32 @@ const OrdersScreen = ({navigation, route}) => {
             </TouchableOpacity>
           )}
 
-          {item.status === 'delivered' && !showDeliveredOnly && (
-            <TouchableOpacity
-              style={styles.outlineButton}
-              onPress={() => handleAction('return', item.id)}>
-              <Ionicons
-                name="return-up-back-outline"
-                size={14}
-                color={COLORS.error}
-              />
-              <Text style={styles.outlineButtonText}>Return</Text>
-            </TouchableOpacity>
-          )}
-
-          {(item.status === 'pending' || item.status === 'confirmed') && (
-            <TouchableOpacity
-              style={styles.outlineButton}
-              onPress={() => handleAction('cancel', item.id)}>
-              <Ionicons
-                name="close-circle-outline"
-                size={14}
-                color={COLORS.error}
-              />
-              <Text style={styles.outlineButtonText}>Cancel</Text>
-            </TouchableOpacity>
+          {/* Reorder and Return Buttons - For delivered orders */}
+          {item.status === 'delivered' && (
+            <>
+              <TouchableOpacity
+                style={styles.reorderButton}
+                onPress={() => handleReorderToCart(item)}>
+                <Ionicons
+                  name="refresh-outline"
+                  size={14}
+                  color={COLORS.white}
+                />
+                <Text style={styles.reorderButtonText}>Reorder</Text>
+              </TouchableOpacity>
+              {!showDeliveredOnly && (
+                <TouchableOpacity
+                  style={styles.outlineButton}
+                  onPress={() => handleAction('return', item.id)}>
+                  <Ionicons
+                    name="return-up-back-outline"
+                    size={14}
+                    color={COLORS.error}
+                  />
+                  <Text style={styles.outlineButtonText}>Return</Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
         </View>
       </TouchableOpacity>
@@ -813,11 +933,11 @@ const OrdersScreen = ({navigation, route}) => {
       <Text style={styles.emptySubtitle}>
         Place your first order to see it here.
       </Text>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.shopButton}
         onPress={() => navigation.navigate('Main', {screen: 'Products'})}>
         <Text style={styles.shopButtonText}>Start Shopping</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 
@@ -901,70 +1021,19 @@ console.log("ordersssss",orders);
                 tintColor={COLORS.primary}
               />
             }
+            onEndReached={loadMoreOrders}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={() => (
+              loadingMore ? (
+                <View style={styles.loadingMoreContainer}>
+                  <Text style={styles.loadingMoreText}>Loading more orders...</Text>
+                </View>
+              ) : null
+            )}
           />
         )}
       </View>
 
-      {/* Pagination Controls */}
-      {orders.length > 0 && totalPages > 1 && (
-        <View style={styles.paginationContainer}>
-          <TouchableOpacity
-            style={[
-              styles.paginationButton,
-              currentPage === 1 && styles.paginationButtonDisabled,
-            ]}
-            onPress={goToPreviousPage}
-            disabled={currentPage === 1 || loadingPage}>
-            <Ionicons
-              name="chevron-back"
-              size={16}
-              color={currentPage === 1 ? COLORS.textSecondary : COLORS.primary}
-            />
-            <Text
-              style={[
-                styles.paginationButtonText,
-                currentPage === 1 && styles.paginationButtonTextDisabled,
-              ]}>
-              Previous
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.paginationInfo}>
-            <Text style={styles.paginationText}>
-              Page {currentPage} of {totalPages}
-            </Text>
-            {loadingPage && (
-              <Text style={styles.paginationLoadingText}>Loading...</Text>
-            )}
-          </View>
-
-          <TouchableOpacity
-            style={[
-              styles.paginationButton,
-              currentPage === totalPages && styles.paginationButtonDisabled,
-            ]}
-            onPress={goToNextPage}
-            disabled={currentPage === totalPages || loadingPage}>
-            <Text
-              style={[
-                styles.paginationButtonText,
-                currentPage === totalPages &&
-                  styles.paginationButtonTextDisabled,
-              ]}>
-              Next
-            </Text>
-            <Ionicons
-              name="chevron-forward"
-              size={16}
-              color={
-                currentPage === totalPages
-                  ? COLORS.textSecondary
-                  : COLORS.primary
-              }
-            />
-          </TouchableOpacity>
-        </View>
-      )}
 
       <ReasonModal
         visible={modalVisible}
@@ -1402,6 +1471,34 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     marginLeft: spacing.xs,
   },
+  reorderButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: borderRadius.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: COLORS.primary,
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  reorderButtonText: {
+    color: COLORS.white,
+    fontWeight: '600',
+    fontSize: fontSize.sm,
+    marginLeft: spacing.xs,
+  },
+  loadingMoreContainer: {
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  loadingMoreText: {
+    fontSize: fontSize.sm,
+    color: COLORS.textSecondary,
+    fontStyle: 'italic',
+  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -1630,63 +1727,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: '600',
     marginLeft: spacing.xs,
-  },
-  // Pagination styles
-  paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: COLORS.white,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    shadowColor: COLORS.shadow,
-    shadowOffset: {width: 0, height: -2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  paginationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    backgroundColor: COLORS.primary + '10',
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    minWidth: 100,
-    justifyContent: 'center',
-  },
-  paginationButtonDisabled: {
-    backgroundColor: COLORS.lightGray + '20',
-    borderColor: COLORS.border,
-  },
-  paginationButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-    color: COLORS.primary,
-    marginHorizontal: spacing.xs,
-  },
-  paginationButtonTextDisabled: {
-    color: COLORS.textSecondary,
-  },
-  paginationInfo: {
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: spacing.md,
-  },
-  paginationText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 2,
-  },
-  paginationLoadingText: {
-    fontSize: fontSize.xs,
-    color: COLORS.textSecondary,
-    fontStyle: 'italic',
   },
 });
 

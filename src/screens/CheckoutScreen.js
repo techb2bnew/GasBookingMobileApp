@@ -1400,10 +1400,14 @@ const CheckoutScreen = ({navigation}) => {
     {id: 'Home Delivery', label: STRINGS.homeDelivery, price: 0},
   ];
 
-  const paymentOptions = [
-    {id: 'Cash on Delivery', label: 'Cash on Delivery'},
-    {id: 'Pay Online', label: 'Pay Online'},
-  ];
+  // Payment options - filter based on delivery mode
+  // Pickup mode mein sirf Cash on Pickup allowed hai (Cash on Delivery label dikhega)
+  const paymentOptions = deliveryMode === 'pickup' 
+    ? [{id: 'Cash on Delivery', label: 'Cash on Pickup'}] // UI mein "Cash on Pickup" dikhega
+    : [
+        {id: 'Cash on Delivery', label: 'Cash on Delivery'},
+        {id: 'Pay Online', label: 'Pay Online'},
+      ];
   // const startOnlinePayment = async (orderId) => {
   //   console.log("orderIdorderId>>",orderId);
 
@@ -1545,16 +1549,28 @@ const CheckoutScreen = ({navigation}) => {
 
       console.log('Order API Payload:', orderData);
 
-      // Make API call
-      const response = await apiClient.post('/api/orders/checkout', orderData);
+      // IMPORTANT: Pickup mode mein online payment nahi hota, sirf cash_on_pickup
+      // Agar deliveryMode = 'pickup' hai, to online payment ko ignore karo
+      const isOnlinePayment = deliveryMode !== 'pickup' && paymentMethod === 'Pay Online';
+      
+      // For online payment (home_delivery only), create draft order (don't place order yet)
+      // For cash/delivery/pickup, place order immediately
+      const apiEndpoint = isOnlinePayment 
+        ? '/api/orders/create-draft'  // Create draft order for online payment (home_delivery only)
+        : '/api/orders/checkout';     // Place order immediately for cash/delivery/pickup
 
-      console.log('Order API Response:', response.data.data.order.id);
+      console.log(`Calling ${apiEndpoint} for payment method: ${orderData.paymentMethod}, deliveryMode: ${deliveryMode}`);
+
+      // Make API call
+      const response = await apiClient.post(apiEndpoint, orderData);
+
+      console.log('Order API Response:', response.data);
 
       if (response?.data && response?.data?.success) {
-        const createdOrderId = response?.data?.data?.order?.id;
+        const createdOrderId = response?.data?.data?.order?.id || response?.data?.data?.orderId;
 
-        //  Online Payment Start
-        if (paymentMethod == 'Pay Online') {
+        //  Online Payment Start - Order is in draft state, will be confirmed after payment
+        if (isOnlinePayment) {
           startOnlinePayment(createdOrderId);
           return;
         }
@@ -1627,7 +1643,15 @@ const CheckoutScreen = ({navigation}) => {
         styles.optionCard,
         deliveryMode === option.id && styles.optionCardSelected,
       ]}
-      onPress={() => dispatch(setDeliveryMode(option.id))}>
+      onPress={() => {
+        dispatch(setDeliveryMode(option.id));
+        // Auto-update payment method based on delivery mode
+        if (option.id === 'pickup') {
+          // Pickup mode mein sirf Cash on Pickup allowed hai
+          dispatch(setPaymentMethod('Cash on Delivery')); // UI mein "Cash on Delivery" dikhega but backend mein "cash_on_pickup" convert hoga
+        }
+        // Home delivery mode mein user payment method select kar sakta hai
+      }}>
       <View style={styles.optionContent}>
         <Text
           style={[
@@ -1677,25 +1701,42 @@ const CheckoutScreen = ({navigation}) => {
     </TouchableOpacity>
   );
 
-  const renderPaymentOption = option => (
-    <TouchableOpacity
-      key={option?.id}
-      style={[
-        styles.optionCard,
-        paymentMethod === option?.id && styles.optionCardSelected,
-      ]}
-      onPress={() => dispatch(setPaymentMethod(option.id))}>
-      <View style={styles.optionContent}>
-        <Text
-          style={[
-            styles.optionLabel,
-            paymentMethod === option?.id && styles.optionLabelSelected,
-          ]}>
-          {option?.label}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const renderPaymentOption = option => {
+    // Pickup mode mein "Pay Online" disable karo
+    const isDisabled = deliveryMode === 'pickup' && option.id === 'Pay Online';
+    
+    return (
+      <TouchableOpacity
+        key={option?.id}
+        style={[
+          styles.optionCard,
+          paymentMethod === option?.id && styles.optionCardSelected,
+          isDisabled && styles.optionCardDisabled,
+        ]}
+        disabled={isDisabled}
+        onPress={() => {
+          if (!isDisabled) {
+            dispatch(setPaymentMethod(option.id));
+          }
+        }}>
+        <View style={styles.optionContent}>
+          <Text
+            style={[
+              styles.optionLabel,
+              paymentMethod === option?.id && styles.optionLabelSelected,
+              isDisabled && styles.optionLabelDisabled,
+            ]}>
+            {option?.label}
+          </Text>
+          {isDisabled && (
+            <Text style={styles.disabledHint}>
+              (Not available for pickup)
+            </Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const renderAddressOption = address => (
     <TouchableOpacity
@@ -2938,6 +2979,10 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
+  optionCardDisabled: {
+    opacity: 0.5,
+    backgroundColor: COLORS.background,
+  },
   optionCardSelected: {
     borderColor: COLORS.primary,
     backgroundColor: COLORS.primary + '10',
@@ -2952,6 +2997,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.text,
     marginBottom: 2,
+  },
+  optionLabelDisabled: {
+    color: COLORS.textSecondary,
+  },
+  disabledHint: {
+    fontSize: fontSize.xs,
+    color: COLORS.textSecondary,
+    fontStyle: 'italic',
+    marginTop: 2,
   },
   optionLabelSelected: {
     color: COLORS.primary,

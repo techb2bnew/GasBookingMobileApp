@@ -821,7 +821,18 @@ const OrderDetailsScreen = ({navigation, route}) => {
           <Ionicons name="arrow-back" size={24} color={COLORS.white} />
         </TouchableOpacity>
         <Text style={styles.title}>Order Details</Text>
-        <View style={styles.placeholder} />
+        {/* Reorder Button in Header - Only show for delivered orders */}
+        {order?.status === 'delivered' ? (
+          <TouchableOpacity
+            style={styles.headerReorderButton}
+            onPress={handleReorder}
+            activeOpacity={0.8}>
+            <Ionicons name="refresh" size={16} color={COLORS.primary} />
+            <Text style={styles.headerReorderButtonText}>Reorder</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.placeholder} />
+        )}
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -832,19 +843,6 @@ const OrderDetailsScreen = ({navigation, route}) => {
         {renderAgencyInfo()}
         {renderAgentInfo()}
         {renderTimeline()}
-        
-        {/* Reorder Button - Only show for delivered orders */}
-        {order?.status === 'delivered' && (
-          <View style={styles.reorderSection}>
-            <TouchableOpacity
-              style={styles.reorderButton}
-              onPress={handleReorder}
-              activeOpacity={0.8}>
-              <Ionicons name="refresh" size={20} color={COLORS.white} />
-              <Text style={styles.reorderButtonText}>Reorder</Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </ScrollView>
     </View>
   );
@@ -886,6 +884,25 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+  },
+  headerReorderButton: {
+    backgroundColor: COLORS.white,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: COLORS.shadow,
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  headerReorderButtonText: {
+    color: COLORS.primary,
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+    marginLeft: spacing.xs / 2,
   },
   content: {
     flex: 1,
@@ -1159,31 +1176,6 @@ const styles = StyleSheet.create({
   timelineDate: {
     fontSize: fontSize.sm,
     color: COLORS.textSecondary,
-  },
-  reorderSection: {
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
-    paddingHorizontal: spacing.sm,
-  },
-  reorderButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: COLORS.primary,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  reorderButtonText: {
-    color: COLORS.white,
-    fontSize: fontSize.md,
-    fontWeight: '700',
-    marginLeft: spacing.xs,
   },
 });
 

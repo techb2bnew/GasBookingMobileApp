@@ -94,7 +94,7 @@ const OrderConfirmationScreen = ({ route, navigation }) => {
       <View style={styles.container}>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle" size={48} color={COLORS.error} />
-          <Text style={styles.errorTitle}>Order Not Foundddd</Text>
+          <Text style={styles.errorTitle}>Order Not Found</Text>
           <Text style={styles.errorMessage}>
             The order you're looking for doesn't exist or has been removed.
           </Text>

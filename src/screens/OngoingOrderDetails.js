@@ -21,14 +21,14 @@ export default function OngoingOrderDetails({navigation}) {
       const response = await apiClient.post('/api/orders/orderdetails');
       console.log('Fetched orders:', response?.data?.data?.orders?.length);
  
-      // Filter out delivered orders - only show non-delivered orders
+      // Only show pending and assigned orders on ongoing screen (exclude confirmed)
       const allOrders = response?.data?.data?.orders || [];
       const filteredOrders = allOrders.filter(order => {
         const status = (order?.status || '').toLowerCase();
-        return status !== 'delivered';
+        return status === 'pending' || status === 'assigned';
       });
       
-      console.log('Filtered orders (excluding delivered):', filteredOrders.length);
+      console.log('Filtered orders (pending/assigned only):', filteredOrders.length);
       setAgents(filteredOrders);
     } catch (error) {
       console.log('Error fetching orders', error);
