@@ -107,6 +107,12 @@
 
 	<!-- ================= BACKGROUND MODES ================= -->
 
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.gasbooking.refresh</string>
+		<string>com.gasbooking.firebase-messaging</string>
+	</array>
+
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
