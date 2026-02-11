@@ -2486,60 +2486,65 @@ const CheckoutScreen = ({navigation}) => {
           <View style={styles.agencyDetailsModal}>
             <Text style={styles.agencyDetailsTitle}>Agency Details</Text>
 
-            {selectedAgencyForDetails && (
-              <View style={styles.agencyDetailsContent}>
-                <View style={styles.agencyDetailRow}>
-                  <Text style={styles.agencyDetailLabel}>Name:</Text>
-                  <Text style={styles.agencyDetailValue}>
-                    {selectedAgencyForDetails.name}
-                  </Text>
-                </View>
-
-                <View style={styles.agencyDetailRow}>
-                  <Text style={styles.agencyDetailLabel}>Email:</Text>
-                  <Text style={styles.agencyDetailValue}>
-                    {selectedAgencyForDetails.email}
-                  </Text>
-                </View>
-
-                <View style={styles.agencyDetailRow}>
-                  <Text style={styles.agencyDetailLabel}>Phone:</Text>
-                  <Text style={styles.agencyDetailValue}>
-                    {selectedAgencyForDetails.phone}
-                  </Text>
-                </View>
-
-                <View style={styles.agencyDetailRow}>
-                  <Text style={styles.agencyDetailLabel}>Address:</Text>
-                  <Text style={styles.agencyDetailValue}>
-                    {selectedAgencyForDetails.address}
-                  </Text>
-                </View>
-
-                <View style={styles.agencyDetailRow}>
-                  <Text style={styles.agencyDetailLabel}>City:</Text>
-                  <Text style={styles.agencyDetailValue}>
-                    {selectedAgencyForDetails.city}
-                  </Text>
-                </View>
-
-                <View style={styles.agencyDetailRow}>
-                  <Text style={styles.agencyDetailLabel}>Pincode:</Text>
-                  <Text style={styles.agencyDetailValue}>
-                    {selectedAgencyForDetails.pincode}
-                  </Text>
-                </View>
-
-                {selectedAgencyForDetails.landmark && (
+            <ScrollView 
+              style={styles.agencyDetailsScrollView}
+              contentContainerStyle={styles.agencyDetailsScrollContent}
+              showsVerticalScrollIndicator={true}>
+              {selectedAgencyForDetails && (
+                <View style={styles.agencyDetailsContent}>
                   <View style={styles.agencyDetailRow}>
-                    <Text style={styles.agencyDetailLabel}>Landmark:</Text>
+                    <Text style={styles.agencyDetailLabel}>Name:</Text>
                     <Text style={styles.agencyDetailValue}>
-                      {selectedAgencyForDetails.landmark}
+                      {selectedAgencyForDetails.name}
                     </Text>
                   </View>
-                )}
-              </View>
-            )}
+
+                  <View style={styles.agencyDetailRow}>
+                    <Text style={styles.agencyDetailLabel}>Email:</Text>
+                    <Text style={styles.agencyDetailValue}>
+                      {selectedAgencyForDetails.email}
+                    </Text>
+                  </View>
+
+                  <View style={styles.agencyDetailRow}>
+                    <Text style={styles.agencyDetailLabel}>Phone:</Text>
+                    <Text style={styles.agencyDetailValue}>
+                      {selectedAgencyForDetails.phone}
+                    </Text>
+                  </View>
+
+                  <View style={styles.agencyDetailRow}>
+                    <Text style={styles.agencyDetailLabel}>Address:</Text>
+                    <Text style={styles.agencyDetailValue}>
+                      {selectedAgencyForDetails.address}
+                    </Text>
+                  </View>
+
+                  <View style={styles.agencyDetailRow}>
+                    <Text style={styles.agencyDetailLabel}>City:</Text>
+                    <Text style={styles.agencyDetailValue}>
+                      {selectedAgencyForDetails.city}
+                    </Text>
+                  </View>
+
+                  <View style={styles.agencyDetailRow}>
+                    <Text style={styles.agencyDetailLabel}>Pincode:</Text>
+                    <Text style={styles.agencyDetailValue}>
+                      {selectedAgencyForDetails.pincode}
+                    </Text>
+                  </View>
+
+                  {selectedAgencyForDetails.landmark && (
+                    <View style={styles.agencyDetailRow}>
+                      <Text style={styles.agencyDetailLabel}>Landmark:</Text>
+                      <Text style={styles.agencyDetailValue}>
+                        {selectedAgencyForDetails.landmark}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            </ScrollView>
 
             <TouchableOpacity
               style={styles.closeAgencyDetailsButton}
@@ -3509,8 +3514,8 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    // justifyContent: 'center',
-    // alignItems: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   profileUpdateModalContainer: {
     // flexGrow: 1,
@@ -3804,6 +3809,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   agencyDetailsTitle: {
     fontSize: 18,
@@ -3811,6 +3821,13 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     marginBottom: 20,
     textAlign: 'center',
+  },
+  agencyDetailsScrollView: {
+    width: '100%',
+    maxHeight: '60%',
+  },
+  agencyDetailsScrollContent: {
+    paddingBottom: 10,
   },
   agencyDetailsContent: {
     width: '100%',
