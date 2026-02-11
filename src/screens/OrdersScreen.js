@@ -36,7 +36,7 @@ import ReasonModal from '../components/ReasonModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../utils/apiConfig';
 
-const OrdersScreen = ({navigation}) => {
+const OrdersScreen = ({navigation, route}) => {
   const dispatch = useDispatch();
   const {orders, isLoading, error} = useSelector(state => state.orders);
   const {products} = useSelector(state => state.products);
@@ -47,6 +47,9 @@ const OrdersScreen = ({navigation}) => {
   const [reasonsList, setReasonsList] = useState([]);
   const [currentReorderId, setCurrentReorderId] = useState(null);
   const [currentAgent, setCurrentAgent] = useState(null);
+
+  // State to track if we should show only delivered orders
+  const [showDeliveredOnly, setShowDeliveredOnly] = useState(false);
 
   // Local states for UI
   const [refreshing, setRefreshing] = useState(false);
@@ -286,12 +289,17 @@ const OrdersScreen = ({navigation}) => {
   // Fetch orders when component mounts and when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
+      // Check route params - only set showDeliveredOnly if explicitly passed as true
+      // If navigating from tab, route.params will be undefined or false, so reset to false
+      const deliveredOnlyParam = route?.params?.showDeliveredOnly;
+      setShowDeliveredOnly(deliveredOnlyParam === true);
+      
       // Always fetch products first to ensure images are available
       fetchProducts().then(() => {
         setCurrentPage(1);
         fetchOrders(1);
       });
-    }, []),
+    }, [route?.params?.showDeliveredOnly]),
   );
 
   // 🔥 SOCKET EVENT LISTENERS - Real-time updates
@@ -769,7 +777,7 @@ const OrdersScreen = ({navigation}) => {
             </TouchableOpacity>
           )}
 
-          {item.status === 'delivered' && (
+          {item.status === 'delivered' && !showDeliveredOnly && (
             <TouchableOpacity
               style={styles.outlineButton}
               onPress={() => handleAction('return', item.id)}>
@@ -856,6 +864,11 @@ const OrdersScreen = ({navigation}) => {
   }
 console.log("ordersssss",orders);
 
+  // Filter orders to show only delivered ones if showDeliveredOnly is true
+  const filteredOrders = showDeliveredOnly 
+    ? orders.filter(order => order.status === 'delivered')
+    : orders;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -868,16 +881,16 @@ console.log("ordersssss",orders);
         <View style={styles.placeholder} />
       </View>
       <View style={{paddingHorizontal: 6, paddingBottom:66}}>
-        {orders?.length == 0 ? (
+        {filteredOrders?.length == 0 ? (
           renderEmptyOrders()
         ) : (
           <FlatList
-            data={orders}
+            data={filteredOrders}
             renderItem={renderOrderItem}
             keyExtractor={item =>
               `${item.id}-${item.status}-${item.lastUpdated || ''}`
             }
-            extraData={orders}
+            extraData={filteredOrders}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.ordersList}
             refreshControl={

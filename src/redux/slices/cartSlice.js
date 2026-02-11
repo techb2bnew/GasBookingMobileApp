@@ -23,21 +23,44 @@ const cartSlice = createSlice({
         state.selectedAgency = agencyId;
       }
       
+      // Normalize weight for comparison (lowercase, trim whitespace)
+      const normalizeWeight = (weight) => {
+        if (!weight || weight === 'default') return 'default';
+        return String(weight).toLowerCase().trim();
+      };
+      
+      // Normalize other fields for comparison
+      const normalizeField = (field) => {
+        if (!field || field === 'default') return 'default';
+        return String(field).toLowerCase().trim();
+      };
+      
+      const normalizedWeight = normalizeWeight(product.weight);
+      const normalizedType = normalizeField(product.type);
+      const normalizedCategory = normalizeField(product.category);
+      
       // Create a unique key for the product based on its properties
-      const productKey = `${product.id}_${product.weight || 'default'}_${product.type || 'default'}_${product.category || 'default'}`;
+      const productKey = `${product.id}_${normalizedWeight}_${normalizedType}_${normalizedCategory}`;
       
       const existingItem = state.items.find(item => {
-        const itemKey = `${item.id}_${item.weight || 'default'}_${item.type || 'default'}_${item.category || 'default'}`;
+        const itemWeight = normalizeWeight(item.weight);
+        const itemType = normalizeField(item.type);
+        const itemCategory = normalizeField(item.category);
+        const itemKey = `${item.id}_${itemWeight}_${itemType}_${itemCategory}`;
         return itemKey === productKey;
       });
       
       if (existingItem) {
+        // Product already exists, update quantity
         existingItem.quantity += quantity;
+        console.log(`Product already in cart, updating quantity from ${existingItem.quantity - quantity} to ${existingItem.quantity}`);
       } else {
+        // New product, add to cart
         state.items.push({
           ...product,
           quantity,
         });
+        console.log(`New product added to cart: ${product.id} - ${normalizedWeight}`);
       }
       
       cartSlice.caseReducers.calculateTotals(state);
@@ -45,16 +68,32 @@ const cartSlice = createSlice({
     removeFromCart: (state, action) => {
       const { productId, weight, category, type } = action.payload;
       
+      // Normalize fields for comparison
+      const normalizeWeight = (w) => {
+        if (!w || w === 'default') return 'default';
+        return String(w).toLowerCase().trim();
+      };
+      const normalizeField = (field) => {
+        if (!field || field === 'default') return 'default';
+        return String(field).toLowerCase().trim();
+      };
+      
       console.log('Removing from cart:', { productId, weight, category, type });
       console.log('Current cart items:', state.items);
       
       // If specific details are provided, remove that specific variant
       if (weight || category || type) {
-        const targetKey = `${productId}_${weight || 'default'}_${type || 'default'}_${category || 'default'}`;
+        const normalizedWeight = normalizeWeight(weight);
+        const normalizedType = normalizeField(type);
+        const normalizedCategory = normalizeField(category);
+        const targetKey = `${productId}_${normalizedWeight}_${normalizedType}_${normalizedCategory}`;
         console.log('Target key for removal:', targetKey);
         
         state.items = state.items.filter(item => {
-          const itemKey = `${item.id}_${item.weight || 'default'}_${item.type || 'default'}_${item.category || 'default'}`;
+          const itemWeight = normalizeWeight(item.weight);
+          const itemType = normalizeField(item.type);
+          const itemCategory = normalizeField(item.category);
+          const itemKey = `${item.id}_${itemWeight}_${itemType}_${itemCategory}`;
           const shouldKeep = itemKey !== targetKey;
           console.log('Item key:', itemKey, 'Should keep:', shouldKeep);
           return shouldKeep;
@@ -71,15 +110,31 @@ const cartSlice = createSlice({
     updateQuantity: (state, action) => {
       const { productId, quantity, weight, category, type } = action.payload;
       
+      // Normalize fields for comparison
+      const normalizeWeight = (w) => {
+        if (!w || w === 'default') return 'default';
+        return String(w).toLowerCase().trim();
+      };
+      const normalizeField = (field) => {
+        if (!field || field === 'default') return 'default';
+        return String(field).toLowerCase().trim();
+      };
+      
       console.log('Updating quantity:', { productId, quantity, weight, category, type });
       
       // If specific details are provided, update that specific variant
       if (weight || category || type) {
-        const targetKey = `${productId}_${weight || 'default'}_${type || 'default'}_${category || 'default'}`;
+        const normalizedWeight = normalizeWeight(weight);
+        const normalizedType = normalizeField(type);
+        const normalizedCategory = normalizeField(category);
+        const targetKey = `${productId}_${normalizedWeight}_${normalizedType}_${normalizedCategory}`;
         console.log('Target key for quantity update:', targetKey);
         
         const item = state.items.find(item => {
-          const itemKey = `${item.id}_${item.weight || 'default'}_${item.type || 'default'}_${item.category || 'default'}`;
+          const itemWeight = normalizeWeight(item.weight);
+          const itemType = normalizeField(item.type);
+          const itemCategory = normalizeField(item.category);
+          const itemKey = `${item.id}_${itemWeight}_${itemType}_${itemCategory}`;
           return itemKey === targetKey;
         });
         
@@ -88,7 +143,10 @@ const cartSlice = createSlice({
           if (quantity <= 0) {
             console.log('Removing item due to quantity <= 0');
             state.items = state.items.filter(item => {
-              const itemKey = `${item.id}_${item.weight || 'default'}_${item.type || 'default'}_${item.category || 'default'}`;
+              const itemWeight = normalizeWeight(item.weight);
+              const itemType = normalizeField(item.type);
+              const itemCategory = normalizeField(item.category);
+              const itemKey = `${item.id}_${itemWeight}_${itemType}_${itemCategory}`;
               return itemKey !== targetKey;
             });
           } else {

@@ -10,11 +10,6 @@ export default function OngoingOrderDetails({navigation}) {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [expandedOrderId, setExpandedOrderId] = useState(null);
-
-  const toggleExpand = (orderId) => {
-    setExpandedOrderId(prev => (prev === orderId ? null : orderId));
-  };
 
   useEffect(() => {
     fetchAgents();
@@ -24,9 +19,17 @@ export default function OngoingOrderDetails({navigation}) {
     try {
       if (!isRefresh) setLoading(true);
       const response = await apiClient.post('/api/orders/orderdetails');
-      console.log('jhsfbas', response?.data?.data?.orders?.length);
+      console.log('Fetched orders:', response?.data?.data?.orders?.length);
  
-      setAgents(response?.data?.data?.orders || []);
+      // Filter out delivered orders - only show non-delivered orders
+      const allOrders = response?.data?.data?.orders || [];
+      const filteredOrders = allOrders.filter(order => {
+        const status = (order?.status || '').toLowerCase();
+        return status !== 'delivered';
+      });
+      
+      console.log('Filtered orders (excluding delivered):', filteredOrders.length);
+      setAgents(filteredOrders);
     } catch (error) {
       console.log('Error fetching orders', error);
     } finally {
@@ -51,14 +54,18 @@ export default function OngoingOrderDetails({navigation}) {
     return '#f59e0b';
   };
 
+  const handleOrderClick = (order) => {
+    // Navigate to OrderDetails screen with the order object
+    navigation.navigate('OrderDetails', { order });
+  };
+
   const renderOrderCard = ({item}) => {
-    const isExpanded = expandedOrderId === item?.id;
     return (
-      <View style={styles.card}>
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => toggleExpand(item?.id)}
-          style={styles.cardHeader}>
+      <TouchableOpacity
+        style={styles.card}
+        activeOpacity={0.7}
+        onPress={() => handleOrderClick(item)}>
+        <View style={styles.cardHeader}>
           <View style={styles.cardSummary}>
             <Text style={styles.orderNumber}>#{item?.orderNumber || '—'}</Text>
             <View style={[styles.statusPill, { backgroundColor: getStatusColor(item?.status) + '20' }]}>
@@ -74,61 +81,15 @@ export default function OngoingOrderDetails({navigation}) {
               </Text>
             </Text>
             <Ionicons
-              name={isExpanded ? 'chevron-up' : 'chevron-down'}
+              name="chevron-forward"
               size={22}
               color={COLORS.primary}
               style={styles.chevron}
             />
           </View>
-          <Text style={styles.tapHint}>{isExpanded ? 'Tap to collapse' : 'Tap to view details'}</Text>
-        </TouchableOpacity>
-
-        {isExpanded && (
-          <View style={styles.expandedSection}>
-            {/* AGENCY INFO */}
-            <View style={styles.detailBlock}>
-              <Text style={styles.sectionTitle}>Agency Info</Text>
-              <View style={styles.rowBetween}>
-                <Text style={styles.label}>Agency Name:</Text>
-                <Text style={styles.value}>{item?.agency?.name || '—'}</Text>
-              </View>
-              <View style={styles.rowBetween}>
-                <Text style={styles.label}>Phone:</Text>
-                <Text style={styles.value}>{item?.agency?.phone || '—'}</Text>
-              </View>
-              <View style={styles.rowBetween}>
-                <Text style={styles.label}>City:</Text>
-                <Text style={styles.value}>{item?.agency?.city || '—'}</Text>
-              </View>
-              <View style={styles.rowBetween}>
-                <Text style={styles.label}>Status:</Text>
-                <Text style={[styles.value, { color: item?.agency?.status === 'active' ? COLORS.success : COLORS.error }]}>
-                  {(item?.agency?.status || '—').toUpperCase()}
-                </Text>
-              </View>
-            </View>
-
-            {/* ASSIGNED AGENT */}
-            {item?.assignedAgent && (
-              <View style={styles.detailBlock}>
-                <Text style={styles.sectionTitle}>Assigned Agent</Text>
-                <View style={styles.rowBetween}>
-                  <Text style={styles.label}>Name:</Text>
-                  <Text style={styles.value}>{item?.assignedAgent?.name || '—'}</Text>
-                </View>
-                <View style={styles.rowBetween}>
-                  <Text style={styles.label}>Phone:</Text>
-                  <Text style={styles.value}>{item?.assignedAgent?.phone || '—'}</Text>
-                </View>
-                <View style={styles.rowBetween}>
-                  <Text style={styles.label}>Vehicle:</Text>
-                  <Text style={styles.value}>{item?.assignedAgent?.vehicleNumber || '—'}</Text>
-                </View>
-              </View>
-            )}
-          </View>
-        )}
-      </View>
+          <Text style={styles.tapHint}>Tap to view full order details</Text>
+        </View>
+      </TouchableOpacity>
     );
   };
  

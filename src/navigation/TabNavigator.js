@@ -105,13 +105,23 @@ const TabNavigator = () => {
           tabBarLabel: () => null, // Hide default label
           tabBarIcon: ({ color, size, focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIconContainer]}>
-              <Ionicons name="newspaper" color={focused ? COLORS.primary: COLORS.blue} size={focused ? 26 : 24} />
+              <Ionicons
+                name="newspaper"
+                color={focused ? COLORS.primary : COLORS.blue}
+                size={focused ? 26 : 24}
+              />
               <Text style={[styles.tabLabel, focused && styles.activeTabLabel]}>
                 Orders
               </Text>
             </View>
           ),
         }}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            // Orders tab se aate time hamesha normal orders flow
+            navigation.setParams({ showDeliveredOnly: false });
+          },
+        })}
       />
       <Tab.Screen
         name="Cart"

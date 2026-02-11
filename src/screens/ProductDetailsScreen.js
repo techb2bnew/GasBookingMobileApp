@@ -99,11 +99,20 @@ const ProductDetailsScreen = ({ route, navigation }) => {
   const isProductInCart = useMemo(() => {
     if (!product?.id || !items || !Array.isArray(items)) return false;
     
+    // Normalize weight for comparison (same logic as cartSlice)
+    const normalizeWeight = (weight) => {
+      if (!weight || weight === 'default') return 'default';
+      return String(weight).toLowerCase().trim();
+    };
+    
+    const normalizedSelectedWeight = normalizeWeight(selectedWeight);
+    
     return items.some(cartItem => {
       // Handle different cart item structures
       const itemProduct = cartItem?.product || cartItem;
+      const normalizedItemWeight = normalizeWeight(itemProduct?.weight);
       return itemProduct?.id === product.id && 
-             itemProduct?.weight === selectedWeight;
+             normalizedItemWeight === normalizedSelectedWeight;
     });
   }, [product?.id, items, selectedWeight]);
 

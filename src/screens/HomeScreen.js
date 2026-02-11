@@ -2355,7 +2355,7 @@ const fetchBanners = async () => {
           {/* Repeat Previous Order */}
           <TouchableOpacity
             style={styles.secondaryCard}
-            onPress={() => navigation.navigate('Orders')}>
+            onPress={() => navigation.navigate('Orders', {showDeliveredOnly: true})}>
             <Text style={styles.secondaryText}>Repeat my Previous Order</Text>
             <Icon name="chevron-right" size={26} color={COLORS.blue} />
           </TouchableOpacity>

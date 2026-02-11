@@ -19,7 +19,8 @@ import {COLORS, STRINGS} from '../constants';
 import {wp, hp, fontSize, spacing, borderRadius} from '../utils/dimensions';
 import apiClient from '../utils/apiConfig';
 import {addOrder} from '../redux/slices/orderSlice';
-import {clearCart} from '../redux/slices/cartSlice';
+import {clearCart, addToCart} from '../redux/slices/cartSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const OrderDetailsScreen = ({navigation, route}) => {
   const routeParams = route?.params || {};
@@ -150,6 +151,10 @@ const OrderDetailsScreen = ({navigation, route}) => {
         return styles.statusCancelled;
       case 'returned':
         return styles.statusReturned;
+      case 'return_approved':
+        return styles.statusDelivered;
+      case 'return_rejected':
+        return styles.statusCancelled;
       default:
         return {};
     }
@@ -170,7 +175,11 @@ const OrderDetailsScreen = ({navigation, route}) => {
       case 'cancelled':
         return 'Cancelled';
       case 'returned':
-        return 'Returned';
+        return 'Return Requests';
+      case 'return_approved':
+        return 'Return Approved';
+      case 'return_rejected':
+        return 'Return Rejected';
       default:
         return status;
     }
@@ -277,6 +286,114 @@ const OrderDetailsScreen = ({navigation, route}) => {
   const handleCloseAgentModal = () => {
     setAgentModalVisible(false);
     setCurrentAgent(null);
+  };
+
+  // Handle reorder - add all items to cart and navigate to checkout
+  const handleReorder = async () => {
+    if (!order || !order.items || order.items.length === 0) {
+      Alert.alert('Error', 'No items found in this order');
+      return;
+    }
+
+    try {
+      // Get selected agency ID from AsyncStorage
+      const selectedAgencyId = await AsyncStorage.getItem('selectedAgencyId');
+      
+      // Clear cart first
+      dispatch(clearCart());
+
+      // Add each item from the order to cart
+      for (const orderItem of order.items) {
+        // Find the product from Redux products state
+        const product = products.find(p => p.id === orderItem.productId);
+        
+        if (!product) {
+          console.warn(`Product not found for productId: ${orderItem.productId}`);
+          continue;
+        }
+
+        // Find matching variant from product's variants array
+        // This ensures we use the correct variant label format that the API expects
+        let matchedVariant = null;
+        let weight = '';
+        let itemPrice = orderItem.variantPrice || orderItem.price || product.price || 0;
+
+        if (product.variants && product.variants.length > 0) {
+          // Try to find exact match first
+          matchedVariant = product.variants.find(
+            v => v.label === orderItem.variantLabel || v.label === orderItem.weight
+          );
+
+          // If no exact match, try case-insensitive match
+          if (!matchedVariant && orderItem.variantLabel) {
+            const orderVariantLower = orderItem.variantLabel.toLowerCase().trim();
+            matchedVariant = product.variants.find(
+              v => v.label.toLowerCase().trim() === orderVariantLower
+            );
+          }
+
+          // If still no match, try to convert lbs to kg (e.g., "6lbs" -> "6kg")
+          if (!matchedVariant && orderItem.variantLabel) {
+            const orderVariant = orderItem.variantLabel.toLowerCase().trim();
+            // Check if it contains "lbs" and try to find equivalent kg variant
+            if (orderVariant.includes('lbs')) {
+              const lbsValue = parseFloat(orderVariant.replace('lbs', '').trim());
+              if (!isNaN(lbsValue)) {
+                // Try to find closest kg variant (approximate conversion: 1kg ≈ 2.2lbs)
+                const kgValue = Math.round(lbsValue / 2.2);
+                matchedVariant = product.variants.find(v => {
+                  const variantKg = parseFloat(v.label.toLowerCase().replace('kg', '').trim());
+                  return !isNaN(variantKg) && Math.abs(variantKg - kgValue) < 1;
+                });
+              }
+            }
+          }
+
+          // Use matched variant if found
+          if (matchedVariant) {
+            weight = matchedVariant.label;
+            itemPrice = matchedVariant.price || itemPrice;
+          } else {
+            // Fallback: use order's variantLabel or weight
+            weight = orderItem.weight || orderItem.variantLabel || '';
+            console.warn(`Variant not found for ${orderItem.variantLabel}, using fallback: ${weight}`);
+          }
+        } else {
+          // Product has no variants, use order's weight/variantLabel
+          weight = orderItem.weight || orderItem.variantLabel || '';
+        }
+        
+        // Create cart product object with all necessary fields
+        const cartProduct = {
+          ...product,
+          weight: weight,
+          price: itemPrice,
+          quantity: orderItem.quantity || 1,
+        };
+
+        console.log('Adding to cart:', {
+          productId: product.id,
+          productName: product.name || product.productName,
+          originalVariantLabel: orderItem.variantLabel,
+          matchedWeight: weight,
+          quantity: orderItem.quantity || 1,
+          price: itemPrice,
+        });
+
+        // Add to cart
+        dispatch(addToCart({ 
+          product: cartProduct, 
+          quantity: orderItem.quantity || 1,
+          agencyId: selectedAgencyId 
+        }));
+      }
+
+      // Navigate to checkout screen
+      navigation.navigate('Checkout');
+    } catch (error) {
+      console.error('Error reordering:', error);
+      Alert.alert('Error', 'Failed to reorder. Please try again.');
+    }
   };
 
   const renderOrderInfo = () => {
@@ -639,6 +756,34 @@ const OrderDetailsScreen = ({navigation, route}) => {
             </View>
           )}
 
+          {order?.returnApprovedAt && (
+            <View style={styles.timelineItem}>
+              <View style={[styles.timelineDot, {backgroundColor: COLORS.success}]} />
+              <View style={styles.timelineContent}>
+                <Text style={styles.timelineLabel}>
+                  Return Approved
+                </Text>
+                <Text style={styles.timelineDate}>
+                  {formatDate(order.returnApprovedAt)}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {order?.returnRejectedAt && (
+            <View style={styles.timelineItem}>
+              <View style={[styles.timelineDot, {backgroundColor: COLORS.error}]} />
+              <View style={styles.timelineContent}>
+                <Text style={styles.timelineLabel}>
+                  Return Rejected
+                </Text>
+                <Text style={styles.timelineDate}>
+                  {formatDate(order.returnRejectedAt)}
+                </Text>
+              </View>
+            </View>
+          )}
+
           {(order?.reorderedAt || order?.status === 'pending') && (
             <View style={styles.timelineItem}>
               <View style={styles.timelineDot} />
@@ -687,6 +832,19 @@ const OrderDetailsScreen = ({navigation, route}) => {
         {renderAgencyInfo()}
         {renderAgentInfo()}
         {renderTimeline()}
+        
+        {/* Reorder Button - Only show for delivered orders */}
+        {order?.status === 'delivered' && (
+          <View style={styles.reorderSection}>
+            <TouchableOpacity
+              style={styles.reorderButton}
+              onPress={handleReorder}
+              activeOpacity={0.8}>
+              <Ionicons name="refresh" size={20} color={COLORS.white} />
+              <Text style={styles.reorderButtonText}>Reorder</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -1001,6 +1159,31 @@ const styles = StyleSheet.create({
   timelineDate: {
     fontSize: fontSize.sm,
     color: COLORS.textSecondary,
+  },
+  reorderSection: {
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.sm,
+  },
+  reorderButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLORS.primary,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  reorderButtonText: {
+    color: COLORS.white,
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    marginLeft: spacing.xs,
   },
 });
 
